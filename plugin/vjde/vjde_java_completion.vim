@@ -170,7 +170,7 @@ func! s:SearchPackages(jar,lib_path,prefix)
 endf
 func! s:SearchClasses(jar,lib_path,prefix,base)
 	let jar_path = substitute(a:jar,'vjde\.jar$','','')
-	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageClasses  '.a:lib_path.' '.a:prefix.' '.jar_path.'/tlds/jdk1.5.lst '.a:base
+	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageClasses  "'.a:lib_path.'" '.a:prefix.' "'.jar_path.'/tlds/jdk1.5.lst" '.a:base
 	let array=[]
 	let array += split(system(cmd))
 	return array
@@ -193,7 +193,7 @@ func! VjdeJavaSearchPackagesAndClasses(jar,lib_path,prefix,base)
 endf
 func! VjdeJavaSearch4Classes(jar,cname,lib_path)
 	let jar_path = substitute(a:jar,'vjde\.jar$','','')
-	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.ClassesByName '.a:cname.' '.jar_path.'/tlds/jdk1.5.lst '.a:lib_path
+	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.ClassesByName '.a:cname.' "'.jar_path.'/tlds/jdk1.5.lst" '.a:lib_path
 	let array=[]
 	let array += split(system(cmd))
 	return array
