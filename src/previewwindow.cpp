@@ -7,6 +7,9 @@
 #include <windows.h>
 #include <winuser.h>
 #endif
+#include "my_system.h"
+
+#define DOC_LENGTH 5124
 
 
 
@@ -34,7 +37,7 @@ extern "C" {
 	guint intval = 1000; //interval
 
 
-	enum COLUM { TAG_NAME,RET_VAL,COMMENT };
+	enum COLUM { TAG_NAME,RET_VAL,COMMENT,TAG_VAL };
 
 	GtkWidget *window=NULL;
 	GtkWidget *input_label = NULL;
@@ -46,6 +49,15 @@ extern "C" {
 	vector<string> lines;
 	string base("");
 
+            void  on_row_selected      (GtkTreeView *treeview,
+                                            GtkTreePath *arg1,
+                                            GtkTreeViewColumn *arg2,
+                                            gpointer user_data);
+
+void   on_cursor_changed(GtkTreeView *treeview,
+		gpointer user_data) ;
+	    
+
 #ifdef _WIN32
 	typedef struct _Rectangle {
 		int x;
@@ -56,6 +68,19 @@ extern "C" {
 #else
 	typedef GdkRectangle MRectangle;
 #endif
+
+	//use for doc preview
+	GtkWidget *doc_window = NULL;
+	GtkWidget *doc_view = NULL;
+	GtkWidget *scrolledwindow3=NULL;//		init_list_store();
+	char doc_buffer[DOC_LENGTH];
+	guint timeout_handler = 0;
+	guint idle_handler = 0;
+	guint delay=1000;
+	MRectangle doc_rect;
+	gboolean use_doc=FALSE;
+	gboolean first_time = FALSE;
+	string doc_cmd_line;
 
 
 
@@ -72,6 +97,11 @@ extern "C" {
 			const int line,const int col, // cursor line and col for vim
 			const int width1 , const int height1, // vim lines and cols in window
 			const int width2 , const int height2); // tool window width heigth
+
+	gboolean show_doc_window(gpointer data) ;//show the document;
+	void remove_last_timeout();
+	void add_new_timeout();
+	gboolean show_doc_thread(gpointer data) ;//show the document;
 	/*
 	gboolean show_docment(gpointer data);
 	void timeout_setup() {
@@ -294,6 +324,7 @@ extern "C" {
 								get_short_tag(temp.substr(index_space+1,index_right-index_space)).c_str(),
 							COMMENT,index_right < index_comma-1?
 								temp.substr(index_right+1,index_comma-index_right-1).c_str():"",
+							TAG_VAL ,temp.substr(index_space+1,index_right-index_space).c_str(),
 							-1);
 				}
 				else 
@@ -301,7 +332,8 @@ extern "C" {
 					gtk_list_store_set(list_store,&iter_tree,
 							RET_VAL,get_short_name(temp.substr(0,index_space)).c_str(),
 							TAG_NAME,get_short_tag(temp.substr(index_space+1)).c_str(),
-							COMMENT,""
+							COMMENT,"",
+							TAG_VAL ,temp.substr(index_space+1).c_str(),
 							-1);
 				}
 				return;
@@ -312,6 +344,7 @@ extern "C" {
 						RET_VAL,get_short_name(temp.substr(0,index_space)).c_str(),
 						TAG_NAME,temp.substr(index_space+1,index_comma-index_space-1).c_str(),
 						COMMENT,index_comma <temp.length()-1?temp.substr(index_comma+1).c_str():"",
+						TAG_VAL,temp.substr(index_space+1,index_comma-index_space-1).c_str(),
 						-1);
 			}
 			else 
@@ -319,7 +352,8 @@ extern "C" {
 				gtk_list_store_set(list_store,&iter_tree,
 						RET_VAL,get_short_name(temp.substr(0,index_space)).c_str(),
 						TAG_NAME,temp.substr(index_space+1).c_str(),
-						COMMENT,""
+						COMMENT,"",
+						TAG_VAL ,temp.substr(index_space+1).c_str(),
 						-1);
 			}
 		}
@@ -327,7 +361,9 @@ extern "C" {
 	void init_list_store()
 	{
 		vector<string>::const_iterator iter = lines.begin();
-		//skip first line
+		//skiping first line,preview parameter
+		if ( iter != lines.end() ) iter++;
+		//skiping second line , document window parameter
 		if ( iter != lines.end() ) iter++;
 
 		for( ; iter != lines.end(); iter++)
@@ -363,6 +399,7 @@ extern "C" {
 							NULL,
 							FALSE);
 					g_free(val);
+					//TODO:set the document window timeout here
 					return;
 				}
 			}
@@ -401,7 +438,7 @@ extern "C" {
 		int tw=50;
 		int th = 50;
 		if ( lines.size()>0) 
-		{
+		{//Preview windows define
 			string firstline=lines[0];
 			int len = firstline.length();
 			int curr = 0;
@@ -439,10 +476,69 @@ extern "C" {
 				curr = index+1;
 			}
 		}
-		char buffer[128];
+		
+		if ( lines.size()>1)
+		{
+			string docline = lines[1];
+			int len = docline.length();
+			int curr = 0;
+			if ( curr < len) {
+				doc_rect.width = read_int(docline,';',len,curr);
+			}
+			if ( curr < len ) {
+				doc_rect.height = read_int(docline,';',len,curr);
+			}
+			if ( curr < len ) {
+				delay = read_int(docline,';',len,curr);
+			}
+			if ( curr < len ) {
+				int index = docline.find(';',curr);
+				index = index==-1?len:index;
+				doc_cmd_line = docline.substr(curr,index-curr);
+				curr = index+1;
+				if ( useShort)
+					use_doc = TRUE;
+			}
+		}
+
+		//char buffer[128];
 		//snprintf(buffer,127,"test x%d y%d  tw%d  th%d w%d h%d px%d py%d",x,y,tw,th,width,height,winposx,winposy);
 		//lines.push_back(buffer);
+
 		get_vim_caret_pos(x,y,x,y,tw,th,width,height);
+
+		MRectangle drect ;
+		get_desktop_rectangle(drect);
+		/*
+		if ( x+width+doc_rect.width>drect.width) {
+			doc_rect.x = drect.width-width-doc_rect.width;
+		}
+		else {
+		}
+		*/
+		doc_rect.x = 0;
+		doc_rect.y = 0;
+		if ( y+height+doc_rect.height+4 >= drect.height) {
+			if ( x + width + doc_rect.width  < drect.width) {
+				doc_rect.x = x+width;
+				doc_rect.y = y;
+			}	
+			else if ( x >= doc_rect.width) {
+				doc_rect.x = x - doc_rect.width;
+				doc_rect.y = y;
+			}
+			else if ( y >= doc_rect.height) {
+				doc_rect.x = x;
+				doc_rect.y = y - doc_rect.height;
+			}
+			//doc_rect.y = drect.height-height-doc_rect.height;
+		}
+		
+		else {
+			doc_rect.y = y+height+4;
+			doc_rect.x = x;
+		}
+
 		return preview_window(lines,base,x,y,width,height);
 	}
 
@@ -454,8 +550,11 @@ extern "C" {
 
 
 		init_window(x,y,width,height);
+		first_time = TRUE;
 
 		gtk_main ();
+		doc_window = NULL;
+
 		snprintf(pre_select_buffer,255,"%s",user_input.c_str());
 		return pre_select_buffer;
 	}
@@ -470,10 +569,14 @@ extern "C" {
 		gtk_window_set_title(GTK_WINDOW(window),"preview");
 
 
-		list_store = gtk_list_store_new(3,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING);
+		list_store = gtk_list_store_new(4,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING);
 		init_list_store();
 
 		line_list = gtk_tree_view_new_with_model((GtkTreeModel*)list_store);
+
+		if ( use_doc) {
+		g_signal_connect(line_list,"cursor-changed",(GCallback)on_cursor_changed,NULL);
+		}
 
 		GtkTreeViewColumn *column;
 		GtkCellRenderer   *renderer = gtk_cell_renderer_text_new ();
@@ -532,8 +635,13 @@ extern "C" {
 void destroy( GtkWidget *widget,
               gpointer   data )
 {
+	if ( doc_window) {
+		gtk_widget_destroy(doc_window);
+		doc_window = NULL;
+	}
 	if ( window) {
 		gtk_widget_destroy(window);
+		window = NULL;
 	}
 	gtk_main_quit ();
 }
@@ -541,6 +649,11 @@ void destroy( GtkWidget *widget,
 void on_key_release_event( GtkWidget *widget,
             GdkEventKey *data )
 {
+
+	if ( idle_handler ) {
+		g_source_remove(idle_handler);
+		idle_handler = 0;
+	}
 	key_release_count+=1;
 	switch ( data->keyval) {
 		case 32://SPACE
@@ -588,6 +701,8 @@ void on_key_release_event( GtkWidget *widget,
 		//gtk_widget_grab_focus(line_list);
 	}
 }
+
+
 int main(int argc,char* argv[])
 {
 	printf("%s\n",preview(argv[1]));
@@ -596,8 +711,113 @@ int main(int argc,char* argv[])
 	return 0;
 }
 
+	string get_select_tag()
+	{
+		string str;
+		GtkTreeIter iter;
+		if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(line_list)),
+				 ((GtkTreeModel**)(&list_store)),&iter))
+		{
+			gchar *val;
+			gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, TAG_VAL,&val, -1);
+			str.append(val);
+			g_free(val);
+		}
+		return str;
+	}
+	gboolean show_doc_thread(gpointer data) {
+		string cmd_line;
+		if ( lines.size()>2) {
+			cmd_line.append(doc_cmd_line);
+			cmd_line.append(" \"");
+			cmd_line.append(lines[2]);
+			cmd_line.append("\" \"");
+			cmd_line.append(get_select_tag().c_str());
+			cmd_line.append("\"");
+		}
+		//char show[128] ;
+		//sprintf(show,"%d %d %d %d" , doc_rect.x,doc_rect.y,doc_rect.width,doc_rect.height);
+		GtkTextBuffer *buffer;
+		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (doc_view));
+		memset(doc_buffer,0,DOC_LENGTH);
+		my_system(cmd_line.c_str(),doc_buffer,DOC_LENGTH);
+		if (strlen(doc_buffer)>0) 
+			gtk_text_buffer_set_text (buffer, doc_buffer, -1);
+		return FALSE;
+	}
+	gboolean show_doc_window(gpointer data) {//show the document;
+		/*
+		if ( first_time ) {
+			first_time = FALSE;
+			return FALSE;
+		}
+		*/
+		if ( doc_window == NULL) {
+			doc_window = gtk_window_new(GTK_WINDOW_POPUP);
+			gtk_window_set_decorated(GTK_WINDOW(doc_window),FALSE);
+			gtk_window_set_modal(GTK_WINDOW(doc_window),FALSE);
+			gtk_window_move(GTK_WINDOW(doc_window),doc_rect.x,doc_rect.y);
+			gtk_window_resize(GTK_WINDOW(doc_window),doc_rect.width,doc_rect.height);
+			gtk_window_set_title(GTK_WINDOW(doc_window),"document");
+
+			doc_view = gtk_text_view_new();
+			g_object_set(G_OBJECT(doc_view),"editable",FALSE,NULL);
+			scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
+			gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
+			gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
+			
+			gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
+			gtk_widget_show(scrolledwindow3);
+			gtk_widget_show(doc_view);
+			gtk_widget_show(doc_window);
+		}
+		//gtk_label_set_text((GtkLabel*)input_label,get_select_tag().c_str());
+		if ( idle_handler ) {
+			g_source_remove(idle_handler);
+			idle_handler = 0;
+		}
+		idle_handler = g_idle_add(show_doc_thread,NULL);
+		return FALSE;
+	}
+	void remove_last_timeout()
+	{
+		if (timeout_handler) {
+			g_source_remove(timeout_handler);
+			timeout_handler = 0;
+		}
+		if ( doc_window != NULL ) {
+			//gtk_widget_hide(doc_window);
+			//gtk_widget_destroy(doc_window);
+			//doc_window = NULL;
+		}
+	}
+	void add_new_timeout()
+	{
+		timeout_handler = g_timeout_add(delay,
+				show_doc_window,
+				NULL);
+	}
+	void  on_row_selected(GtkTreeView *treeview,
+			GtkTreePath *arg1,
+			GtkTreeViewColumn *arg2,
+			gpointer user_data) {
+		if ( use_doc) 
+		{
+			remove_last_timeout();
+			add_new_timeout();
+		}
+	}
+
+void        on_cursor_changed(GtkTreeView *treeview,
+		gpointer user_data) {
+	if ( use_doc) 
+	{
+		remove_last_timeout();
+		add_new_timeout();
+	}
+}
 #ifdef AS_C
 }
 #endif
 
-// vim:ts=4:sw=4
+

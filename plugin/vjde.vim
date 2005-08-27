@@ -44,28 +44,13 @@ endif
 if !exists('g:vjde_xml_advance')
     let g:vjde_xml_advance=1
 endif
-if !exists('g:vjde_show_preview')
-    let g:vjde_show_preview=1
-endif
+
 if !exists('g:vjde_cfu_java_dot')
 	let g:vjde_cfu_java_dot = 1
 endif
 if !exists('g:vjde_cfu_java_para')
 	let g:vjde_cfu_java_para = 0
 endif
-if !exists('g:vjde_javadoc_path')
-	let g:vjde_javadoc_path ='.'
-endif
-if !exists('g:vjde_preview_gui')
-	let g:vjde_preview_gui = 0
-endif
-if !exists('g:vjde_preview_gui_width')
-	let g:vjde_preview_gui_width = 350
-endif
-if !exists('g:vjde_preview_gui_height')
-	let g:vjde_preview_gui_height= 170 
-endif
-
 
 let g:vjde_path_spt=':'
 if has('win32')
@@ -90,6 +75,7 @@ if has('ruby')
 	command! -nargs=0 VjdeJstl ruby Vjde::init_jstl(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/")
 endif
 
+runtime plugin/vjde/vjde_preview.vim
 runtime plugin/vjde/vjde_java_completion.vim
 runtime plugin/vjde/vjde_tag_loader.vim
 runtime plugin/vjde/vjde_java_utils.vim
@@ -97,6 +83,12 @@ runtime plugin/vjde/vjde_completion.vim
 runtime plugin/vjde/vjde_menu_def.vim
 runtime plugin/vjde/vjde_template.vim
 runtime plugin/vjde/vjde_java_iab.vim
+
+let java_previewer = VjdePreviewWindow_New()
+let java_previewer.name = 'java_previewer'
+let java_previewer.onSelect='VjdeInsertWord'
+let java_previewer.previewLinesFun='GetJavaCompletionLines'
+let java_previewer.docLineFun='VjdeGetDocWindowLine'
 
 if g:vjde_autoload_stl && has('ruby')
     ruby Vjde::init_jstl(VIM::evaluate("g:vjde_install_path")+"/vjde/tlds/")
@@ -112,30 +104,30 @@ if v:version>=700
     au BufNewFile,BufRead,BufEnter *.java set cfu=VjdeCompletionFun | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
     au BufNewFile,BufRead,BufEnter *.jsp set cfu=VjdeCompletionFun |let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
 
-    "au! CursorHold *.java nested call VjdeJavaPreview()
+    "au! CursorHold *.java nested call java_previewer.CFU()
 endif
     if g:vjde_cfu_java_dot
-        au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> . .<Esc>:call VjdeJavaPreview('.')<CR>a
-        au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> @ @<Esc>:call VjdeJavaPreview('@')<CR>a
+        au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> . .<Esc>:call java_previewer.CFU('.')<CR>a
+        au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> @ @<Esc>:call java_previewer.CFU('@')<CR>a
 
-        au BufNewFile,BufRead,BufEnter *.jsp nested inoremap <buffer> < <<Esc>:call VjdeJavaPreview('<')<CR>a
-        au BufNewFile,BufRead,BufEnter *.jsp nested inoremap <buffer> : :<Esc>:call VjdeJavaPreview(':')<CR>a
+        au BufNewFile,BufRead,BufEnter *.jsp nested inoremap <buffer> < <<Esc>:call java_previewer.CFU('<')<CR>a
+        au BufNewFile,BufRead,BufEnter *.jsp nested inoremap <buffer> : :<Esc>:call java_previewer.CFU(':')<CR>a
 
-        au BufNewFile,BufRead,BufEnter *.html nested inoremap <buffer> < <<Esc>:call VjdeJavaPreview('<')<CR>a
-        au BufNewFile,BufRead,BufEnter *.htm nested inoremap <buffer> < <<Esc>:call VjdeJavaPreview('<')<CR>a
+        au BufNewFile,BufRead,BufEnter *.html nested inoremap <buffer> < <<Esc>:call java_previewer.CFU('<')<CR>a
+        au BufNewFile,BufRead,BufEnter *.htm nested inoremap <buffer> < <<Esc>:call java_previewer.CFU('<')<CR>a
 
-        au BufNewFile,BufRead,BufEnter *.xml nested inoremap <buffer> < <<Esc>:call VjdeJavaPreview('<')<CR>a
+        au BufNewFile,BufRead,BufEnter *.xml nested inoremap <buffer> < <<Esc>:call java_previewer.CFU('<')<CR>a
 
     endif
     if g:vjde_cfu_java_para
 	    au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> ( <Esc>:call VjdeJavaParameterPreview()<CR>a(
     endif
 
-   au BufNewFile,BufRead,BufEnter *.java imap <buffer> <C-space> <Esc>:call VjdeJavaPreview('<C-space>')<CR>a
-   au BufNewFile,BufRead,BufEnter *.jsp imap <buffer> <C-space> <Esc>:call VjdeJavaPreview('<C-space>')<CR>a
-   au BufNewFile,BufRead,BufEnter *.xml imap <buffer> <C-space> <Esc>:call VjdeJavaPreview('<C-space>')<CR>a
-   au BufNewFile,BufRead,BufEnter *.htm imap <buffer> <C-space> <Esc>:call VjdeJavaPreview('<C-space>')<CR>a
-   au BufNewFile,BufRead,BufEnter *.html imap <buffer> <C-space> <Esc>:call VjdeJavaPreview('<C-space>')<CR>a
+   au BufNewFile,BufRead,BufEnter *.java imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>',1)<CR>a
+   au BufNewFile,BufRead,BufEnter *.jsp imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
+   au BufNewFile,BufRead,BufEnter *.xml imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
+   au BufNewFile,BufRead,BufEnter *.htm imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
+   au BufNewFile,BufRead,BufEnter *.html imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
 
 "autocmd BufReadPost,FileReadPost	.vjde  exec 'Vjdeload '.expand('<afile>')
 "au BufNewFile,BufRead *.xsl set cfu=VjdeXslCompletionFun

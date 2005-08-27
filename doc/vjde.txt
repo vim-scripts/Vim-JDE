@@ -5,6 +5,7 @@
 	Comntents:
 		
 		Desc				     |vjde-desc|
+		Install				     |vjde-install|
 		VJDE    project                      |vjde-project|
 		search auto-completion	             |vjde-auto-comp|
                     java 			     |vjde-java|
@@ -17,6 +18,8 @@
 		    xdoclet			     |vjde-xdoclet|
 	 	    javadoc			     |vjde-javadoc|
 		    iabbr			     |vjde-iabbr|
+                document viewer                      |vjde-doc|
+		Preview window			     |vjde-preview|
 		refactor tools			     |vjde-refactor|
 		    extract local variable           |vjde-rft-local|
 		    extract member variable          |vjde-rft-field|
@@ -73,6 +76,10 @@ I will do:~
 7. Todo List                 ok, but don't commited
 
 
+								*vjde-install*
+Install~
+    For Windows , for the document viewer , must copy plugin/vjde/wspawn.exe
+to you path, such as JAVA_HOME/bin ...
 								*vjde-project*
 Project~
 Project tools is usered to save the vjde variables, while you
@@ -267,6 +274,18 @@ file format is simple , line which is started / or * is treated as comment. >
 
 	Note: once you change the xdoclet.def , backup is need for next time .
 Update VJDE will recover it.
+
+								    *vjde-doc*
+Document viewer~
+	When you preview your code completion in a gui window, for some
+delays, the document of this function or member will be shown.
+	It's depends on :
+	g:vjde_javadoc_path   	'/javadocs/api/'
+	g:vjde_doc_gui_height	 height of the window
+	g:vjde_doc_gui_width	width of the window
+	g:vjde_doc_delay	once a item selected ,delay how long.
+				(1/1000 seconds) default 2000
+	See |vjde-variable|
 								  *vjde-iabbr*
 Iabbr~
 	Iabbr is some codelet,just something like :
@@ -276,6 +295,98 @@ Iabbr~
 
 Refactor~
 	Note:Use g:vjde_utils_setup=0 to avoid command defination
+
+								*vjde-preview*
+Vjde Preview window~
+	VJDE Preview window is a tool for preview in a gui tools for
+selection.
+	I had Use this window to preview the VJDE completion and code template
+.
+	In Java , html , It's use the completion cfu |cfu| to generate lines
+to use. It's used like:  
+NOTE:
+	Preview.name ~
+		name of the previewer , must equals the variable name;
+	Preview.preview_buffer ~
+ The buffer to be shown, It's the first line is
+a description of content , like >
+	java.lang.System:
+<
+or >
+	java.lang.System:c 
+	element->:
+	body->attributes:
+	bgground->values:
+<
+	Each line of the preview_buffer, the first word ( It's seperated by a
+space) is the type of the tag, the second word ( It's seperated by ';' or '(')
+it the tag name. All the other is trusted as comment. For example >
+	java.io.PrintStream in;
+	boolean equals(java.lang.Object);
+	...
+	element body;
+	element html;
+	....
+<
+	previewer.onSelect ~
+		is called when use select a word in preview window. 
+		Both GUI or Console preview are. It's has a parameter 
+			which is the user selected word. 
+	previewer.previewLinesFun ~
+		It's be called with a parameter
+	which is previewer self.  like >
+	call previewer.PreviewLinesFun(self)
+<
+	previewer.docLineFun ~
+		This function it's called to get the document preview window
+line.  It's would return a String , which is comma seperated. like >
+		400;300;2000;java -cp vjde.jar vjde.completion.Document
+	/mnt/win_e/downloads/docs/api/ src 
+<
+	It's used as :
+	doc width ; doc height ; delay millis;command line to get document
+	I will add preview.preview_buffer[0] and the
+user selected tag name at the end of command line , and call it , trust the
+stdout as the document which to be shown.
+
+	previewer.CFU ~
+		At first , It's call the |cfu| function to complete code
+complation.
+		Then , call previewer.previewLinesFun to get buffer would be
+shown.
+		Third , call preview.docLineFun get the docment define line 
+		Third, call the previewer.Preview to preview.
+
+		Four , call preview.onSelect to handle the user input.
+
+	NOTE:See vjde_preview.vim for detail.
+>
+	
+	let java_previewer = VjdePreviewWindow_New()
+	let java_previewer.name = 'java_previewer'
+	let java_previewer.onSelect='VjdeInsertWord'
+	let java_previewer.previewLinesFun='GetJavaCompletionLines'
+	let java_previewer.docLineFun='VjdeGetDocWindowLine'
+
+	
+	   au BufNewFile,BufRead,BufEnter *.java imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>',1)<CR>a
+<
+	NOTE:you can put you preview content to preview buffer >
+	call add(previewer.preview_buffer,'line1');
+<
+	
+
+	Used for the code template: >
+
+	let g:iab_previewer = VjdePreviewWindow_New()
+	let g:iab_previewer.name='iab_previewer'
+	let g:iab_previewer.onSelect='VjdePreviewIabSelect'
+	let g:iab_previewer.previewLinesFun=''
+	...
+       	...
+	call g:iab_previewer.Preview(0)
+<
+	See vjde_java_iab.vim for detail.
 							       *vjde-refactor*
 Variable refactoring~
 normal mode:
@@ -590,6 +701,15 @@ g:vjde_javadoc_path
 	setup the javadoc path, must be 'd:\javadocs\api\' , end with a
 splash, and reference to the api document path.
 
+g:vjde_doc_gui_height
+	document viewer height
+
+g:vjde_doc_gui_width 
+	document viewer width
+
+g:vjde_doc_delay
+	timemillis to delay.
+
 g:vjde_preview_gui [0|1]
 	setup the preview for gui. 
 	Note:gtk+2.0 runtime is required.
@@ -639,6 +759,10 @@ occured, how to avoid it?
     A3. You must use "javaw" instead of "java", use this command: >
     ruby $java_command="javaw"
 <
+    Q4. I am MS Windows user, I can't see the document , althought the
+g:vjde_javadoc_path is correctly.
+    A3. Confirm the wspawn.exe is run enable from you command window.
+
    for 2.00.01 later version. use this command: >
     let g:vjde_java_command='javaw'
 <

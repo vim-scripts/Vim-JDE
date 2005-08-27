@@ -147,17 +147,17 @@ func! s:VjdeRunCurrent(...)
         exec "!java  -cp \"".g:vjde_lib_path."\" ".substitute(cpath,'[/\\]','.','g').".".cname
 endf
 " create menu here {{{2
-amenu Vim\ &JDE.Project.Project :
-amenu Vim\ &JDE.Project.--Project-- :
-amenu Vim\ &JDE.Project.Load\ Project\.\.\.    :call VjdeBrowseProject() <CR>
-tmenu Vim\ &JDE.Project.Load\ Project\.\.\.    Browse a project file to use.
-amenu Vim\ &JDE.Project.Save\ Project    :call VjdeSaveMenu()<CR>
-amenu Vim\ &JDE.Project.Save\ Project\ As\.\.\.      :call VjdeSaveAsMenu()<CR>
-amenu Vim\ &JDE.Project.--other--      :
-amenu Vim\ &JDE.Project.Load\ STL\ TLDS  :VjdeJstl <CR>
-tmenu Vim\ &JDE.Project.Load\ STL\ TLDS  loade the Standard taglibray for use
-amenu Vim\ &JDE.Project.Avaiable\ Dtds\ \.\.\.      :echo VjdeListDtds()<CR>
-tmenu Vim\ &JDE.Project.Avaiable\ Dtds      Query the available Docuement type definations (xml)
+amenu Vim\ &JDE.&Project.Project :
+amenu Vim\ &JDE.&Project.--Project-- :
+amenu Vim\ &JDE.&Project.&Load\ Project\.\.\.    :call VjdeBrowseProject() <CR>
+tmenu Vim\ &JDE.&Project.&Load\ Project\.\.\.    Browse a project file to use.
+amenu Vim\ &JDE.&Project.&Save\ Project    :call VjdeSaveMenu()<CR>
+amenu Vim\ &JDE.&Project.&Save\ Project\ As\.\.\.      :call VjdeSaveAsMenu()<CR>
+amenu Vim\ &JDE.&Project.--other--      :
+amenu Vim\ &JDE.&Project.Load\ S&TL\ TLDS  :VjdeJstl <CR>
+tmenu Vim\ &JDE.&Project.Load\ S&TL\ TLDS  loade the Standard taglibray for use
+amenu Vim\ &JDE.&Project.Avaiable\ &Dtds\ \.\.\.      :echo VjdeListDtds()<CR>
+tmenu Vim\ &JDE.&Project.Avaiable\ &Dtds      Query the available Docuement type definations (xml)
 amenu <silent> Vim\ &JDE.Project.Add\ DTD(XML)\ \.\.\.      :let sefile =has('browse')? browse(0,"DTD File",".",""):inputdialog("Input a Document Type Define file",".","") <BAR> let ns=inputdialog("Enter the namspace or other name","") <BAR> call <SID>VjdeAddDtd(sefile,ns)<CR>
 amenu <silent> Vim\ &JDE.Project.Add\ TLD(JSP)\ \.\.\.      :let sefile = has('browse')?browse(0,"TLD File",".",""):inputdialog("Input a Taglib Library Define file",".","") <BAR> let ns=inputdialog("Enter the uri for tld,(maybe empty)","") <BAR> call <SID>VjdeAddTld(sefile,ns)<CR>
 tmenu <silent> Vim\ &JDE.Project.Add\ TLD(JSP)     add Taglib defination file to project 
@@ -188,8 +188,8 @@ amenu Vim\ &JDE.&Source.Create\ Java&Doc	:call JCommentWriter()<cr>
 vmenu Vim\ &JDE.&Source.Create\ JavaDocE&x	:call JCommentWriter()<cr>
 amenu Vim\ &JDE.&Source.Invalidate\ JavaDoc	:call SearchInvalidComment(0)<cr>
 amenu Vim\ &JDE.-fixtools-    :
-amenu Vim\ &JDE.Fixerror\ with\ &try/catch    :call Vjde_fix_try()<CR>
-amenu Vim\ &JDE.Fixerror\ with\ th&rows    :call Vjde_fix_throws()<CR>
+amenu Vim\ &JDE.&Fixerror\ with\ try/catch    :call Vjde_fix_try()<CR>
+amenu Vim\ &JDE.Fi&xerror\ with\ throws    :call Vjde_fix_throws()<CR>
 amenu Vim\ &JDE.Fixerror\ with\ &import    :call Vjde_fix_import()<CR>
 amenu Vim\ &JDE.&Add\ import  :call Vjde_fix_import1()<CR>
 amenu Vim\ &JDE.-tools-    :
@@ -197,31 +197,31 @@ amenu Vim\ &JDE.&Compile\ file    :comp javac <BAR> Vjdec <CR>
 amenu Vim\ &JDE.&Run\ file    :Vjder <CR>
 amenu <silent> Vim\ &JDE.Run\ c&lass\.\.\.    :let cls = inputdialog("input the class name(with package) :","") <BAR> call <SID>VjdeRunCurrent(cls) <CR>
 amenu Vim\ &JDE.-Params-    :
-amenu Vim\ &JDE.Settings.Settings     :
-amenu Vim\ &JDE.Settings.-Params1-    :
-amenu <silent> Vim\ &JDE.Settings.Set\ Source\ Path\ \.\.\. :let g:vjde_src_path=has('browse')?browsedir("The source path:",g:vjde_src_path): inputdialog("Please Enter the source path:",g:vjde_src_path) <CR>
-    amenu <silent> Vim\ &JDE.Settings.Set\ Test-Source\ Path\ \.\.\. :let g:vjde_test_path=has('browse')?browsedir("Test-source path:",g:vjde_test_path):inputdialog("Please Enter the test-source path:",g:vjde_test_path) <CR>
-    amenu <silent> Vim\ &JDE.Settings.Set\ WebApp\ Path\ \.\.\. :let g:vjde_web_app=has('browse')?browsedir("WebApp path:",g:vjde_web_app):inputdialog("Please Enter the WebApp path:",g:vjde_web_app) <CR>
-    amenu <silent> Vim\ &JDE.Settings.Add(jar/path)\ To\ class\ path\ \.\.\. :let g:vjde_lib_path.=g:vjde_path_spt.has('browse')?browse(0,"WebApp path:",".",''):inputdialog("Please Enter the classpath:",g:vjde_lib_path) <CR>
-    amenu <silent> Vim\ &JDE.Settings.Set\ Class\ Path\ \.\.\. :let g:vjde_lib_path=inputdialog("Please Enter the classpath:",g:vjde_lib_path) <CR>
-    amenu <silent> Vim\ &JDE.Settings.Set\ Out\ Path\ \.\.\. :let g:vjde_out_path=has('browse')?browsedir("Out dir:",g:vjde_out_path):inputdialog("Please Enter the Out dir:",g:vjde_out_path) <CR>
-amenu  Vim\ &JDE.Settings.--cfu-- :
-amenu <silent> Vim\ &JDE.Settings.Set\ Java\ command :let str=inputdialog("Please Enter the java command[".VjdeGetJava()."]:","java") <BAR> call VjdeSetJava(str) <CR>
-amenu <silent> Vim\ &JDE.Settings.Reload\ lib\ path :let  g:vjde_java_cfu={} <CR>
-amenu <silent> Vim\ &JDE.Settings.Show\ Params(on/off) :let g:vjde_show_paras=1-g:vjde_show_paras <CR>
-amenu <silent> Vim\ &JDE.Settings.Completion\ Child(XML)(on/off) :let g:vjde_xml_advance=1-g:vjde_xml_advance <CR>
-amenu <silent> Vim\ &JDE.Settings.Previews.-previ1-	:
-amenu <silent> Vim\ &JDE.Settings.Previews.Show\ preview(console)\ (on/off) :let g:vjde_show_preview=1-g:vjde_show_preview <CR>
-amenu <silent> Vim\ &JDE.Settings.Previews.-preview2-	:
-amenu <silent> Vim\ &JDE.Settings.Previews.Show\ preview(gui)\ (on/off)	:let g:vjde_preview_gui=1-g:vjde_preview_gui <CR>
-amenu <silent> Vim\ &JDE.Settings.Previews.Set\ preview(gui)\ width	:let g:vjde_preview_gui_width=inputdialog("The width of the preview window",g:vjde_preview_gui_width) <CR>
-amenu <silent> Vim\ &JDE.Settings.Previews.Set\ preview(gui)\ height	:let g:vjde_preview_gui_height=inputdialog("The width of the preview window",g:vjde_preview_gui_height) <CR>
-amenu  Vim\ &JDE.Settings.--find-- :
-amenu  Vim\ &JDE.Settings.Add\ source\ to\ path   :exec 'set path+='.g:vjde_src_path <CR>
-amenu  Vim\ &JDE.Settings.Add\ Test\ source\ to\ path   :exec 'set path+='.g:vjde_src_path <CR>
+amenu Vim\ &JDE.Se&ttings.Settings     :
+amenu Vim\ &JDE.Se&ttings.-Params1-    :
+amenu <silent> Vim\ &JDE.Se&ttings.Set\ Source\ Path\ \.\.\. :let g:vjde_src_path=has('browse')?browsedir("The source path:",g:vjde_src_path): inputdialog("Please Enter the source path:",g:vjde_src_path) <CR>
+    amenu <silent> Vim\ &JDE.Se&ttings.Set\ Test-Source\ Path\ \.\.\. :let g:vjde_test_path=has('browse')?browsedir("Test-source path:",g:vjde_test_path):inputdialog("Please Enter the test-source path:",g:vjde_test_path) <CR>
+    amenu <silent> Vim\ &JDE.Se&ttings.Set\ WebApp\ Path\ \.\.\. :let g:vjde_web_app=has('browse')?browsedir("WebApp path:",g:vjde_web_app):inputdialog("Please Enter the WebApp path:",g:vjde_web_app) <CR>
+    amenu <silent> Vim\ &JDE.Se&ttings.Add(jar/path)\ To\ class\ path\ \.\.\. :let g:vjde_lib_path.=g:vjde_path_spt.(has('browse')?browse(0,"WebApp path:",".",''):inputdialog("Please Enter the classpath:",g:vjde_lib_path)) <CR>
+    amenu <silent> Vim\ &JDE.Se&ttings.Set\ Class\ Path\ \.\.\. :let g:vjde_lib_path=inputdialog("Please Enter the classpath:",g:vjde_lib_path) <CR>
+    amenu <silent> Vim\ &JDE.Se&ttings.Set\ Out\ Path\ \.\.\. :let g:vjde_out_path=has('browse')?browsedir("Out dir:",g:vjde_out_path):inputdialog("Please Enter the Out dir:",g:vjde_out_path) <CR>
+amenu  Vim\ &JDE.Se&ttings.--cfu-- :
+amenu <silent> Vim\ &JDE.Se&ttings.Set\ Java\ command :let str=inputdialog("Please Enter the java command[".VjdeGetJava()."]:","java") <BAR> call VjdeSetJava(str) <CR>
+amenu <silent> Vim\ &JDE.Se&ttings.&Reload\ lib\ path :let  g:vjde_java_cfu={} <CR>
+amenu <silent> Vim\ &JDE.Se&ttings.&Show\ Params(on/off) :let g:vjde_show_paras=1-g:vjde_show_paras <CR>
+amenu <silent> Vim\ &JDE.Se&ttings.&Completion\ Child(XML)(on/off) :let g:vjde_xml_advance=1-g:vjde_xml_advance <CR>
+amenu <silent> Vim\ &JDE.Se&ttings.Previews.-previ1-	:
+amenu <silent> Vim\ &JDE.Se&ttings.Previews.Show\ &preview(console)\ (on/off) :let g:vjde_show_preview=1-g:vjde_show_preview <CR>
+amenu <silent> Vim\ &JDE.Se&ttings.Previews.-preview2-	:
+amenu <silent> Vim\ &JDE.Se&ttings.Previews.Show\ preview(&gui)\ (on/off)	:let g:vjde_preview_gui=1-g:vjde_preview_gui <CR>
+amenu <silent> Vim\ &JDE.Se&ttings.Previews.Set\ preview(gui)\ width	:let g:vjde_preview_gui_width=inputdialog("The width of the preview window",g:vjde_preview_gui_width) <CR>
+amenu <silent> Vim\ &JDE.Se&ttings.Previews.Set\ preview(gui)\ height	:let g:vjde_preview_gui_height=inputdialog("The width of the preview window",g:vjde_preview_gui_height) <CR>
+amenu  Vim\ &JDE.Se&ttings.--find-- :
+amenu  Vim\ &JDE.Se&ttings.Add\ source\ to\ path   :exec 'set path+='.g:vjde_src_path <CR>
+amenu  Vim\ &JDE.Se&ttings.Add\ Test\ source\ to\ path   :exec 'set path+='.g:vjde_src_path <CR>
 amenu Vim\ &JDE.-help-    :
 amenu Vim\ &JDE.Create\ Index     :helptag $VIM/vimfiles/doc <CR>
-amenu Vim\ &JDE.Vjde\ Help<TAB>:h\ vjde     :h vjde<CR>
+amenu Vim\ &JDE.Vjde\ &Help<TAB>:h\ vjde     :h vjde<CR>
 "command for project {{{2
 command!  -nargs=1 -complete=file Vjdeload call s:VjdeLoadProject(<f-args>)
 command!  -nargs=* -complete=file Vjdeas call s:VjdeSaveProjectAs(<f-args>)

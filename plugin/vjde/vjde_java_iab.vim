@@ -5,6 +5,12 @@ let g:vjde_iab_loaded = 1
 
 let s:templates = []
 let s:add_lines = []
+
+let g:iab_previewer = VjdePreviewWindow_New()
+let g:iab_previewer.name='iab_previewer'
+let g:iab_previewer.onSelect='VjdePreviewIabSelect'
+let g:iab_previewer.previewLinesFun=''
+
 ruby $vjde_iab_manager = Vjde::VjdeTemplateManager.new
 func! s:VjdeIabbrAdd(name,desc) "{{{2
 	call add(s:templates,{'name':a:name,'desc':a:desc})
@@ -22,22 +28,20 @@ $vjde_iab_manager.indexs.each_with_index { |ti,i|
 EOF
 endf
 func! s:VjdeInitPreview(base) "{{{2
-	call VjdeClearPreview()
-	call VjdeAddToPreview('abbr:'.a:base)
+	call g:iab_previewer.Clear()
+	call g:iab_previewer.Add('abbr:'.a:base)
 	if strlen(a:base)<=0
 		for item in s:templates
-			call VjdeAddToPreview('abbr '.item.name.';'.item.desc)
+			call g:iab_previewer.Add('abbr '.item.name.';'.item.desc)
 		endfor
 	else
 		for item in filter(copy(s:templates),'v:val.name =~ "^'.a:base.'"')
-			call VjdeAddToPreview('abbr '.item.name.';'.item.desc)
+			call g:iab_previewer.Add('abbr '.item.name.';'.item.desc)
 		endfor
 	endif
 endf
+let s:paras = {}
 func! VjdePreviewIab(paras,...) "{{{2
-	if !g:vjde_preview_gui || g:vjde_preview_lib==''
-		return 
-	endif
 	let base = '' 
 	if a:0>1
 		let base = a:1
@@ -45,26 +49,19 @@ func! VjdePreviewIab(paras,...) "{{{2
 		let base = expand('<cword>')
 	endif
 	call s:VjdeInitPreview(base)
-
-	let l:word = ''
-	if g:vjde_preview_gui && g:vjde_preview_lib!=''
-		if len(VjdeGetPreview())>2
-			let l:word = base.VjdeCallPreviewWindow(base,0)
-		elseif len(VjdeGetPreview())==2
-			let l:word = substitute(VjdeGetPreview()[1],'^abbr \([a-zA-Z0-9]\+\);.*$','\1','')
-		endif
-	else
-		"call VjdeUpdatePreviewBuffer(base)
-	endif
-	if strlen(l:word)>=0
+	let s:paras = a:paras
+	call g:iab_previewer.Preview(0)
+endf
+func! VjdePreviewIabSelect(word)
+	if strlen(a:word)>=0
 		let s:added_lines = []
 ruby<<EOF
-    tn = VIM::evaluate("l:word")
+    tn = VIM::evaluate("a:word")
     tplt = $vjde_iab_manager.getTemplate(tn)
     if tplt != nil
 	tplt.each_para { |p|
-		if "1"==VIM::evaluate('has_key(a:paras,"'+p.name+'")')
-			tplt.set_para(p.name,VIM::evaluate('a:paras["'+p.name+'"]'))
+		if "1"==VIM::evaluate('has_key(s:paras,"'+p.name+'")')
+			tplt.set_para(p.name,VIM::evaluate('s:paras["'+p.name+'"]'))
 		else
 		str=VIM::evaluate('inputdialog(\''+p.desc.gsub(/'/,"''")+' : \',"")')
 		tplt.set_para(p.name,str)

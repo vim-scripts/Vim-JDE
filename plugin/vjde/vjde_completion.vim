@@ -44,13 +44,13 @@ func! s:VjdeDirectiveInit() "{{{2
 endf
 call s:VjdeDirectiveInit()
 
-func! VjdeAddToPreview(str) "{{{2
+func! VjdeAddToPreview(str) 
 	call add(s:preview_buffer,a:str)
 endf
-func! VjdeClearPreview() "{{{2
+func! VjdeClearPreview() 
 	let s:preview_buffer=[]
 endf
-func! VjdeGetPreview() "{{{2
+func! VjdeGetPreview() 
 	return s:preview_buffer
 endf
 
@@ -260,9 +260,9 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     if g:vjde_show_preview && strlen(s:retstr)!=0
 	    let s:beginning=a:base
 	    let s:key_preview=''
-	    if !g:vjde_preview_gui
-		    call s:VjdeUpdatePreviewBuffer(a:base)
-	    endif
+	    "if !g:vjde_preview_gui
+		    "call s:VjdeUpdatePreviewBuffer(a:base)
+	    "endif
     endif
     return s:retstr
 endf
@@ -1335,227 +1335,6 @@ func! s:VjdeFindPairBack(line,col,m_start,m_end) "{{{2
     return res
 endf
 
-func! s:VjdePreviewWindowInit() "{{{2
-	setlocal pvw
-	setlocal buftype=nofile
-	setlocal nobuflisted
-	setlocal ft=preview
-	let chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._:%@!'
-	let start=strlen(chars)
-	while start>0
-		let var = chars[start-1]
-		exec 'inoremap <buffer> '.var.' <Esc>:call VjdePreviewKeyPress("'.var.'")<cr>a'
-		let start -= 1
-	endwhile
-	inoremap <buffer> <Backspace> <Esc>:call VjdePreviewKeyPress('Backspace')<cr>a
-	inoremap <buffer> <Space> <Esc>:call VjdePreviewSelect(' ')<cr>a
-	inoremap <buffer> <cr> <Esc>:call VjdePreviewSelect("\n")<cr>a
-	"inoremap <buffer> . <Esc>:call VjdePreviewSelect('.')<cr>a.
-	inoremap <buffer> ( <Esc>:call VjdePreviewSelect('(')<cr>a(
-	inoremap <buffer> [ <Esc>:call VjdePreviewSelect('[')<cr>a[
-	inoremap <buffer> ; <Esc>:call VjdePreviewSelect(';')<cr>a;
-	inoremap <buffer> ? <Esc>:call VjdePreviewSelect('?')<cr>a?
-	"inoremap <buffer> : <Esc>:call VjdePreviewSelect(':')<cr>a:
-	inoremap <buffer> " <Esc>:call VjdePreviewSelect('"')<cr>a"
-	inoremap <buffer> <C-CR> <Esc>:call VjdePreviewSelect("C-CR")<cr>a
-	inoremap <buffer> <M-d> <Esc>:call VjdeShowJavadoc()<cr>a
-
-	nnoremap <buffer> <Space> :call VjdePreviewSelect(' ')<cr>a
-	nnoremap <buffer> <cr> :call VjdePreviewSelect("\n")<cr>a
-	nnoremap <buffer> <C-CR> :call VjdePreviewSelect("C-CR")<cr>a
-	nnoremap <buffer> <M-d> :call VjdeShowJavadoc()<cr>
-	nnoremap <buffer> <Backspace> :call VjdePreviewKeyPress('Backspace')<cr>
-	au CursorHold <buffer> call VjdeShowJavadoc()
-	hi def link User1 Tag
-endf
-func! VjdePreviewSelect(k) "{{{2
-	let clnr = line('.')
-	let word = s:key_preview
-	if a:k !="\n" 
-		"let clnr = search('^[^ \t]\+\s\([^(;]\+\)[(;].*$','')
-		let clnr = search('^[^ \t]\+\s\('.s:beginning.word.'[^(;]*\)[(;].*$','')
-	endif
-	if clnr>1
-		let cstr = getline(clnr)
-		let word = substitute(cstr,'^[^ \t]\+\s\([^(;]\+\)[(;].*$','\1','')
-		let word = strpart(word,strlen(s:beginning))
-	endif
-        match none
-	q!
-	silent! wincmd p
-	call s:VjdeInsertWord(word)
-	"let lnr = line('.')
-	"let lcol = col('.')
-	"let str = getline(lnr)
-	"call setline(lnr,strpart(str,0,lcol).word.strpart(str,lcol))
-	"exec 'normal '.strlen(word).'l'
-endf "}}}2
-func! s:VjdeInsertWord(word) "{{{2
-	let lnr = line('.')
-	let lcol = col('.')
-	let str = getline(lnr)
-	call setline(lnr,strpart(str,0,lcol).a:word.strpart(str,lcol))
-	exec 'normal '.strlen(a:word).'l'
-endf "}}}2
-func! VjdePreviewKeyPress(k) "{{{2
-	"let s:beginning .= a:k
-	if a:k != "Backspace"
-		let s:key_preview .= a:k
-	elseif strlen(s:key_preview)>0
-		let s:key_preview = strpart(s:key_preview,0,strlen(s:key_preview)-1)
-	endif
-	call s:VjdeUpdatePreviewBuffer(s:beginning.s:key_preview)
-endf "}}}2
-func! VjdeShowJavadoc() "{{{2
-	if !has('ruby')
-		return
-	endif
-    if bufname("%")!="Vjde_preview"
-	    return
-    endif
-    let lnr = line('.')
-    if lnr < 2
-	    return
-    endif
-    let fname=g:vjde_javadoc_path.substitute(substitute(getline(1),'^\([^:]\+\):.*$','\1',''),'\.','/','g').'.html'
-    let funname=substitute(getline(lnr),'^[^ \t]\+\s\([^)]\+[)]\|[^(;]\+\).*$','\1','')
-ruby<<EOF
-lnr = VIM::evaluate("lnr").to_i
-$vjde_doc_reader.read(VIM::evaluate("fname"),VIM::evaluate("funname"))
-VIM::Buffer.current.append(lnr,"**")
-lnr += 1
-$vjde_doc_reader.to_text_arr.each { |l|
-	l[-1]=''
-	VIM::Buffer.current.append(lnr," * #{l}")
-	lnr +=1
-}
-VIM::Buffer.current.append(lnr," *")
-EOF
-endf "}}}2
-func! VjdeGetPreviewWindowBuffer() "{{{2
-	let l:b_n = -1
-	if &pvw
-		let l:b_n = bufnr("%")
-		if bufname("%")!= 'Vjde_preview'
-			let l:b_n = -1
-		end
-		return  l:b_n
-	end
-	silent! wincmd P
-	if !&pvw
-		exec 'silent! bel '.&pvh.'sp Vjde_preview'
-		call s:VjdePreviewWindowInit()
-		let l:b_n = bufnr("%")
-		"setlocal noma
-	else
-		let l:b_n = bufnr("%")
-		if bufname("%")!= 'Vjde_preview'
-			let l:b_n = -1
-		end
-	end
-	silent! wincmd p
-	return l:b_n
-endf "}}}2
-func! VjdeJavaPreview(char) "{{{2
-	if strlen(&cfu)<=0
-		return 
-	endif
-	let Cfufun = function(&cfu)
-	let show_prev_old = g:vjde_show_preview
-	let g:vjde_show_preview=1
-	let linestr= getline(line('.'))
-	let cnr = col('.')
-	let s:preview_buffer=[]
-	let s = Cfufun(linestr,'',cnr,1)
-	let mretstr=Cfufun(linestr,strpart(linestr,s,cnr-s),cnr,0)
-	let g:vjde_show_preview=show_prev_old
-
-        if mretstr!=""
-	    let s:beginning=strpart(linestr,s,cnr-s)
-	    if len(s:preview_buffer)==2  " only one 
-		    let word = mretstr[0:-2]
-		    call s:VjdeInsertWord(strpart(word,strlen(s:beginning)))
-		    return
-	    endif
-	    if g:vjde_preview_gui && g:vjde_preview_lib!=''
-		    let useshort = 0
-		    if &cfu=='VjdeCompletionFun' && (s:cfu_type==1 || s:cfu_type==4 )
-			    let useshort=1
-		    endif
-		    let word = VjdeCallPreviewWindow(s:beginning,useshort)
-		    if strlen(word)>0
-			    call s:VjdeInsertWord(word)
-		    endif
-	    else
-		    let s:key_preview=''
-		    call s:VjdeUpdatePreviewBuffer(s:beginning)
-		    call VjdeGetPreviewWindowBuffer()
-		    wincmd P
-		    if &pvw
-			    let s:key_preview=''
-			    exec 'silent! normal $'
-		    end
-	    endif
-        endif
-endf "}}}2
-func! VjdeCallPreviewWindow(base,useshort) "{{{2
-	let pos = VjdeGetCaretPos()
-	"let x = winline()
-	"let y = wincol()
-	let x = pos[0]
-	let y = pos[1]
-	let tw = &columns
-	let th = &lines
-	let width=g:vjde_preview_gui_width
-	let height= g:vjde_preview_gui_height
-	let str = VjdePreviewGetLines()
-	let cmdline = y.';'.x.';'.tw.";".th.";".width.';'.height.';'
-	let cmdline .= getwinposx().';'.getwinposy().';'
-	let cmdline .= a:useshort.';'.a:base.";\n".str
-	let cstr = libcall(g:vjde_preview_lib,'_Z7previewPc',cmdline)
-	let cstr = substitute(cstr,'\([^(;]\+\)[(;].*$','\1','')
-	return strpart(cstr,strlen(a:base))
-endf "}}}
-func! VjdeGetCaretPos() "{{{2 
-	let cols = wincol()
-	let lines = winline()
-	let cnr = winnr()
-
-	let oei = &ei
-	set ei=WinEnter,WinLeave,BufEnter,BufLeave
-
-	let wcount = 0
-	wincmd  h
-	let prenr = cnr
-	let lastnr = winnr()
-	while prenr != lastnr
-		let wcount +=1
-		let cols += winwidth(0)+1
-		let prenr = lastnr
-		wincmd h
-		let lastnr = winnr()
-	endw
-	if wcount >0
-		exec wcount.'wincmd l'
-	endif
-	
-	let wcount = 0
-	wincmd k
-	let prenr = cnr
-	let lastnr = winnr()
-	while prenr != lastnr
-		let wcount +=1
-		let lines += winheight(0)+1
-		let prenr = lastnr
-		wincmd k
-		let lastnr = winnr()
-	endw
-	if wcount > 0
-		exec wcount.'wincmd j'
-	endif
-	exec 'set ei='.oei
-	return [cols,lines]
-endf "}}}2
 func! VjdeJavaParameterPreview() "{{{2
 	let show_prev_old = g:vjde_show_preview
 	let g:vjde_show_preview=1
@@ -1589,6 +1368,7 @@ func! s:VjdeShowParameterInPreview() "{{{2
    silent! wincmd p
 endf "}}}2
 func! s:VjdeGeneratePreviewBuffer(base) "{{{2
+	call VjdeClearPreview()
 	if g:vjde_java_cfu.success
 		call add(s:preview_buffer,g:vjde_java_cfu.class.name.':')
 	    if strlen(a:base)==0
@@ -1600,7 +1380,7 @@ func! s:VjdeGeneratePreviewBuffer(base) "{{{2
 		    endfor
 	    else
 		    for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
-			    call add(s:preview_buffer,member.type.' '.member.name.';'
+			    call add(s:preview_buffer,member.type.' '.member.name.';')
 		    endfor
 		    for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
 			    call add(s:preview_buffer,method.ToString())
@@ -1609,55 +1389,54 @@ func! s:VjdeGeneratePreviewBuffer(base) "{{{2
 	endif
 	return
 endf "}}}2
-func! VjdeUpdatePreview(base) "{{{2
-	call s:VjdeUpdatePreviewBuffer(a:base)
-endf
-"a:1 beforeenter a:2 afterenter a:3 beforeleave a:4 afterleave
-func! s:VjdeUpdatePreviewBuffer(base,...) "{{{2
-    if len(s:preview_buffer)==0
-	return 
-    endif
-    let prenr = VjdeGetPreviewWindowBuffer()
-    let thesame = 1
-    if prenr ==-1
-        return
-    endif
-    if prenr != bufnr("%")
-        if a:0>=1 && type(a:1)==2 
-            call a:1()
-        endif
-        silent! wincmd P
-        if a:0>=2 && type(a:2)==2 
-            call a:2()
-        endif
-	let thesame = 0
-    endif
-    exec '1,$d'
-    exec 'setlocal statusline=%t\ %w\ :%1*'.substitute(a:base,'%','%%','').'\|%0*'
-    if ( prenr == bufnr("%"))
-        if strlen(a:base)>0 
-            call append(1,filter(copy(s:preview_buffer),'v:val =~ ''^[^ \t]\+\s'.a:base.'.*$'''))
-            exec 'match Tag /\s'.a:base.'/' 
-        else 
-            call append(0,s:preview_buffer)
-            match none
-        end
-        call setline(1,s:preview_buffer[0].a:base)
-    endif
-    call cursor(1,col('$'))
-    if !thesame
-        if a:0>=3 && type(a:3)==2 
-            call a:3()
-        endif
-        silent! wincmd p
-        if a:0>=4 && type(a:4)==2 
-            call a:4()
-        endif
-    endif
-endf
 func! VjdePreviewGetLines() "{{{2
 	return join(s:preview_buffer,"\n")
 endf "}}}
+
+
+" add by wangfc
+func! VjdeInsertWord(word) "{{{2
+	let lnr = line('.')
+	let lcol = col('.')
+	let str = getline(lnr)
+	call setline(lnr,strpart(str,0,lcol).a:word.strpart(str,lcol))
+	exec 'normal '.strlen(a:word).'l'
+endf "}}}2
+func! GetJavaCompletionLines(arr)
+	let a:arr.preview_buffer += VjdeGetPreview()
+endf
+if has('win32')
+let s:wspawn_available = executable('wspawn.exe')
+if !s:wspawn_available
+	echoerr 'wspawn.exe which come from plugin/vjde/ is not runable'
+	echoerr ':h vjde-install for detail'
+endif
+	let s:wspawn_available=1
+endif
+func! VjdeGetDocWindowLine() 
+	if !s:wspawn_available
+		return "\n"
+	endif
+	let ft=&ft
+	if ft !='java'
+		return "\n"
+	endif
+	if strlen(g:vjde_javadoc_path)<=2
+		return "\n"
+	endif
+	if !isdirectory(g:vjde_javadoc_path)
+		return "\n"
+	endif
+	let str = g:vjde_doc_gui_width.';'.g:vjde_doc_gui_height.';'
+	let str = str.g:vjde_doc_delay.';'
+	let str = str.'java -cp "'.substitute(g:vjde_install_path,'\','/','g').'/vjde/vjde.jar" vjde.completion.Document '
+	if ( strlen(g:vjde_src_path)>0) 
+		let str = str.'"'.g:vjde_javadoc_path.'" "'.g:vjde_src_path.'" '
+	else
+		let str = str.'"'.g:vjde_javadoc_path.'" "./" '
+	endif
+	return str.";\n"
+endf
  "{{{2
 command! -nargs=0 Vjdei call  s:VjdeInfomation()  
 command! -nargs=0 Vjdegd call  s:VjdeGotoDecl()  
