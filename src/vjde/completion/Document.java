@@ -31,6 +31,7 @@ public class Document {
 		tagMaps.put("/H3","</big></big>");
 		tagMaps.put("CODE","<span foreground=\"blue\">");
 		tagMaps.put("/CODE","</span>");
+		tagMaps.put("DD","\n");
 	}
 	public Document(String ps,String src,String cname,String m) {
 		paths = ps;
@@ -138,7 +139,9 @@ public class Document {
 		}
 		try {
 			Document doc = new Document(args[0],args[1],args[2],args4);
+			System.out.println("<span background=\"yellow\">");
 			System.out.println(doc.read().replaceFirst("\n",""));
+			System.out.println("</span>");
 		}
 		catch(Exception ex) {
 			ex.printStackTrace();

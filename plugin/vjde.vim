@@ -83,7 +83,7 @@ runtime plugin/vjde/vjde_java_utils.vim
 runtime plugin/vjde/vjde_completion.vim
 runtime plugin/vjde/vjde_menu_def.vim
 runtime plugin/vjde/vjde_template.vim
-runtime plugin/vjde/vjde_java_iab.vim
+runtime plugin/vjde/vjde_iab.vim
 
 runtime plugin/vjde/vjde_cpp_completion.vim
 runtime plugin/vjde/vjde_ctags_completion.vim

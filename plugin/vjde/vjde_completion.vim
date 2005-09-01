@@ -330,7 +330,11 @@ func! s:VjdePkgCfuByVIM(prefix,base)
 endf
 func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     if a:findstart
-        return VjdeFindStart(a:line,a:base,a:col,'[.@ \t]')
+        return VjdeFindStart(a:line,a:base,a:col,'[.@ \t(]')
+    endif
+    if a:line[s:last_start-1]=='('
+	    call VjdeJavaParameterPreview(1)
+	    return
     endif
 
     let s:retstr=""
@@ -425,7 +429,7 @@ endf
 func! s:VjdeInfomation() "{{{2
     let ext = expand('%:e')
     if ext == 'java'
-        return s:VjdeInfo()
+        return VjdeInfo()
     elseif ext=='jsp'
         let t = s:VjdeJspTaglib()
         if t == 1
@@ -563,7 +567,7 @@ else
 end
 EOF
 endf
-func! s:VjdeInfo(...) "{{{2
+func! VjdeInfo(...) "{{{2
     let key = expand('<cword>')
     let m_line = line('.')
     let m_col = col('.')
@@ -1216,37 +1220,23 @@ func! s:VjdeFindPairBack(line,col,m_start,m_end) "{{{2
     return res
 endf
 
-func! VjdeJavaParameterPreview() "{{{2
+func! VjdeJavaParameterPreview(...) "{{{2
+	let off = 0
+	if a:0 > 0
+		let off=a:1
+	endif
 	let show_prev_old = g:vjde_show_preview
 	let g:vjde_show_preview=1
-	call s:VjdeInfo(1) " call vjdei, not show the infomation
-	call s:VjdeShowParameterInPreview()
+	"call VjdeInfo(1) " call vjdei, not show the infomation
+	let lstr = getline(line('.'))
+	let cnr = col('.') - off
+	let Cfu = function(&cfu)
+	let s:last_start = Cfu(lstr,'',cnr,1)
+	let mstr = Cfu(lstr,strpart(lstr,s:last_start,cnr-s:last_start),cnr,0)
+	if len(s:preview_buffer)>0
+		call g:java_previewer.PreviewInfo(join(s:preview_buffer,"\n"))
+	endif
 	let g:vjde_show_preview=show_prev_old
-endf "}}}2
-func! s:VjdeShowParameterInPreview() "{{{2
-   let prev = 1
-   let bufnr = -1
-
-   let prenr = VjdeGetPreviewWindowBuffer()
-   if prenr==-1
-	   return
-   endif
-   if prenr !=bufnr('%')
-	   silent! wincmd P
-   endif
-   exec '0,$d'
-   if g:vjde_java_cfu.success
-	   if strlen(s:beginning)>0
-		for method in g:vjde_java_cfu.class.SearchMethods('method.name=="'.s:beginning.'"')
-			call append('$',method.ToString())
-		endfor
-	   else
-		   for constructor in g:vjde_java_cfu.class.constructors
-			   call append('$',constructor.ToString())
-		   endfor
-	   endif
-   endif
-   silent! wincmd p
 endf "}}}2
 func! s:VjdeGeneratePreviewBuffer(base) "{{{2
 	call VjdeClearPreview()

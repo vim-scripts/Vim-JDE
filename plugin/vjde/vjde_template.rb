@@ -77,11 +77,62 @@ module Vjde #{{{1
         RE_PARA=/^para/
         RE_TEMP_SPLIT=/^temp[a-z]*\s+(\w+)(\s+.*)$/
         RE_PARA_SPLIT=/^para[a-z]*\s+(\w+)(\s+.*)$/
+	@@loaded = {}
+	@@iabs= {}
         def initialize(f=nil)
             @current=nil
             @indexs = []
             load_index(f) if f!= nil
         end
+	def VjdeTemplateManager.loaded
+		@@loaded
+	end
+	def VjdeTemplateManager.iabs
+		@@iabs
+	end
+	def VjdeTemplateManager.GetIAB(name,path='')
+		if @@iabs[name]==nil 
+			tm = VjdeTemplateManager.new
+			if path!=''
+				tm.add_file(path+"/vjde/tlds/"+name+".iab")
+				tm.add_file(File.expand_path("~/.vim/vjde/"+name+".iab"))
+			end
+			@@iabs[name]=tm
+		end
+		@@iabs[name]
+	end
+	def VjdeTemplateManager.[](name,path='')
+		if @@loaded[name]==nil
+			tm = VjdeTemplateManager.new
+			if path!=''
+				tm.add_file(path+"/vjde/tlds/"+name+".vjde")
+				tm.add_file(File.expand_path("~/.vim/vjde/"+name+".vjde"))
+			end
+			@@loaded[name]=tm
+		end
+		@@loaded[name]
+	end
+	def VjdeTemplateManager.load_all(path1)
+		len1 = path1.length+11
+		Dir[path1+'/vjde/tlds/*.vjde'].each { |fn|
+			name = fn[len1..-6]
+			VjdeTemplateManager.[](name,path1)
+		}
+		Dir[path1+'/vjde/tlds/*.iab'].each { |fn|
+			name = fn[len1..-5]
+			VjdeTemplateManager.GetIAB(name,path1)
+		}
+		path2 = File.expand_path('~/.vim/vjde/')
+		len1 = path2.length+1
+		Dir[path2+'/*.vjde'].each { |fn|
+			name = fn[len1..-6]
+			VjdeTemplateManager.[](name,path2)
+		}
+		Dir[path2+'/*.iab'].each { |fn|
+			name = fn[len1..-5]
+			VjdeTemplateManager.GetIAB(name,path2)
+		}
+	end
         def add_file(t)
             load_index(t)
         end
@@ -178,5 +229,11 @@ end #}}}1
    #eval("paras[\""+$1+"\"]") 
 #}
 #puts str
-
+#path1 = 'd:\vim\vimfiles\plugin'
+#Dir[path1+'/vjde/tlds/*.vjde'].each { |fn|
+	#puts fn[(path1.length+11)..-6]
+#}
+#Dir[File.expand_path('~/.vim/vjde/*.vjde')].each { |n|
+	#puts n
+#}
 # vim: fdm=marker

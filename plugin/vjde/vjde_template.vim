@@ -13,10 +13,7 @@ let s:added_lines = []
 let s:add_methods = []
 
 exec "rubyf ".g:vjde_install_path."/vjde/vjde_template.rb"
-ruby $vjde_template_manager=Vjde::VjdeTemplateManager.new
-ruby $vjde_template_manager.add_file(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/java.vjde")
-ruby $vjde_template_manager.add_file(VIM::evaluate('expand("~/.vim/vjde/java.vjde")'))
-
+ruby Vjde::VjdeTemplateManager.load_all(VIM::evaluate('g:vjde_install_path'))
 function! VjdeNewClass(type,...) "{{{2
     let pkg=''
     let cn =''
@@ -95,11 +92,17 @@ func! VjdeJUnitCase(...)
 endf
 func! VjdeTemplateJavaRuby(tn,paras) "{{{2
     let s:added_lines = []
+    let mf = &ft
+    if mf==''
+	    let mf = inputdialog('Input a file type to use.',mf)
+	    if mf==''
+		    echo 'Template must used with a filetype!!'
+		    return 
+	    endif
+    endif
 ruby<<EOF
     tn = VIM::evaluate("a:tn")
-    #if $vjde_template_manager == nil
-    #	    $vjde_template_manager = Vjde::VjdeTemplateManager.new(VIM::evaluate("$VIM")+"/vimfiles/plugin/vjde/tlds/java.vjde")
-    #end
+    $vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("mf"),VIM::evaluate("g:vjde_install_path"))
     tplt = $vjde_template_manager.getTemplate(tn)
     if tplt != nil
 	tplt.each_para { |p|
@@ -146,6 +149,7 @@ func! VjdeAppendTemplate(name)
 endf
 func! VjdeTemplateWizard()
 ruby<<EOF
+$vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("&ft"),VIM::evaluate("g:vjde_install_path"))
 $vjde_template_manager.indexs.each_with_index { |ti,i|
 	VIM::command("echo \" #{i}\t#{ti.name}\t#{ti.desc}\"")
 }
@@ -158,6 +162,7 @@ end
 EOF
 endf
 func! s:VjdeAddTemplate(fname)
+	ruby $vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("&ft"),VIM::evaluate("g:vjde_install_path"))
 	ruby $vjde_template_manager.add_file(VIM::evaluate("a:fname"))
 	call VjdeTemplateReload()
 endf
@@ -171,6 +176,7 @@ func! VjdeBrowsTemplate()
     if prj == ""
         return 
     endif
+	ruby $vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("&ft"))
 	ruby $vjde_template_manager.add_file(VIM::evaluate("prj"))
 	call VjdeTemplateReload()
 endf
@@ -178,24 +184,26 @@ let s:templates=[]
 func! s:VjdeTemplatesAdd(name,desc)
 	call add(s:templates,{'name':a:name,'desc':a:desc})
 endf
-func! s:VjdeTemplatesCreateMenu()
+func! s:VjdeTemplatesCreateMenu(f)
 for item in s:templates
-	exec 'amenu Vim\ &JDE.&Wizard.All\ Templates.'.item.name.' :call VjdeAppendTemplate("'.item.name.'")<cr>'
+	exec 'amenu Vim\ &JDE.&Wizard.&'.a:f.'\ Templates.'.item.name.' :call VjdeAppendTemplate("'.item.name.'")<cr>'
 	"if strlen(item.name) 
 		"exec 'tmenu Vim\ &JDE.Wizard.All\ Templates.'.item.name.' '.item.desc
 	"endif
 endfor
 endf
-func! s:VjdeTemplates2Menu()
+func! s:VjdeTemplates2Menu(f)
 	if !empty(s:templates)
 		call remove(s:templates,0,-1)
 	endif
+	let f=a:f
 ruby<<EOF
+	$vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("f"))
 $vjde_template_manager.indexs.each_with_index { |ti,i|
 	VIM::command('call s:VjdeTemplatesAdd("'+ti.name+'","'+ti.desc+'")')
 }
 EOF
-	call s:VjdeTemplatesCreateMenu()
+	call s:VjdeTemplatesCreateMenu(f)
 endf
 func! VjdeTemplateReload()
 	unmenu! Vim\ &JDE.&Wizard.All\ Templates
@@ -213,8 +221,12 @@ amenu Vim\ &JDE.&Wizard.--Cosutom--    :
 amenu Vim\ &JDE.&Wizard.Add\ Template\ file\ \.\.\.	:call VjdeBrowsTemplate() <CR>
 amenu Vim\ &JDE.&Wizard.Select\ Template\ \.\.\.	:call VjdeTemplateWizard() <CR>
 amenu Vim\ &JDE.&Wizard.--Cosutom2--    :
-
-call s:VjdeTemplates2Menu()
+ruby<<EOF
+Vjde::VjdeTemplateManager.loaded.each_key { |k|
+	VIM::command('call s:VjdeTemplates2Menu("'+k+'")')
+}
+EOF
+"call s:VjdeTemplates2Menu('java')
 "{{{2 command defination
 
 command! -nargs=* VjdeNclass call VjdeNewClass(1,<f-args>)

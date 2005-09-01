@@ -88,11 +88,11 @@ func! s:ObjectSplit(line,index) "{{{2 remove
 endf
 func! VjdeFormatLine(line) "{{{2 remove
     let len = strlen(a:line)
-    let index0 = SkipToIgnoreString(a:line,0,'[=<>+\-\*\/%?:\&|\^|]')
+    let index0 = SkipToIgnoreString(a:line,0,'[=<>+\-\*\/%?:\&|\^|,;]')
     let index=0
     while index0 != -1
         let index = index0
-        let index0 = SkipToIgnoreString(a:line,index0+1,'[=<>+\-\*\/%?:\&\^|]')
+        let index0 = SkipToIgnoreString(a:line,index0+1,'[=<>+\-\*\/%?:\&\^|,;]')
     endw
     let index0 = MatchToIgnoreString(a:line,index+1,'^return')
     if  index0 != -1
@@ -102,7 +102,7 @@ func! VjdeFormatLine(line) "{{{2 remove
     if  index0 != -1
         let index = index0+3
     endif
-    let index = SkipToIgnoreString(a:line,index,'[^=<>+\-\*\/%?:\&\^|]')
+    let index = SkipToIgnoreString(a:line,index,'[^=<>+\-\*\/%?:\&\^|,;]')
     if index == -1
 	    return ""
     else

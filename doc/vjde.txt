@@ -102,6 +102,7 @@ Load project
 
 Autocompletion ~
 							      *vjde-auto-comp*
+For c++ or other ctags supoorted language , see |vcde|
 Setup custom completionfunc  >
 	:set cfu=VjdeCompletionFun
 <
@@ -293,7 +294,16 @@ Iabbr~
 	Iabbr is some codelet,just something like :
 		a while block, a for block ...
 	use <c-j> to invoke this tools on gui running
-	NOTE: g:vjde_preview_gui == 1 is required.
+
+	For example ,to use ruby with Iabbr
+
+	Install your own iabbr as ~/.vim/vjde/ruby.iab
+	setup g:vjde_iab_exts='rb'
+
+	so , for your ruby file which is used '.rb' as the extend 
+	
+	Iabbr define file is |vjde-template|, and use the first '|' as the
+cursor postion.
 
 Refactor~
 	Note:Use g:vjde_utils_setup=0 to avoid command defination

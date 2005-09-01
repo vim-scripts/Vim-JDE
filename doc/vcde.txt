@@ -27,6 +27,22 @@ named tags.vjde_idx
 	NOTE: for *inux user, you must make sure that the director is writable
 for the user.
 
+	
+
+Setup~
+	To setup the completion for your own cpp files, you can set >
+	g:vjde_cpp_exts
+<
+	which is seperated by ';' , It's treat as the extentions of c++/c
+files , like >
+	let g:vjde_cpp_exts='cpp;c;cxx;h;hpp;hxx'
+<
+Other language Support ~
+	VJDE support other language which is ctags supported.
+	Once you want to use with your language, setup the variable >
+	let g:vjde_ctags_exts='vim;rb'
+<
+	Then, the vim and ruby file can be previewed!
 
 
 

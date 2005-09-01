@@ -30,14 +30,14 @@ func! VjdeGetCppType(v)
 endf
 func! VjdeCppCFU(line,base,col,findstart) "{{{2
     if a:findstart
-        let s:last_start  = VjdeFindStart(a:line,a:base,a:col,'[.> \t:?)(+\-*/&|^]')
+        let s:last_start  = VjdeFindStart(a:line,a:base,a:col,'[.> \t:?)(+\-*/&|^,]')
 	return s:last_start
     endif
     let lstr = strpart(a:line,0,a:col)
     let lstr = substitute(lstr,'::','.','g')
     let lstr = substitute(lstr,'->','.','g')
     " call the parameter info
-    if a:line[s:last_start-1]=='(' 
+    if a:line[s:last_start-1]=='(' && (s:last_start == a:col)
 	    let s:types=VjdeObejectSplit(VjdeFormatLine(lstr[0:-2].'.'))
 	    if len(s:types)==1
 		    return CtagsCompletion3(s:types[0])
@@ -79,7 +79,7 @@ func! VjdeCppCompletion(char,short)
 	    let str = ''
 	    let items = VjdeGetCppCFUTags()
 	    for item in items
-		    let str.=item.name.' '. item.cmd."\n"
+		    let str.=item.cmd."\n"
 	    endfor
 	    call g:vjde_cpp_previewer.PreviewInfo(str)
 	    return mstr

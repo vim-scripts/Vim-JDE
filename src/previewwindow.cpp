@@ -870,13 +870,24 @@ int information_window(int x, int y, int width,int height,char *str)
 	gtk_window_set_decorated(GTK_WINDOW(doc_window),FALSE);
 	gtk_window_set_modal(GTK_WINDOW(doc_window),TRUE);
 	gtk_window_move(GTK_WINDOW(doc_window),x,y);
-	gtk_window_resize(GTK_WINDOW(doc_window),width,height);
 	gtk_window_set_title(GTK_WINDOW(doc_window),"");
 
-	doc_view = gtk_label_new("");//gtk_text_view_new();
-	//gtk_label_set_markup(GTK_LABEL(doc_view),str);
-	gtk_label_set_text(GTK_LABEL(doc_view),str);
-	//g_object_set(G_OBJECT(doc_view),"editable",FALSE,NULL);
+	doc_view = gtk_label_new("");
+	
+	//gtk_label_set_text(GTK_LABEL(doc_view),str);
+
+	char *markup;
+	markup = g_markup_printf_escaped("<span background=\"yellow\">%s</span>",str);
+	gtk_label_set_markup(GTK_LABEL(doc_view),markup);
+	g_free(markup);
+
+	GtkRequisition req;
+	gtk_widget_size_request(GTK_WIDGET(doc_view),&req);
+
+	gtk_window_resize(GTK_WINDOW(doc_window),
+			width,
+			std::min(req.height,height));
+
 	scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
 	gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);

@@ -443,7 +443,7 @@ end
 #Vjde::generateIndex("d:/mingw/include/c++/3.4.2/tags")
 #Vjde::generateIndex("d:/mingw/include/tags")
 #Vjde::generateIndex("d:/gtk/include/tags",1)
-#taglist = Vjde::CtagsTagList.new("d:/mingw/include/c++/3.4.2/tags")
+taglist = Vjde::CtagsTagList.new("d:/workspace/vjde/tags")
 #d1 = Time.now
 #cls = taglist.find_class('list::iterator')
 #puts 'a'
@@ -462,9 +462,11 @@ end
 #taglist.each_member('string','find_first_of') {|t,f|
 	#puts "#{t.name} , #{t.kind}  #{t.line} #{t.cmd}"
 #}
-#taglist.each_tag('gtk_wid') { |t,f|
-	#puts "#{t.name} #{t.kind} " + t.kind.length.to_s
+#taglist.each_tag('VjdeTem') { |t,f|
+	#cmd = t.cmd
+	#cmd.gsub!('\\','\\\\')
+	#cmd.gsub!('"','\"')
+	#puts "#{t.name} #{t.kind} " + cmd
 #}
-
 #puts Time.now - d1
 
