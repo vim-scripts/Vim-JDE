@@ -245,6 +245,35 @@ func! VjdePreviewWindow_Preview(useshort) dict
     endif
 endf
 "{{{2 preview in gui
+func! VjdePreviewWindow_PreviewInfo(data) dict
+	let pos = VjdeGetCaretPos()
+	let x = pos[0]
+	let y = pos[1]
+	let tw = &columns
+	let th = &lines
+	let width=g:vjde_preview_gui_width
+	let height= g:vjde_preview_gui_height
+	let cmdline = y.';'.x.';'.tw.";".th.";".width.';'.height.';'
+	let cmdline .= getwinposx().';'.getwinposy().";\n"
+	let data = a:data
+	if g:vjde_preview_gui && g:vjde_preview_lib!=''
+		return libcallnr(g:vjde_preview_lib,'_Z11informationPc',cmdline.data)
+	else
+		if ( !empty(self.preview_buffer))
+			call remove(self.preview_buffer,0,-1)
+		endif
+		call add(self.preview_buffer,'information:')
+		let self.preview_buffer+= split(data,"\n")
+		call self.Update('')
+		call self.GetBuffer()
+
+		"wincmd P
+		"if &pvw
+			"let self.key_preview=''
+			"exec 'silent! normal $'
+		"endif
+	endif
+endf
 func! VjdePreviewWindow_PreviewGUI(useshort) dict 
 	if len(self.preview_buffer)==0
 		return ''
@@ -337,6 +366,7 @@ func! VjdePreviewWindow_New()
 		\ 'name':'',
 		\ 'input_chars' : 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._:%@!',
 		\ 'Preview':function('VjdePreviewWindow_Preview'),
+		\ 'PreviewInfo':function('VjdePreviewWindow_PreviewInfo'),
 		\ 'PreviewGUI':function('VjdePreviewWindow_PreviewGUI'),
 		\ 'Update' :function('VjdePreviewUpdate'),
 		\ 'BufferUpdate' :function('VjdePreviewBufferUpdate'),

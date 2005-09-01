@@ -1,54 +1,24 @@
 module Vjde
     def Vjde.getTagFiles(tagsVar)
-        # get the 'tags' VIM variable
-        #tagsVar = VIM::evaluate("&tags") #"./tags,/"
-
-        # if the user does not have his/her
-        # 'tags' variable set :
         if ( (tagsVar == "") || (tagsVar == nil) )
-            # we provide a reasonnable default :
             tagsVar = "./tags,/"
         end
 
         curDir = curVimDir()
-        # As the current directory may contain spaces, we need to reintroduce
-        # backspaces in the current directory.
         curDir.gsub!(/ /, '\\ ')
 
-        # replace eg ./tags by `pwd`.tags
-        # this is useful for the uniq! done
-        # at the end of this function.
-        # i don't want to parse once `pwd`/tags
-        # and once ./tags...
         tagsVar.gsub!(/^\./, curDir)
 
-        # we split by " " but NOT by "\ ",
-        # which is a valid space in a filename
         result = tagsVar.scan(/(?:\\ |[^,; ])+/)
 
-        # now we remove the "\ ", ruby
-        # otherwise later when we replace
-        # all the "\" by "/" for the windows
-        # paths, all is messed up.
         result.each { |tr|
             tr.gsub!(/\\ / ," ")
 
-            # in here i want only paths with "/"
-            # separators. that's the ruby way
-            # (hey, i didn't say i think it's a good
-            # idea :O/)
             tr.gsub!(/\\/, "/")
         }
 
-        # we support the "/" trick: if 'tags'
-        # include "/", then we check all the files
-        # in directories under us.
         if result.include?("/")
             result.delete("/")
-            # now we must add "pwd/tags" and all subdirs
-            # 		# we start at the dir under us.
-            # 		curDir = dirUp(Dir.pwd)
-            # current directory
             curDir = curVimDir() 
             while (!File.rootDir?(curDir))
                 result.push(curDir + "/tags")
@@ -65,10 +35,13 @@ module Vjde
 
 
     def Vjde.generateIndex(fileName,len=1)
+	    return if !File.exist?(fileName)
         index = 0
         latter=" "*len
+	#return if !File.stat(fileName+".vjde_idx").writable_real?
+        f_idx = File.open(fileName+".vjde_idx","w")
+	return if f_idx == nil
         f_tag = File.open(fileName)
-        f_idx = File.open(fileName+".idx","w")
         f_tag.each_line { |line|
             if ( line[0,len]!=latter)
                 latter=line[0,len]
@@ -80,29 +53,12 @@ module Vjde
         f_idx.close()
     end
 
-    # return the current directory.
-    # depending on cpoptions, this might
-    # be the path of the current file, or
-    # the current directory itself (and those
-    # might of course be different)
     def Vjde.curVimDir()
-        # is pwd(), if 'cpoptions' contains 'd'
-        #if (VIM::evaluate('&cpoptions').include?(?d))
         curDir = Dir.pwd
-        #else
-        #curDir = VIM::evaluate("expand('%:p:h')")
-        #end
         return curDir
     end
 
-    # some more methods for the class
-    # file...
     class MyFile
-        # will return path itself if path
-        # is the root of the drive.
-        # requires "/" as the dir separator,
-        # even on windows (do a gsub to fix it
-        # if needed)
         def File.dirUp(path)
             # remove final "/" if there is one
             cleanPath = path.chomp(File::SEPARATOR)
@@ -110,10 +66,6 @@ module Vjde
             File.split(cleanPath)[0]
         end
 
-        # is this dir the root dir?
-        # requires "/" as the dir separator,
-        # even on windows (do a gsub to fix it
-        # if needed)
         def File.rootDir?(path)
             # remove final "/" if there is one
             cleanPath = path.chomp(File::SEPARATOR)
@@ -134,25 +86,31 @@ module Vjde
     class CtagsTag
         attr_reader :scope
         attr_reader :name
+	attr_reader :file
+	attr_reader :line
         attr_reader :className
-        attr_reader :type
+        attr_reader :kind
         attr_reader :inherits
         attr_reader :access
+	attr_reader :ns
+	attr_reader :cmd
 
-        def initialize(name, file, type, line, scope, inherits, className, access)
+        def initialize(name, file, kind, line, scope, inherits, className, access,ns,cmd)
             @name = name
             @file = file
-            @type = type
+            @kind = kind
             @line = line
             @scope = scope
             @inherits = inherits
             @className = className
             @access = access
+	    @ns = ns
+	    @cmd = cmd
         end
 
         # for debug.
         def to_s()
-            return "tag, name : " + @name + ", file : " + @file + ", type : " + @type + ", line : " + ((@line==nil)?(""):(@line)) + ", scope : " + ((@scope == nil)?(""):(@scope)) + ", inherits : " + ((@inherits == nil)?(""):(@inherits)) + ", className : " + ((@className == nil)?(""):(@className)) + ", access : \"" + ((@access == nil)?(""):(@access)) + "\""
+            return "tag, name : " + @name + ", file : " + @file + ", kind : " + @kind + ", line : " + ((@line==nil)?(""):(@line)) + ", scope : " + ((@scope == nil)?(""):(@scope)) + ", inherits : " + ((@inherits == nil)?(""):(@inherits)) + ", className : " + ((@className == nil)?(""):(@className)) + ", access : \"" + ((@access == nil)?(""):(@access)) + "\""
         end
 
         # for now "==" is not defined for speed (i often do comparisons
@@ -162,7 +120,7 @@ module Vjde
         # to remove duplicate elements and I want that duplicate
         # elements are properly accounted for...
         def hash
-            return @name.hash() + @type.hash()
+            return @name.hash() + @kind.hash()
         end
 
         # http://165.193.123.250/book/ref_c_object.html#Object.hash
@@ -178,13 +136,14 @@ module Vjde
 
             # ;\ separates the "extended" information
             # from the standard one.
-            ctag_infos = ctag_line.split('$/;"')
+	    #ctag_infos = ctag_line.split('$/;"')
+            ctag_infos = ctag_line.split(';"')
 
             ctag_infos_base = ctag_infos[0].split("\t")
 
 
             if ( ctag_infos[1] == nil) 
-                return
+		    return
             end
             ctag_infos_ext = ctag_infos[1].split("\t")
 
@@ -198,25 +157,28 @@ module Vjde
                 info << ctag_infos_ext[index][0,infoindex]
                 info << ctag_infos_ext[index][infoindex+1,ctag_infos_ext[index].length]
 
-                infoindex = info[1].index("::")
-                if (infoindex != nil)
-                    info[1][0,infoindex+2]=""
-                end
+                #infoindex = info[1].index("::")
+                #if (infoindex != nil)
+			#info[1][0,infoindex+2]=""
+                #end
                 # possible optimisation: call chomp only
                 # if it's REALLY the last identifier of the line,
                 # not "just in case" like that.
-                if (info[0] == "line")
-                    line = info[1].chomp
-                end
-                if (info[0] == "inherits")
-                    inherits = info[1].chomp.split(",")
-                end
-                if ( (info[0] == "class") || (info[0] == "interface") )
-                    className = info[1].chomp
-                end
-                if (info[0] == "access")
-                    access = info[1].chomp
-                end
+		if (info[0] == "line")
+			line = info[1].chomp
+		elsif (info[0] == "inherits")
+			inherits = info[1].chomp.split(",")
+		elsif ( (info[0] == "class") || (info[0] == "interface") || info[0]=="struct" )
+			#infoindex = info[1].index("::")
+			#if (infoindex != nil)
+			#info[1][0,infoindex+2]=""
+			#end
+			className = info[1].chomp
+		elsif (info[0] == "access")
+			access = info[1].chomp
+		elsif ( info[0]=='namespace')
+			ns = info[1].chomp
+		end
                 index = index + 1
             end
             # since there is no ctag_infos_ext[index], there will
@@ -228,7 +190,11 @@ module Vjde
             # 			scope.chomp!
             # 		end
 
-            result = CtagsTag.new(ctag_infos_base[0].chomp, ctag_infos_base[1].chomp, ctag_infos_ext[1].chomp, line, scope, inherits, className, access)
+	    kind = ''
+	    kind = ctag_infos_base[1].chomp if ctag_infos_base[1]!=nil
+	    ext = ''
+	    ext = ctag_infos_ext[1].chomp if ctag_infos_ext[1]!=nil
+            result = CtagsTag.new(ctag_infos_base[0], kind, ext, line, scope, inherits, className, access,ns,ctag_infos_base[2])
             # if the tag is already known..
             # 		if (knownTags.include?(result))
             # # 			puts "already known tag"
@@ -242,250 +208,228 @@ module Vjde
         # (do it in the constructor and cache it?)
         def tagMethod?()
             lang = language()
-            return (@type == "m" ||  @type=="f") if (lang == "java")
-            return (@type == "f") if (lang == "cpp")
+            return (@kind == "m" ||  @kind=="f") if (lang == "java")
+            return (@kind == "f" || @kind=="t") if (lang == "cpp")
         end
 
         # is this tag defining a class? (language dependant)
         def tagClass?()
-            return (@type == "c") || (@type == "i")
+            return (@kind == "c") || (@kind== "i")
         end
 
         # language for this tag (do it in the constructor and cache it?)
         def language()
             return "java" if (@file =~ /java\Z/ )
             return "cpp" if ( (@file =~ /cpp\Z/) || (@file =~ /cc\Z/) || (@file =~ /h\Z/) || (@file =~ /hpp\Z/) )
+	    return "cpp" 
         end
 
     end
 
     class CtagsTagList
-        def initialize(tagsVar="./tags,")
+	    attr_accessor :max
+	    attr_accessor :count
 
-            # TODO split normal tags and class tags.
-
-            # will contain all the tags of the tag file.
-            @nonClassTags = Array.new()
-            @classTags = Array.new()
-            @matchingTags = Array.new()
-            # 		@classByName = Hash.new()
-
-            # will contain an Array<String> containing
-            # names of classes for which there is no tag
-            # and that I do not have to look for again
-            # in the future. eg if you use QT, you might
-            # not have the tag info for all QT classes..
-            # this is for performance (see classByName)
-            @blacklist = Array.new()
-
-            # will contain the name of all the classes that were
-            # not found in the researches through the directories
-            # may contain duplicate names
-            # may contain classes that were not found in one directory
-            # and found in another. you'll have to do a "detect" at
-            # the end to find the relevant ones.
-            @missingClasses = Array.new()
-
-            @tagFiles = getTagFiles(tagsVar)
+	def initialize(tagsVar)
+            @tagFiles = Vjde::getTagFiles(tagsVar)
             @local_depth = 0
+	    @max = -1
+	    @count = 0
         end
 
         # parsing. TODO: parse only what I need..
-        def parseTags(tagFile,classSearchedName,beginning,firstonly=false,classonly=false)
-
-            #puts tagFile,classSearchedName,beginning
-            # if we want to keep all info
-            # in memory, don't remove the already
-            # parsed tags. otherwise, remove them,
-            # we'll keep the relevant stuff in
-            # matchingTags.
-            if (!$keepAllInfo)
-                @nonClassTags = Array.new
-            end
-
-            seek = 0
+	def get_skip2(tagFile,beginning,seek)
+		    f_tag = File.open(tagFile)
+		    f_tag.seek(seek)
+		    index = seek
+		    len = beginning.length
+		    f_tag.each_line { |line|
+			    if line[0,len]==beginning 
+				    seek = index -1
+				    break
+			    end
+			    index = f_tag.pos
+		    }
+		    f_tag.close()
+		    return seek
+	end
+	def get_skip(tagFile,beginning) 
+	    seek = -1
             headLen = -1
             compareLen = -1
             if (beginning.length>0)
-                if(FileTest.exist?(tagFile+".idx"))
-                    idx = File.open(tagFile+".idx")
-                    if ( compareLen ==-1)
-                        str = idx.gets()
-                        compareLen = str.index("\t")
-                        headLen = compareLen
-                        if ( compareLen > beginning.length)
-                            compareLen = beginning.length
-                        end
-                    end
-                    idx_line = idx.find { |line| line[0,compareLen]==beginning[0,compareLen]}
-                    if (idx_line ==nil) 
-                        return 
-                    end
-                    seek = idx_line[headLen+1,idx_line.length].to_i
-                end
-            end
+		    if(FileTest.exist?(tagFile+".vjde_idx"))
+			    idx = File.open(tagFile+".vjde_idx")
+			    if ( compareLen ==-1)
+				    str = idx.gets()
+				    compareLen = str.index("\t")
+				    headLen = compareLen
+				    if ( compareLen > beginning.length)
+					    compareLen = beginning.length
+				    end
+			    end
+			    idx_line = idx.find { |line| line[0,compareLen]==beginning[0,compareLen]}
+			    if (idx_line ==nil) 
+				    return -1
+			    end
+			    seek = idx_line[headLen+1,idx_line.length].to_i
+			    idx.close()
+			    if compareLen < beginning.length && seek > 0
+				    seek = get_skip2(tagFile,beginning,seek)
+			    end
 
+		    else
+			    f_tag = File.open(tagFile)
+			    index = 0
+			    len = beginning.length
+			    f_tag.each_line { |line|
+				    if line[0,len]==beginning 
+					    seek = index -1
+					    break
+				    end
+				    index = f_tag.pos
+			    }
+			    f_tag.close()
+		    end
+	    else
+		    seek = 0
+            end
+	    return seek
+	end
+	def each_tag(name='',firstfile=true)
+		find = false
+	    @tagFiles.each { |curFile|
+		    next if (!FileTest.exist?(curFile))
+		    if name.length == 0
+			    each_tag4file(curFile,get_skip(curFile,name)) { |t|
+				    yield(t,curFile)
+			    }
+		    else
+			    len = name.length
+			    each_tag4file(curFile,get_skip(curFile,name)) { |t|
+				    tg = t.name[0,len]
+				    yield(t,curFile) if tg==name
+				    break if tg>name
+			    }
+		    end
+	    }
+	end
+        def each_tag4file(tagFile,seek=0)
+		return if seek==-1
             file = File.open(tagFile)
-            file.seek(seek)
-            # now we parse the ctags output
+	    file.seek(seek)
             ctags_line = file.gets
             file.each_line { |ctags_line|
-                #while ( ctags_line != nil) 
-                #next 
                 if (ctags_line[0,2]== "!_")
-                    #ctags_line= file.gets
                     next
                 end
-                if ( ctags_line[0,beginning.length]>beginning)
-                    break
-                end	       
-
-                tag = Tag.getTagFromCtag(ctags_line, @matchingTags)
+                tag = CtagsTag.getTagFromCtag(ctags_line, nil)
                 next if tag==nil 
-                #print tag.name,tag.className
-                if (tag.tagClass?())
-                    if (tag.name == classSearchedName)
-                        @classTags.push(tag)
-                        break if firstonly
-                    end
-                else if (!classonly)
-                    if (tag.className== classSearchedName)
-                        @nonClassTags.push(tag)
-                        break if firstonly
-                    end
-                end
-        end
-        #ctags_line = file.gets
+		yield(tag)
+		break if @count == @max
             }
-            #end
             file.close
+	    return seek
     end
 
-    # list public methods of this taglist that
-    # have the class name you give and which (the methods)
-    #names start with "beginning".
-    def listMethods(className, beginning,max_depth=1,curr=0)
-        @tagFiles.each { |curFile|
-            next if (!FileTest.exist?(curFile))
-
-            @classSearched = classByName(className)
-            if @classSearched == nil
-                searchForMethods(curFile,className,className,true,true)
-                @classSearched = classByName(className)
-
-                if ( @classSearched!= nil)
-                    searchForMethods(curFile, className, beginning)
-                    if ( @classSearched.inherits!= nil&& curr<max_depth)
-                        @classSearched.inherits.each { |ih|
-                            listMethods(ih,beginning,max_depth,curr+1)
-                        }
-                    end
-                end
-            end
-
-            @missingClasses += @blacklist
-            @blacklist.clear
-        }
-        #find the tag , then , find the parent
+    def each_class(className='')
+	    if className.length == 0
+		    each_tag() { |t,f|
+			    if t.kind=='c'  
+				    yield(t,curFile)
+			    end
+		    }
+	    else
+		    each_tag(className) { |t,curFile|
+			    next if t.kind!='c' 
+			    nm = t.name[0,className.length]
+			    #break if nm>className
+			    yield(t,curFile) if nm==className
+		    }
+	    end
     end
-
-    def putsMethods()
-        @missingClasses.uniq!
-        @missingClasses.each { |className|
-            item = @matchingTags.detect { |tag|
-                (tag.name == className)
-            }
-            if (item == nil)
-                puts "WARNING: did not find definition of " + className
-            end
-        }
-        @matchingTags.uniq!
-        if ( @matchingTags.size() ==0)
-            puts "not found"
-            return
-        end
-        @matchingTags.each { |tag|
-            if ( tag.tagMethod?() && ( (tag.access == "public") \
-                        || (tag.access == "") \
-                        || (tag.access == "default") \
-                        || (tag.access == nil) ) )
-                puts tag.name + " [" + tag.className + "] " 
-            end
-        }
+    def find_class(className1)
+	    className = className1
+	    idx = className1.rindex("::")
+	    ns = nil
+	    if idx != nil
+		    ns = className1[0,idx]
+		    className = className1[idx+2..-1]
+	    end
+	    each_tag(className) { |t,f|
+		    next if className!=t.name
+		    if t.kind=='c' || t.kind=='s' || t.kind=='n'
+			   if ( t.ns!= nil && ns!=nil) 
+				   next if t.ns.rindex(ns)!= t.ns.length-ns.length
+			   end
+			   if ( t.className !=nil && ns!=nil)
+				   next if t.className.rindex(ns)!= t.ns.length-ns.length
+			   end
+			   return t,f
+		    elsif t.kind=='t'
+			   if ( t.ns!= nil && ns!=nil) 
+				   next if t.ns.rindex(ns)!= t.ns.length-ns.length
+			   end
+			   if ( t.className !=nil && ns!=nil)
+				   next if t.className.rindex(ns)!= t.className.length-ns.length
+			   end
+			    if t.cmd.length>0
+				idx = t.cmd.index('typedef')
+				idx2 = t.cmd.index(' ',idx+9)
+				if idx2 > idx && idx >0
+					cmd = t.cmd[idx+8,idx2]
+					cmd.sub!(/[ *<\[].*$/,'')
+					if cmd!=nil
+						return find_class(cmd) 
+					end
+				end
+			    end
+		    end
+	    }
+	    return nil
     end
-    def methodsToLine()
-        @missingClasses.uniq!
-        @missingClasses.each { |className|
-            item = @matchingTags.detect { |tag|
-                (tag.name == className)
-            }
-            if (item == nil)
-                puts "WARNING: did not find definition of " + className
-            end
-        }
-        retstr = ""
-        @matchingTags.uniq!
-        @matchingTags.each { |tag|
-            if ( tag.tagMethod?() && ( (tag.access == "public") \
-                        || (tag.access == "") \
-                        || (tag.access == "default") \
-                        || (tag.access == nil) ) )
-                #puts tag.name + " [" + tag.className + "] "  
-                retstr += VIM::evaluate("s:pre_beginning")+tag.name+"\n"
-            end
-        }
-        return retstr
+    def each_member(className1, beginning='')
+	    className = className1
+	    clsTag = nil
+	    seachedFile = nil
+	    cls = find_class(className)
+	    return if cls==nil
+
+	    clsTag = cls[0]
+	    seachedFile = cls[1]
+
+	    #namespace
+	    if clsTag.kind=='n'
+		    if beginning.length==0
+			    each_tag4file( seachedFile ) { |t|
+				    yield(t,seachedFile) if t.ns==className
+			    }
+		    else
+			    each_tag4file( seachedFile,get_skip(seachedFile,beginning)) {|t|
+				    tg = t.name[0,beginning.length]
+				    break if tg > beginning 
+				    yield(t,seachedFile) if t.ns==className && t.name[0,beginning.length]==beginning
+			    }
+		    end
+		    return
+	    end
+
+
+	    cn = ""
+	    cn = cn + clsTag.ns+"::" if clsTag.ns != nil
+	    cn = cn + clsTag.name
+	    if beginning.length==0
+		    each_tag4file( seachedFile ) { |t|
+			    yield(t,seachedFile) if t.className==cn
+		    }
+	    else
+		    each_tag4file( seachedFile,get_skip(seachedFile,beginning)) {|t|
+			    tg = t.name[0,beginning.length]
+			    break if tg > beginning 
+			    yield(t,seachedFile) if t.className==cn && t.name[0,beginning.length]==beginning
+		    }
+	    end
     end
-    def searchForMethods(tagFile, classSearchedName, beginning,firstonly=false,classonly=false)
-        #if (VIM::evaluate("&verbose").to_i > 0)
-        #	puts "parsing tags for " + tagFile
-        #end
-        parseTags(tagFile,classSearchedName,beginning,firstonly,classonly)
-        @matchingTags.concat(@nonClassTags)
-        @nonClassTags.clear()
-
-        #@classSearched = classByName(classSearchedName)
-        #if @classSearched == nil
-        #	parseTags(tagFile,classSearchedName,classSearchedName,false)
-        #	currentClass = classByName(classSearchedName)
-
-        #if ( currentClass != nil)
-        #if ( currentClass.inherits!= nil)
-        #currentClass.inherits.each { |ih|
-
-        #	listMethods(ih,beginning)
-        #parseTags(tagFile,ih,beginning,false)
-        #	}
-        #end
-        #end
-        #end
-
-        #@matchingTags.concat(@nonClassTags)
-        #@nonClassTags.clear()
-
-    end
-
-    # get a Tag object from this TagList and a class name string.
-    def classByName(className)
-        # we keep a blacklist of classes. For instance
-        # if you are using say QT, you'll have constant references
-        # to QObject, that is not in your tag files.
-        # to avoid checking all the tags looking for this class
-        # each time that I'm asked for it, I just blacklist it once for all.
-        # this happened with KoRect in kword, and the time went from
-        # 12 seconds to instantaneous...
-        #return nil if @blacklist.include?(className)
-        @classTags.each { |tag|
-            #puts "classByName: found " + tag.name
-            if (tag.name == className)
-                return tag
-            end
-        }
-
-        return nil
-    end
-
-
 end
 
 end
@@ -496,8 +440,31 @@ end
 #$keepAllInfo =false 
 #Vjde.generateIndex('d:\workspace\vjde\plugin\vjde\tlds\jdk1.5.lst',6)
 #Vjde.generateIndex("/usr/share/vim/vimfiles/plugin/vjde/tlds/jdk1.5.lst")
+#Vjde::generateIndex("d:/mingw/include/c++/3.4.2/tags")
+#Vjde::generateIndex("d:/mingw/include/tags")
+#Vjde::generateIndex("d:/gtk/include/tags",1)
+#taglist = Vjde::CtagsTagList.new("d:/mingw/include/c++/3.4.2/tags")
+#d1 = Time.now
+#cls = taglist.find_class('list::iterator')
+#puts 'a'
+#puts cls[0].name if cls!=nil
+#puts 'a'
+#puts cls[0].ns if cls!=nil
+#puts 'a'
+#puts cls[0].className if cls!=nil
+#puts 'a'
+#taglist.each_class('iterator') { |t,f| 
+	#puts t.name
+	#if t.kind=='t'
+	
+	#end
+#}
+#taglist.each_member('string','find_first_of') {|t,f|
+	#puts "#{t.name} , #{t.kind}  #{t.line} #{t.cmd}"
+#}
+#taglist.each_tag('gtk_wid') { |t,f|
+	#puts "#{t.name} #{t.kind} " + t.kind.length.to_s
+#}
 
-#taglist = TagList.new("/home/wangfc/workspace/smgpapp/tags,/tmp/tags,/usr/java/jdk/src/tags")
-#taglist.listMethods("MySQL", "Ex",1)
-#taglist.putsMethods()
+#puts Time.now - d1
 

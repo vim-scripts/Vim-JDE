@@ -45,6 +45,8 @@
 
 								   *vjde-desc*
 Desc~
+Now , C++ supported with ruby and ctags. See |vcde| for detail.
+
 This tools wich is named "Vim Java Development Envirement".
 Current version, has two tools : Project and AutoCompletion
 Auto competion is avaiable to :java ,jsp, taglib , html
@@ -61,18 +63,18 @@ the future list is:
 Some plugin is already used for Vim JDE~
 a. Project File Plugin           already 
 b. match it
-c. auto import
-d. getter setter
+c. auto import                    ok
+d. getter setter                  ok  
 e. compiler
 
 I will do:~
 
 1. Project management	    ok 
 2. Auto completion	    ok
-3. Template
+3. Template		    ok
 4. Extend tool
-5. Implementiong tool
-6. Getter/Setter
+5. Implementiong tool       ok
+6. Getter/Setter            ok
 7. Todo List                 ok, but don't commited
 
 

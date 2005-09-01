@@ -7,6 +7,7 @@ let s:preview_buffer=[]
 
 let s:base_types=["void","int","long","float","double","boolean","char","byte"]
 let s:directives={}
+let s:types=[]
 func! s:VjdeDirectiveAttribute(name,...) "{{{2
 	let attr = VjdeTagAttributeElement_New(a:name)
 	if a:0>0
@@ -358,7 +359,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
         return s:retstr
     endif
 
-    call s:VjdeObejectSplit(s:VjdeFormatLine(strpart(a:line,0,a:col)))
+    let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(a:line,0,a:col)))
 
 
     if  len(s:types)<1 
@@ -416,129 +417,9 @@ func! s:VjdeCreateString4CFU(base) "{{{2
 	    endif
 	    return str
 endf
-func! s:VjdeFormatLine(line) "{{{2
-    let len = strlen(a:line)
-    let index0 = SkipToIgnoreString(a:line,0,'[=<>+\-\*\/%?:\&|\^|]')
-    let index=0
-    while index0 != -1
-        let index = index0
-        let index0 = SkipToIgnoreString(a:line,index0+1,'[=<>+\-\*\/%?:\&\^|]')
-    endw
-    let index0 = s:MatchToIgnoreString(a:line,index+1,'^return')
-    if  index0 != -1
-        let index = index0+6
-    endif
-    let index0 = s:MatchToIgnoreString(a:line,index+1,'^new')
-    if  index0 != -1
-        let index = index0+3
-    endif
-    let index = SkipToIgnoreString(a:line,index,'[^=<>+\-\*\/%?:\&\^|]')
-    if index == -1
-	    return ""
-    else
-	    "let index = index0
-    endif
-
-
-    let l:index2= index
-    let ret_index = index
-
-    let l:stack = [l:index2]
-    while  l:index2 < len
-        let c= a:line[l:index2]
-        if  c == '(' || c=='['
-            call add(l:stack,l:index2+1)
-        elseif c == ')' || c==']'
-            call remove(l:stack,-1)
-        elseif c == '\'
-            let l:index2 = l:index2+1
-        elseif c=='"'
-            let l:index2 = SkipToIgnoreString(a:line,l:index2+1,'"')
-            if  l:index2 == -1 " Can't find the next \" for the current one
-                return ""
-            endif
-        endif
-        let l:index2 = l:index2+1
-    endw
-    if len(l:stack)>0 
-        let ret_index=remove(l:stack,-1)
-    else
-        return ""   " incorrectly line
-    endif
-    let l:index2 = matchend(a:line,'^\(return\s\+\|new\s\+\|([^)]*)\s*\)',ret_index)
-    if  l:index2 != -1
-        let ret_index = l:index2 
-    endif
-    "let l:index2 = matchend(a:line,"new\\s\\+",ret_index)
-    "if  l:index2 != -1
-        "let ret_index = l:index2 
-    "endif
-    "let l:index2 = matchend(a:line,"return\\s\\+",ret_index)
-    "if  l:index2 != -1
-        "let ret_index = l:index2 
-    "endif
-    return strpart(a:line,ret_index)
-endf
-
-func! s:VjdeObejectSplit(line) "{{{2
-    let s:types=[]
-    let len = strlen(a:line)
-    let index = SkipToIgnoreString(a:line,0,'\a')
-    let oind = s:ObjectSplit(a:line,index)
-    while ( oind!=-1 && oind < len )
-        if a:line[oind]=='('
-            let oind = SkipToIgnoreString(a:line,oind+1,')')
-            if ( oind == -1 )
-                return s:types
-            endif
-            let oind = SkipToIgnoreString(a:line,oind,'\.')
-            if ( oind == -1 )
-                return s:types
-            endif
-        endif
-        if a:line[oind]=='['
-           let oind = SkipToIgnoreString(a:line,oind+1,'\]')
-           if ( oind == -1 )
-               return s:types
-           endif
-        endif
-        let oind = oind+1
-        let oind = s:ObjectSplit(a:line,oind)
-    endw
-    return s:types
-endf
-
-func! s:ObjectSplit(line,index) "{{{2
-    let oend = SkipToIgnoreString(a:line,a:index,'[\.(\[]')
-    if ( oend!= -1 && oend!=a:index)
-        call add(s:types,strpart(a:line,a:index,oend-a:index))
-    end
-    return oend
-endf
-
-func! s:MatchToIgnoreString(line,index,target) "{{{2
-    let start = a:index
-    let len = strlen(a:line)
-    while start < len
-        if ( match(a:line,a:target,start)==start) 
-            return start
-        endif
-        if ( a:line[start]=='\')
-            let start=start+1
-        elseif (a:line[start]=='"')
-            let start=SkipToIgnoreString(a:line,start+1,'"')
-            if start == -1
-                return -1
-            end
-        endif
-        let start=start + 1
-    endwhile
-    return -1
-endf
 
 func! VjdespFun(line) "{{{2
-    call s:VjdeObejectSplit(a:line)
-    echo s:types
+    echo VjdeObejectSplit(a:line)
 endf
 
 func! s:VjdeInfomation() "{{{2
@@ -564,7 +445,7 @@ func! s:VjdeGotoDecl() "{{{2
     let m_col = col('.')
     let line = getline(m_line)
     let idx = matchend(line,'.\>',m_col)
-    call s:VjdeObejectSplit(s:VjdeFormatLine(strpart(line,0,idx)).".")
+    let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(line,0,idx)).".")
     if len(s:types)<1
         echo "no object find by ".key
         return 
@@ -698,7 +579,7 @@ func! s:VjdeInfo(...) "{{{2
 		    let s:type=key
 	    endif
     else
-	    call s:VjdeObejectSplit(s:VjdeFormatLine(strpart(line,0,idx)).".")
+	    let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(line,0,idx)).".")
 	    if len(s:types)<1
 		echo "no object find by ".key
 		return 
@@ -748,7 +629,7 @@ func! s:VjdeJspInfo() "{{{2
     let m_col = col('.')
     let line = getline(m_line)
     let idx = matchend(line,'.\>',m_col)
-    call s:VjdeObejectSplit(s:VjdeFormatLine(strpart(line,0,idx)).".")
+    let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(line,0,idx)).".")
     if len(s:types)<1
         echo "no object find by ".key
         return 
@@ -812,7 +693,7 @@ func! s:VjdeJspCompletionFun(line,base,col,findstart) "{{{2
     let s:beginning = a:base
 
     "call s:VjdeObejectSplit(s:VjdeFormatLine(strpart(a:line,0,a:col)).'.')
-    call s:VjdeObejectSplit(s:VjdeFormatLine(strpart(a:line,0,a:col)))
+    let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(a:line,0,a:col)))
     "call s:VjdeObejectSplit(a:line)
 
     if  len(s:types)<1 
@@ -1396,6 +1277,9 @@ endf "}}}
 
 " add by wangfc
 func! VjdeInsertWord(word) "{{{2
+	if strlen(a:word)==0
+		return
+	endif
 	let lnr = line('.')
 	let lcol = col('.')
 	let str = getline(lnr)

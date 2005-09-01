@@ -13,12 +13,25 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.regex.Matcher;
 
 public class Document {
 	String paths;
 	String className;
 	String member;
 	String src;
+	static HashMap tagMaps= new HashMap();
+	static {
+		tagMaps.put("A","<u>");
+		tagMaps.put("/A","</u>");
+		tagMaps.put("B","<b>");
+		tagMaps.put("/B","</b>");
+		tagMaps.put("H3","<big><big>");
+		tagMaps.put("/H3","</big></big>");
+		tagMaps.put("CODE","<span foreground=\"blue\">");
+		tagMaps.put("/CODE","</span>");
+	}
 	public Document(String ps,String src,String cname,String m) {
 		paths = ps;
 		int index = cname.indexOf(":",0);
@@ -75,7 +88,9 @@ public class Document {
 		boolean find = false;
 		BufferedReader reader = new BufferedReader(new FileReader(f));
 		String line ;
-		Pattern pattern = Pattern.compile("<[^>]*>");
+		//Pattern pattern = Pattern.compile("(<([^ ]+) ?[^>]*>)");
+		Pattern pattern = Pattern.compile("<([^ >]+)[^>]*>");
+		//Pattern pattern = Pattern.compile("<[^>]*>");
 		Pattern pattern2 = Pattern.compile("&nbsp;");
 		while ( ( line = reader.readLine())!= null) {
 			if ((!find) && line.indexOf("<A NAME=\"" + member +"\">",0)!=0) {
@@ -87,7 +102,19 @@ public class Document {
 			if ( find &&  line.indexOf("<A NAME=\"",0)==0 ) {
 				break;
 			}
-			String temp = pattern.matcher(line).replaceAll("");
+			String temp = line;//pattern.matcher(line).replaceAll("");
+			Matcher mat = pattern.matcher(line);
+			StringBuffer  buffer2 = new StringBuffer();
+			//if ( mat.matches()) {
+				while ( mat.find()) {
+					String old = mat.group(1);
+					mat.appendReplacement(buffer2, getTags(old));
+				}
+				mat.appendTail(buffer2);
+				temp = buffer2.toString();
+			//}
+			
+
 			temp = temp.replace("&nbsp;"," ");
 			if ( temp.length()>1) {
 				buffer.append(temp);
@@ -111,11 +138,18 @@ public class Document {
 		}
 		try {
 			Document doc = new Document(args[0],args[1],args[2],args4);
-			System.out.println(doc.read());
+			System.out.println(doc.read().replaceFirst("\n",""));
 		}
 		catch(Exception ex) {
+			ex.printStackTrace();
 			//TODO: Add Exception handler here
 		}
         }
+	private String getTags(String old) {
+		if (tagMaps.containsKey(old)) 
+			return (String) tagMaps.get(old);
+		return "";
+	}
+
 }
 // vim: ft=java

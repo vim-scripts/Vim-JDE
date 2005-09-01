@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 #ifdef _WIN32
 #include <windows.h>
 #include <winuser.h>
@@ -11,7 +12,7 @@
 
 #define DOC_LENGTH 5124
 
-
+//#define MAX(a,b) (a)>(b)?(a):(b)
 
 #if defined(DLL) && defined(_WIN32)
 #define _DL_EXPORT __declspec(dllexport) extern
@@ -102,6 +103,11 @@ void   on_cursor_changed(GtkTreeView *treeview,
 	void remove_last_timeout();
 	void add_new_timeout();
 	gboolean show_doc_thread(gpointer data) ;//show the document;
+
+
+
+	void on_key_release_event2( GtkWidget *widget, GdkEventKey *data );
+	void destroy( GtkWidget *widget, gpointer   data );
 	/*
 	gboolean show_docment(gpointer data);
 	void timeout_setup() {
@@ -314,7 +320,7 @@ void   on_cursor_changed(GtkTreeView *treeview,
 		if ( index_space > 0 ) 
 		{
 			gtk_list_store_append(list_store,&iter_tree);
-			if ( index_right > 0 ) //method defination
+			if ( index_right > 0 && index_right<index_comma) //method defination
 			{
 				if ( index_comma > 0 ) 
 				{
@@ -323,7 +329,7 @@ void   on_cursor_changed(GtkTreeView *treeview,
 							TAG_NAME,
 								get_short_tag(temp.substr(index_space+1,index_right-index_space)).c_str(),
 							COMMENT,index_right < index_comma-1?
-								temp.substr(index_right+1,index_comma-index_right-1).c_str():"",
+								temp.substr(index_right+1,index_comma-index_right-1).c_str():temp.substr(std::max(index_right,index_comma)+1).c_str(),
 							TAG_VAL ,temp.substr(index_space+1,index_right-index_space).c_str(),
 							-1);
 				}
@@ -563,7 +569,7 @@ void   on_cursor_changed(GtkTreeView *treeview,
 	{
 		window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 		gtk_window_set_decorated((GtkWindow*)window,FALSE);
-		gtk_window_set_modal((GtkWindow*)window,TRUE);
+		gtk_window_set_modal((GtkWindow*)window,FALSE);
 		gtk_window_move((GtkWindow*)window,x,y);
 		gtk_window_resize((GtkWindow*)window,width,height);
 		gtk_window_set_title(GTK_WINDOW(window),"preview");
@@ -702,6 +708,42 @@ void on_key_release_event( GtkWidget *widget,
 	}
 }
 
+void on_key_release_event2( GtkWidget *widget,
+            GdkEventKey *data )
+{
+	if ( key_release_count++==0) {
+		return ;
+	}
+	switch ( data->keyval) {
+		case 32://SPACE
+			if (doc_window)
+				gtk_widget_destroy(doc_window);
+			gtk_main_quit ();
+			return;
+		case 65293: //ENTER
+			if (doc_window)
+				gtk_widget_destroy(doc_window);
+			gtk_main_quit ();
+			return;
+		case 65307: //ESC
+			if (doc_window)
+				gtk_widget_destroy(doc_window);
+			gtk_main_quit ();
+			return;
+		case GDK_Shift_L:
+		case GDK_Shift_R:
+		case GDK_Control_L:
+		case GDK_Control_R:
+		case GDK_Caps_Lock:
+		case GDK_Shift_Lock:
+		case GDK_Meta_L:
+		case GDK_Meta_R:
+		case GDK_Alt_L:
+		case GDK_Alt_R:
+		case GDK_VoidSymbol:
+			return;
+	}
+}
 
 int main(int argc,char* argv[])
 {
@@ -737,12 +779,16 @@ int main(int argc,char* argv[])
 		}
 		//char show[128] ;
 		//sprintf(show,"%d %d %d %d" , doc_rect.x,doc_rect.y,doc_rect.width,doc_rect.height);
+		/*
 		GtkTextBuffer *buffer;
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (doc_view));
+		*/
 		memset(doc_buffer,0,DOC_LENGTH);
 		my_system(cmd_line.c_str(),doc_buffer,DOC_LENGTH);
-		if (strlen(doc_buffer)>0) 
-			gtk_text_buffer_set_text (buffer, doc_buffer, -1);
+		if (strlen(doc_buffer)>0) {
+			gtk_label_set_markup(GTK_LABEL(doc_view),doc_buffer);
+		}
+		//	gtk_text_buffer_set_text (buffer, doc_buffer, -1);
 		return FALSE;
 	}
 	gboolean show_doc_window(gpointer data) {//show the document;
@@ -760,8 +806,8 @@ int main(int argc,char* argv[])
 			gtk_window_resize(GTK_WINDOW(doc_window),doc_rect.width,doc_rect.height);
 			gtk_window_set_title(GTK_WINDOW(doc_window),"document");
 
-			doc_view = gtk_text_view_new();
-			g_object_set(G_OBJECT(doc_view),"editable",FALSE,NULL);
+			doc_view = gtk_label_new("");//gtk_text_view_new();
+			//g_object_set(G_OBJECT(doc_view),"editable",FALSE,NULL);
 			scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
 			gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
 			gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
@@ -814,6 +860,86 @@ void        on_cursor_changed(GtkTreeView *treeview,
 	{
 		remove_last_timeout();
 		add_new_timeout();
+	}
+}
+
+int information_window(int x, int y, int width,int height,char *str)
+{
+	gtk_init(0,NULL);
+	doc_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_decorated(GTK_WINDOW(doc_window),FALSE);
+	gtk_window_set_modal(GTK_WINDOW(doc_window),TRUE);
+	gtk_window_move(GTK_WINDOW(doc_window),x,y);
+	gtk_window_resize(GTK_WINDOW(doc_window),width,height);
+	gtk_window_set_title(GTK_WINDOW(doc_window),"");
+
+	doc_view = gtk_label_new("");//gtk_text_view_new();
+	//gtk_label_set_markup(GTK_LABEL(doc_view),str);
+	gtk_label_set_text(GTK_LABEL(doc_view),str);
+	//g_object_set(G_OBJECT(doc_view),"editable",FALSE,NULL);
+	scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
+	gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
+
+	g_signal_connect (G_OBJECT (doc_window), "key_release_event",
+			G_CALLBACK (on_key_release_event2), NULL);
+
+	gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
+	gtk_widget_show(scrolledwindow3);
+	gtk_widget_show(doc_view);
+	gtk_widget_show(doc_window);
+
+	gtk_main();
+	return 0;
+}
+
+_DL_EXPORT int information(char *str)
+{
+	string para(str);
+	std::istringstream input(para);
+	string temp;
+	while ( getline(input,temp)) {
+		lines.push_back(temp);
+	}
+	int x = 50;
+	int y = 50;
+	int width=250;
+	int height=100;
+	int tw=50;
+	int th = 50;
+	int skip = 0;
+	if ( lines.size()>0) 
+	{//Preview windows define
+		string firstline=lines[0];
+		skip = firstline.size()+1;
+		int len = firstline.length();
+		int curr = 0;
+		if ( curr < len ) {
+			x = read_int(firstline,';',len,curr);
+		}
+		if ( curr < len ) {
+			y = read_int(firstline,';',len,curr);
+		}
+		if ( curr < len ) {
+			tw = read_int(firstline,';',len,curr);
+		}
+		if ( curr < len ) {
+			th = read_int(firstline,';',len,curr);
+		}
+		if ( curr < len ) {
+			width = read_int(firstline,';',len,curr);
+		}
+		if ( curr < len ) {
+			height = read_int(firstline,';',len,curr);
+		}
+		if ( curr < len ) {
+			winposx = read_int(firstline,';',len,curr);
+		}
+		if ( curr < len ) {
+			winposy = read_int(firstline,';',len,curr);
+		}
+		get_vim_caret_pos(x,y,x,y,tw,th,width,height);
+		return information_window(x,y,width,height,str+skip);
 	}
 }
 #ifdef AS_C

@@ -71,6 +71,7 @@ if has('ruby')
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_taglib_cfu.rb'
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_xml_cfu.rb'
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_javadoc.rb'
+	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_ctags_support.rb'
 	au BufNewFile,BufRead,BufEnter *.xml set cfu=VjdeXMLFun 
 	command! -nargs=0 VjdeJstl ruby Vjde::init_jstl(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/")
 endif
@@ -83,6 +84,9 @@ runtime plugin/vjde/vjde_completion.vim
 runtime plugin/vjde/vjde_menu_def.vim
 runtime plugin/vjde/vjde_template.vim
 runtime plugin/vjde/vjde_java_iab.vim
+
+runtime plugin/vjde/vjde_cpp_completion.vim
+runtime plugin/vjde/vjde_ctags_completion.vim
 
 let java_previewer = VjdePreviewWindow_New()
 let java_previewer.name = 'java_previewer'

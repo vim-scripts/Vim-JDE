@@ -1,0 +1,34 @@
+									*vcde*
+
+
+Descrition~
+	VCDE is a c++ development support by VJDE framework.
+
+Fucture~
+	Code completion in a gui window or a preview window for c++,simply
+namespace and typedef support. >
+	string str;
+	str.find
+		^<c-space>	
+<
+	Parameter preview in a window while your input a <C-space> after a 
+'(' >
+	string str;
+	str.find_first_of(
+			  ^<c-space>
+<
+
+	For quickly seach the tag of c++ , you can generate a index for your
+tags. Use the flowing command: >
+	:call VjdeCppGenerateIdx()
+<
+	It's use |tags| parameter , then generate a index for each tag file,
+named tags.vjde_idx
+	NOTE: for *inux user, you must make sure that the director is writable
+for the user.
+
+
+
+
+
+ vim:ts=8 sw=8 noexpandtab tw=78 ft=help:
