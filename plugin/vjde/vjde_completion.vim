@@ -1279,16 +1279,8 @@ endf "}}}2
 func! GetJavaCompletionLines(arr)
 	let a:arr.preview_buffer += VjdeGetPreview()
 endf
-if has('win32')
-let s:wspawn_available = executable('wspawn.exe')
-if !s:wspawn_available
-	echoerr 'wspawn.exe which come from plugin/vjde/ is not runable'
-	echoerr ':h vjde-install for detail'
-endif
-	let s:wspawn_available=1
-endif
 func! VjdeGetDocWindowLine() 
-	if !s:wspawn_available
+	if !g:wspawn_available
 		return "\n"
 	endif
 	let ft=&ft

@@ -42,7 +42,7 @@ module Vjde #{{{1
                         eval($1)
                     end
                 }
-                yield(l)
+		l.each { |l1| yield(l1) }
             }
         end
         def each_para 

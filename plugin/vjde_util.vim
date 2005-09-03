@@ -55,7 +55,7 @@ let s:types=[]
 func! VjdeObejectSplit(line) "{{{2 remove
     let s:types=[]
     let len = strlen(a:line)
-    let index = SkipToIgnoreString(a:line,0,'\a')
+    let index = SkipToIgnoreString(a:line,0,'[a-zA-Z_]')
     let oind = s:ObjectSplit(a:line,index)
     while ( oind!=-1 && oind < len )
         if a:line[oind]=='('

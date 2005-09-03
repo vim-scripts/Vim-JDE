@@ -812,7 +812,6 @@ int main(int argc,char* argv[])
 			gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
 			gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
 			
-			gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
 			gtk_widget_show(scrolledwindow3);
 			gtk_widget_show(doc_view);
 			gtk_widget_show(doc_window);
@@ -889,15 +888,14 @@ int information_window(int x, int y, int width,int height,char *str)
 			std::min(req.height,height));
 
 	scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
-	gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
 
 	g_signal_connect (G_OBJECT (doc_window), "key_release_event",
 			G_CALLBACK (on_key_release_event2), NULL);
 
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
 	gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
-	gtk_widget_show(scrolledwindow3);
 	gtk_widget_show(doc_view);
+	gtk_widget_show(scrolledwindow3);
 	gtk_widget_show(doc_window);
 
 	gtk_main();

@@ -52,6 +52,10 @@ if !exists('g:vjde_cfu_java_para')
 	let g:vjde_cfu_java_para = 0
 endif
 
+if !exists('g:vjde_use_project')
+	let g:vjde_use_project = 0
+endif
+
 let g:vjde_path_spt=':'
 if has('win32')
 	let g:vjde_path_spt=';'
@@ -65,7 +69,14 @@ elseif has('gui_gtk2')
 	let g:vjde_preview_lib = g:vjde_install_path.'/vjde/preview4gtk.so'
 endif
 endif
-
+let g:wspawn_available=1
+if has('win32')
+	let g:wspawn_available = executable('wspawn.exe')
+	if !g:wspawn_available
+		echoerr 'wspawn.exe which come from plugin/vjde/ is not runable'
+		echoerr ':h vjde-install for detail'
+	endif
+endif
 
 if has('ruby')
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_taglib_cfu.rb'
@@ -87,6 +98,13 @@ runtime plugin/vjde/vjde_iab.vim
 
 runtime plugin/vjde/vjde_cpp_completion.vim
 runtime plugin/vjde/vjde_ctags_completion.vim
+
+if !exists('*JCommentWriter')
+	runtime plugin/vjde/jcommenter.vim
+endif
+if !exists(':Project') && g:vjde_use_project
+	runtime plugin/vjde/project.vim
+endif
 
 let java_previewer = VjdePreviewWindow_New()
 let java_previewer.name = 'java_previewer'

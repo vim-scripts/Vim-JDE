@@ -94,6 +94,7 @@ module Vjde
         attr_reader :access
 	attr_reader :ns
 	attr_reader :cmd
+	RE_CMD_SP=/\/\^.*\$\//
 
         def initialize(name, file, kind, line, scope, inherits, className, access,ns,cmd)
             @name = name
@@ -140,6 +141,8 @@ module Vjde
             ctag_infos = ctag_line.split(';"')
 
             ctag_infos_base = ctag_infos[0].split("\t")
+	    cmd = ctag_line[RE_CMD_SP]
+	    cmd = '' if cmd==nil
 
 
             if ( ctag_infos[1] == nil) 
@@ -194,7 +197,7 @@ module Vjde
 	    kind = ctag_infos_base[1].chomp if ctag_infos_base[1]!=nil
 	    ext = ''
 	    ext = ctag_infos_ext[1].chomp if ctag_infos_ext[1]!=nil
-            result = CtagsTag.new(ctag_infos_base[0], kind, ext, line, scope, inherits, className, access,ns,ctag_infos_base[2])
+            result = CtagsTag.new(ctag_infos_base[0], kind, ext, line, scope, inherits, className, access,ns,cmd)
             # if the tag is already known..
             # 		if (knownTags.include?(result))
             # # 			puts "already known tag"
@@ -230,12 +233,14 @@ module Vjde
 	    attr_accessor :max
 	    attr_accessor :count
 
+	    RE_CMD_LINE=/((typedef|struct|union|enum|public|prviate|protected|class)*\s)*/
 	def initialize(tagsVar)
             @tagFiles = Vjde::getTagFiles(tagsVar)
             @local_depth = 0
 	    @max = -1
 	    @count = 0
         end
+
 
         # parsing. TODO: parse only what I need..
 	def get_skip2(tagFile,beginning,seek)
@@ -348,6 +353,14 @@ module Vjde
 		    }
 	    end
     end
+    def CtagsTagList.get_type(line2,name) 
+	    re=Regexp.new('[^ \t]+(\s*<.*>)*(\s*\[.*\])*[	 *]+'+name+'\W+')
+	    line = line2[re]
+	    return nil if line==nil
+	    idx = line.index(/[\[<( 	*]/)
+	    return line[0,idx] if idx!= nil
+	    nil
+    end
     def find_class(className1)
 	    className = className1
 	    idx = className1.rindex("::")
@@ -373,18 +386,18 @@ module Vjde
 			   if ( t.className !=nil && ns!=nil)
 				   next if t.className.rindex(ns)!= t.className.length-ns.length
 			   end
-			    if t.cmd.length>0
-				idx = t.cmd.index('typedef')
-				idx2 = t.cmd.index(' ',idx+9)
-				if idx2 > idx && idx >0
-					cmd = t.cmd[idx+8,idx2]
-					cmd.sub!(/[ *<\[].*$/,'')
-					if cmd!=nil
-						return find_class(cmd) 
-					end
-				end
-			    end
-		    end
+			   if t.cmd.length>0
+				   cmd = CtagsTagList.get_type(t.cmd,className)
+				   if cmd!=nil
+					   return find_class(cmd) 
+				   end
+			   end
+		   elsif t.kind=='v'
+			   cmd = CtagsTagList.get_type(t.cmd,className)
+			   if cmd!=nil
+				   return find_class(cmd) 
+			   end
+		   end
 	    }
 	    return nil
     end
@@ -443,7 +456,9 @@ end
 #Vjde::generateIndex("d:/mingw/include/c++/3.4.2/tags")
 #Vjde::generateIndex("d:/mingw/include/tags")
 #Vjde::generateIndex("d:/gtk/include/tags",1)
-taglist = Vjde::CtagsTagList.new("d:/workspace/vjde/tags")
+#taglist = Vjde::CtagsTagList.new("d:/temp/first/tags")
+#arrs = taglist.find_class('NATION')
+#puts arrs[0].name if arrs!=nil
 #d1 = Time.now
 #cls = taglist.find_class('list::iterator')
 #puts 'a'
@@ -459,7 +474,7 @@ taglist = Vjde::CtagsTagList.new("d:/workspace/vjde/tags")
 	
 	#end
 #}
-#taglist.each_member('string','find_first_of') {|t,f|
+#taglist.each_member('_NATION','') {|t,f|
 	#puts "#{t.name} , #{t.kind}  #{t.line} #{t.cmd}"
 #}
 #taglist.each_tag('VjdeTem') { |t,f|
@@ -469,4 +484,6 @@ taglist = Vjde::CtagsTagList.new("d:/workspace/vjde/tags")
 	#puts "#{t.name} #{t.kind} " + cmd
 #}
 #puts Time.now - d1
-
+#str='/^ typedef		  abc<def> a;$/'
+#puts str[/\/\^.*\$\//]
+#puts Vjde::CtagsTagList.get_type('/^  string doc_cmd_line;$/','doc_cmd_line')

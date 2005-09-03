@@ -2,9 +2,15 @@ if exists('g:vjde_iab_loaded') || &cp || !has('ruby') "{{{1
 	finish
 endif
 let g:vjde_iab_loaded = 1
-let g:vjde_iab_refs={}
-let g:vjde_iab_refs['jsp']=[ 'java', 'html' ]
-let g:vjde_iab_refs['cpp']=[ 'c' ]
+if !exists('g:vjde_iab_refs')
+	let g:vjde_iab_refs={}
+endif
+if !has_key(g:vjde_iab_refs,'jsp')
+	let g:vjde_iab_refs['jsp']=[ 'java', 'html' ]
+endif
+if !has_key(g:vjde_iab_refs,'cpp')
+	let g:vjde_iab_refs['cpp']=[ 'c' ]
+endif
 let s:all_templates={}
 let s:templates = []
 let s:add_lines = []
@@ -61,6 +67,10 @@ func! s:VjdeInitPreview(base) "{{{2
 endf
 let s:paras = {}
 func! VjdePreviewIab(paras,...) "{{{2
+	if strlen(&ft)==0
+		echoerr 'You must setup the filetype of current buffer. :h ft'
+		return
+	endif
 	let base = '' 
 	if a:0>1
 		let base = a:1
@@ -133,6 +143,8 @@ endf
 "call s:VjdeIabbrInit()
 au BufNewFile,BufRead,BufEnter *.java imap <buffer> <C-j> <esc>:call VjdePreviewIab({})<cr>i
 au BufNewFile,BufRead,BufEnter *.jsp imap <buffer> <C-j> <esc>:call VjdePreviewIab({})<cr>i
+au BufNewFile,BufRead,BufEnter *.htm imap <buffer> <C-j> <esc>:call VjdePreviewIab({})<cr>i
+au BufNewFile,BufRead,BufEnter *.html imap <buffer> <C-j> <esc>:call VjdePreviewIab({})<cr>i
 
 if exists('g:vjde_iab_exts')
 	for item in split(g:vjde_iab_exts,';')

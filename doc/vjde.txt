@@ -732,6 +732,18 @@ g:vjde_preview_gui_width [350]
 g:vjde_preview_gui_height [170]
 	preview height for the gui window
 
+g:vjde_use_project [0|1]
+	use project.vim as the project file manager. >
+	if g:vjde_use_project && !exist(':Project')
+		runtime plugin/vjde/project.vim
+	endif
+<
+While a vjde project is loaded , the project file manager is enabled >
+	if filereadable('.prj') && exists(':Project')
+		exec 'Project .prj'
+	endif
+<
+
 ruby 
     $java_command     
          the java command line, linux, is tested for "java",

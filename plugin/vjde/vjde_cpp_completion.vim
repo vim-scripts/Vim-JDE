@@ -87,11 +87,15 @@ func! VjdeCppCompletion(char,short)
     call g:vjde_cpp_previewer.CFU(a:char,a:short)
 endf
 
-func! VjdeCppGenerateIdx()
+func! VjdeCppGenerateIdx(...)
 	let mtags = &tags
+	let len = 2
+	if ( a:0 > 0)
+		let len = a:1
+	endif
 	for item in split(mtags,",")
 ruby<<EOF
-	Vjde.generateIndex(VIM::evaluate("item"),2)
+	Vjde.generateIndex(VIM::evaluate("item"),VIM::evaluate("len"))
 EOF
 	endfor
 endf
