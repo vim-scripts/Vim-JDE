@@ -611,6 +611,7 @@ void   on_cursor_changed(GtkTreeView *treeview,
 		
 
 		input_label = gtk_label_new(base.c_str());
+		gtk_wid
 		gtk_widget_set_size_request(input_label,width,13);
 
 		scrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
@@ -671,6 +672,7 @@ void on_key_release_event( GtkWidget *widget,
 		case 65288://BACKSPACE
 			if (user_input.length()>=1) {
 				user_input.erase(user_input.length()-1,1);
+
 				update_label();
 			}
 			return;
@@ -807,6 +809,7 @@ int main(int argc,char* argv[])
 			gtk_window_set_title(GTK_WINDOW(doc_window),"document");
 
 			doc_view = gtk_label_new("");//gtk_text_view_new();
+			gtk_label_set_justify(GTK_LABEL(doc_view),GTK_JUSTIFY_LEFT);
 			//g_object_set(G_OBJECT(doc_view),"editable",FALSE,NULL);
 			scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
 			gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
@@ -872,6 +875,7 @@ int information_window(int x, int y, int width,int height,char *str)
 	gtk_window_set_title(GTK_WINDOW(doc_window),"");
 
 	doc_view = gtk_label_new("");
+	gtk_label_set_justify(GTK_LABEL(doc_view),GTK_JUSTIFY_LEFT);
 	
 	//gtk_label_set_text(GTK_LABEL(doc_view),str);
 

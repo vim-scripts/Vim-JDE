@@ -95,7 +95,7 @@ func! VjdeCppGenerateIdx(...)
 	endif
 	for item in split(mtags,",")
 ruby<<EOF
-	Vjde.generateIndex(VIM::evaluate("item"),VIM::evaluate("len"))
+	Vjde.generateIndex(VIM::evaluate("item"),VIM::evaluate("len").to_i)
 EOF
 	endfor
 endf
