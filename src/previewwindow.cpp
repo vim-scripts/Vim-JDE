@@ -569,7 +569,11 @@ void   on_cursor_changed(GtkTreeView *treeview,
 	{
 		window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 		gtk_window_set_decorated((GtkWindow*)window,FALSE);
+#ifdef _WIN32
 		gtk_window_set_modal((GtkWindow*)window,FALSE);
+#else
+		gtk_window_set_modal((GtkWindow*)window,TRUE);
+#endif
 		gtk_window_move((GtkWindow*)window,x,y);
 		gtk_window_resize((GtkWindow*)window,width,height);
 		gtk_window_set_title(GTK_WINDOW(window),"preview");
@@ -611,7 +615,6 @@ void   on_cursor_changed(GtkTreeView *treeview,
 		
 
 		input_label = gtk_label_new(base.c_str());
-		gtk_wid
 		gtk_widget_set_size_request(input_label,width,13);
 
 		scrolledwindow2 = gtk_scrolled_window_new (NULL, NULL);
@@ -624,6 +627,7 @@ void   on_cursor_changed(GtkTreeView *treeview,
 		gtk_container_add(GTK_CONTAINER(window),vbox);
 		gtk_container_add (GTK_CONTAINER (scrolledwindow2), line_list);
 
+		gtk_window_set_accept_focus(GTK_WINDOW(window),TRUE);
 		g_signal_connect (G_OBJECT (window), "key_release_event",
 				G_CALLBACK (on_key_release_event), NULL);
 
@@ -815,6 +819,8 @@ int main(int argc,char* argv[])
 			gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
 			gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
 			
+			g_signal_connect (G_OBJECT (doc_window), "key_release_event",
+					G_CALLBACK (on_key_release_event2), NULL);
 			gtk_widget_show(scrolledwindow3);
 			gtk_widget_show(doc_view);
 			gtk_widget_show(doc_window);

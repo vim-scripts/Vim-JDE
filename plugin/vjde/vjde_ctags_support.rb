@@ -311,7 +311,7 @@ module Vjde
 			    }
 		    else
 			    len = name.length
-			    each_tag4file(curFile,get_skip(curFile,name)) { |t|
+			    each_tag4file(curFile,get_skip(curFile,name),name) { |t|
 				    tg = t.name[0,len]
 				    yield(t,curFile) if tg==name
 				    break if tg>name
@@ -319,15 +319,17 @@ module Vjde
 		    end
 	    }
 	end
-        def each_tag4file(tagFile,seek=0)
+        def each_tag4file(tagFile,seek=0,must='')
 		return if seek==-1
             file = File.open(tagFile)
 	    file.seek(seek)
             ctags_line = file.gets
+	    use = true if must!=''
             file.each_line { |ctags_line|
                 if (ctags_line[0,2]== "!_")
                     next
                 end
+		next if (use&&!ctags_line.include?(must))
                 tag = CtagsTag.getTagFromCtag(ctags_line, nil)
                 next if tag==nil 
 		yield(tag)
@@ -371,12 +373,12 @@ module Vjde
 	    end
 	    each_tag(className) { |t,f|
 		    next if className!=t.name
-		    if t.kind=='c' || t.kind=='s' || t.kind=='n'
+		    if t.kind=='c' ||  t.kind=='n' || t.kind=='s'
 			   if ( t.ns!= nil && ns!=nil) 
 				   next if t.ns.rindex(ns)!= t.ns.length-ns.length
 			   end
-			   if ( t.className !=nil && ns!=nil)
-				   next if t.className.rindex(ns)!= t.ns.length-ns.length
+			   if ( t.className !=nil)
+				   next if t.className.rindex(className1)!= t.className.length - className1.length
 			   end
 			   return t,f
 		    elsif t.kind=='t'
@@ -414,11 +416,11 @@ module Vjde
 	    #namespace
 	    if clsTag.kind=='n'
 		    if beginning.length==0
-			    each_tag4file( seachedFile ) { |t|
+			    each_tag4file( seachedFile ,0,className1) { |t|
 				    yield(t,seachedFile) if t.ns==className
 			    }
 		    else
-			    each_tag4file( seachedFile,get_skip(seachedFile,beginning)) {|t|
+			    each_tag4file( seachedFile,get_skip(seachedFile,beginning),className1) {|t|
 				    tg = t.name[0,beginning.length]
 				    break if tg > beginning 
 				    yield(t,seachedFile) if t.ns==className && t.name[0,beginning.length]==beginning
@@ -432,11 +434,11 @@ module Vjde
 	    cn = cn + clsTag.ns+"::" if clsTag.ns != nil
 	    cn = cn + clsTag.name
 	    if beginning.length==0
-		    each_tag4file( seachedFile ) { |t|
+		    each_tag4file( seachedFile,0,className1) { |t|
 			    yield(t,seachedFile) if t.className==cn
 		    }
 	    else
-		    each_tag4file( seachedFile,get_skip(seachedFile,beginning)) {|t|
+		    each_tag4file( seachedFile,get_skip(seachedFile,beginning),className1) {|t|
 			    tg = t.name[0,beginning.length]
 			    break if tg > beginning 
 			    yield(t,seachedFile) if t.className==cn && t.name[0,beginning.length]==beginning
@@ -460,7 +462,8 @@ end
 #arrs = taglist.find_class('NATION')
 #puts arrs[0].name if arrs!=nil
 #d1 = Time.now
-#cls = taglist.find_class('list::iterator')
+#taglist = Vjde::CtagsTagList.new("d:/boost_1_33_0/tags")
+#cls = taglist.find_class('boost::multi_index::index')
 #puts 'a'
 #puts cls[0].name if cls!=nil
 #puts 'a'
@@ -474,8 +477,10 @@ end
 	
 	#end
 #}
-#taglist.each_member('_NATION','') {|t,f|
-	#puts "#{t.name} , #{t.kind}  #{t.line} #{t.cmd}"
+#taglist.max=100
+#taglist.each_member('boost::multi_index','') {|t,f|
+	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
+	#taglist.count+=1
 #}
 #taglist.each_tag('VjdeTem') { |t,f|
 	#cmd = t.cmd

@@ -17,16 +17,74 @@ let g:vjde_cpp_previewer.docLineFun=''
 func! VjdeGetCppType(v)
 	let lnr = line('.')
 	let cnr = col('.')
-	let pattern='\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*[* \t]\+\<'.a:v.'\>'
+	"let pattern='\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*[* \t]\+\<'.a:v.'\>'
+	let pattern='\(\<\i\+\>\(\s*<.*>\)*::\)*\<\i\+\>\(\[.*\]\)*[* \t]\+\<'.a:v.'\>'
 	let pos = VjdeGotoDefPos(pattern,'b')
 	if pos[0]==0
 		call cursor(lnr,cnr)
 		return a:v
 	endif
 	let lstr = getline(pos[0])
-	let vt = matchstr(lstr,'[^ \t\[\<]\+',pos[1]-1)
+	let lend = match(lstr,'[* \t]\+\<'.a:v.'\>',pos[1])
+	let vt = strpart(lstr,pos[1]-1,lend-pos[1]+1)
 	call cursor(lnr,cnr)
+	while ( stridx(vt,'<')>0) 
+		let len = strlen(vt)
+		let vt=substitute(vt,'<[^<>]*>','','g')
+		if len == strlen(vt) 
+			break
+		endif
+	endwhile
 	return vt
+endf
+func! VjdeCppObjectSplit(lstr)
+	let lstr = a:lstr
+	let lstr = substitute(lstr,'::','..','g')
+	let lstr = substitute(lstr,'->','...','g')
+	"let lstr = substitute(lstr,'<','.....','g')
+	"let lstr = substitute(lstr,'>','......','g')
+	let index0 = stridx(lstr,'"')
+	let index1 = index0
+	let str2 = ''
+	let lastnr = -1
+	while index1 > -1 && index0> -1
+		let index1 = SkipToIgnoreString(lstr,index0+1,'"')
+		if index1 > index0
+			let str2.=strpart(lstr,lastnr,index0-lastnr)
+			let index0 = index1
+			let lastnr = index1
+		else
+			break
+		endif
+	endw
+	let str2 .= strpart(lstr,lastnr+1)
+	let len = -1
+	while len!=strlen(str2)
+		let len = strlen(str2)
+		let str2=substitute(str2,'<[^<>]*>','','g')
+	endwh
+	let lstr = VjdeFormatLine(str2)
+	let lstr = substitute(lstr,'\([^.]\)\.\.\([^.]\)','\1::\2','g')
+	let header = matchstr(lstr,'^\s*\(\<\i\+\>\(\s*<.*>\)*::\)*')
+	let s:types=VjdeObejectSplit(strpart(lstr,strlen(header)))
+	if strlen(header)>0
+		let header = substitute(header,'^\s*','','')
+		while ( stridx(header,'<')>0) 
+			let len = strlen(header)
+			let header=substitute(header,'<[^<>]*>','','g')
+			if len == strlen(header) 
+				break
+			endif
+		endwhile
+		if strlen(header)>2
+			if len(s:types)>0
+				let s:types[0]=header.s:types[0]
+			else
+				call add(s:types,header[0:-3])
+			endif
+		endif
+	endif
+	return s:types
 endf
 func! VjdeCppCFU(line,base,col,findstart) "{{{2
     if a:findstart
@@ -34,20 +92,18 @@ func! VjdeCppCFU(line,base,col,findstart) "{{{2
 	return s:last_start
     endif
     let lstr = strpart(a:line,0,a:col)
-    let lstr = substitute(lstr,'::','.','g')
-    let lstr = substitute(lstr,'->','.','g')
     " call the parameter info
     if a:line[s:last_start-1]=='(' && (s:last_start == a:col)
-	    let s:types=VjdeObejectSplit(VjdeFormatLine(lstr[0:-2].'.'))
-	    if len(s:types)==1
-		    return CtagsCompletion3(s:types[0])
+	    let s:types=VjdeCppObjectSplit(lstr[0:-2].'.')
+	    if len(s:types)==0
+		    return CtagsCompletion3(header.a:base)
 	    else
-		    let vt = VjdeGetCppType(s:types[0])
+		    let vt = VjdeGetCppType(header.stypes[0])
 		    return CtagsCompletion4(vt,s:types[-1])
 	    end
 	    return ""
     endif
-    let s:types=VjdeObejectSplit(VjdeFormatLine(lstr))
+    let s:types=VjdeCppObjectSplit(lstr)
     if len(s:types)==0  " completion for global functions
 	    return CtagsCompletion(a:base)
     endif
@@ -57,10 +113,13 @@ func! VjdeCppCFU(line,base,col,findstart) "{{{2
 	    return CtagsCompletion2(v,a:base)
     endif
     let vt = VjdeGetCppType(v)
-    if ( strlen(vt)>0)
-	    return CtagsCompletion2(vt,a:base)
-    endif
-    return ''
+    return CtagsCompletion2(vt,a:base)
+    "if strlen(header)>0
+	    "return CtagsCompletion2(header.v,a:base)
+    "else
+	    "if ( strlen(vt)>0)
+	    "endif
+    "endif
 endf
 func! VjdeCppCompletion(char,short)
     let lstr = getline(line('.'))
