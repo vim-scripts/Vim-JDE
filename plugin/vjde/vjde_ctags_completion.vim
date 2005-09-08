@@ -3,6 +3,17 @@
 if !exists('g:vjde_ctags_exts')
 		let g:vjde_ctags_exts=''
 endif
+if !exists('g:vjde_readtags')
+		if has('win32') 
+				let g:vjde_readtags=g:vjde_install_path.'/vjde/readtags.exe'
+		else
+				let g:vjde_readtags=g:vjde_install_path.'/vjde/readtags'
+		endif
+
+endif
+if !exists('g:vjde_max_tags')
+		let g:vjde_max_tags=100
+endif
 let s:matched_tags=[]
 let s:retstr=''
 let s:header=''
@@ -23,20 +34,24 @@ endf
 func! VjdeGetCppCFUTags()
 	return s:matched_tags
 endf
-
-func! CtagsCompletion(word) "{{{2
+" completion for a word, a:1 is fully or partly
+func! CtagsCompletion(word,...) "{{{2
 	if strlen(a:word)==0
 		return
+	endif
+	let full=0
+	if a:0 > 0
+			let full = a:1
 	endif
 	call s:VjdeCleanTags()
 	let word = a:word
 	let s:header = word.':'
 ruby<<EOF
-	taglist = Vjde::CtagsTagList.new(VIM::evaluate('&tags'))
+	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
 	str=''
-	taglist.max=150
+	taglist.max=VIM::evaluate("g:vjde_max_tags").to_i + 50
 	taglist.count=0
-	taglist.each_tag(VIM::evaluate('word')) { |t,f|
+	taglist.each_tag(VIM::evaluate('word'),VIM::evaluate("full")==1) { |t,f|
 		cmd = t.cmd
 		cmd.gsub!('\\','\\\\\\')
 		cmd.gsub!('"','\"')
@@ -50,69 +65,22 @@ EOF
 	return s:retstr
 endf
 
-func! CtagsCompletion2(cls,word) "{{{2
+func! CtagsCompletion2(cls,word,...) "{{{2
 	call s:VjdeCleanTags()
-	let s:header = a:cls.':'.a:word
+	let s:header = a:cls.':'
 	let cls = a:cls
 	let word = a:word
-ruby<<EOF
-	taglist = Vjde::CtagsTagList.new(VIM::evaluate('&tags'))
-	str=''
-	taglist.max=100
-	taglist.count=0
-	taglist.each_member(VIM::evaluate('cls'),VIM::evaluate('word')) { |t,f|
-		cmd = t.cmd
-		cmd.gsub!('\\','\\\\\\')
-		cmd.gsub!('"','\"')
-		VIM::command('call s:VjdeAddToTags("'+t.name+'","'+t.kind+'","'+cmd+'")')
-		str=str+t.name+"\n"
-		taglist.count+=1
-	}
-	VIM::command('let s:retstr="'+str+'"')
-EOF
-	return s:retstr
-endf
-func! CtagsCompletion3(word) "{{{2
-	if strlen(a:word)==0
-		return
+	let full=0
+	if a:0 > 0
+			let full = a:1
 	endif
-	call s:VjdeCleanTags()
-	let word = a:word
-	let s:header = word.':'
-	let s:retstr=''
 ruby<<EOF
-	taglist = Vjde::CtagsTagList.new(VIM::evaluate('&tags'))
+#taglist = Vjde::CtagsTagList.new(VIM::evaluate('&tags'))
+	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
 	str=''
-	taglist.max=10
+	taglist.max=VIM::evaluate("g:vjde_max_tags").to_i 
 	taglist.count=0
-	word = VIM::evaluate('word')
-	taglist.each_tag(word) { |t,f|
-		next if t.name != word
-		cmd = t.cmd
-		cmd.gsub!('\\','\\\\\\')
-		cmd.gsub!('"','\"')
-		VIM::command('call s:VjdeAddToTags("'+t.name+'","'+t.kind+'","'+cmd+'")')
-		str=str+t.name+"\n"
-		taglist.count+=1
-	}
-	VIM::command('let s:retstr="'+str+'"')
-EOF
-	return s:retstr
-endf
-func! CtagsCompletion4(cls,word) "{{{2
-	call s:VjdeCleanTags()
-	let s:header = a:cls.':'.a:word
-	let cls = a:cls
-	let word = a:word
-	let s:retstr=''
-ruby<<EOF
-	taglist = Vjde::CtagsTagList.new(VIM::evaluate('&tags'))
-	str=''
-	taglist.max=30
-	taglist.count=0
-	word = VIM::evaluate('word')
-	taglist.each_member(VIM::evaluate('cls'),word) { |t,f|
-		next if t.name!= word
+	taglist.each_member(VIM::evaluate('cls'),VIM::evaluate('word'),VIM::evaluate("full")==1) { |t,f|
 		cmd = t.cmd
 		cmd.gsub!('\\','\\\\\\')
 		cmd.gsub!('"','\"')

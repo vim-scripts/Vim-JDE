@@ -89,7 +89,7 @@ function! s:VjdeSaveProject() " {{{2
     endif
 endf
 func! s:VjdeWriteStr(name) 
-	call add(s:lines,'let '.a:name."=\"".escape(eval(a:name),'"')."\"")
+	call add(s:lines,'let '.a:name."='".escape(eval(a:name),"'")."'")
 endf
 func! s:VjdeWriteNumber(name) 
 	call add(s:lines,'let '.a:name."=".eval(a:name))

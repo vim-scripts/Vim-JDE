@@ -1,4 +1,11 @@
 module Vjde
+		def Vjde.getCtags(tagsVar,cmd='')
+				if File.executable?(cmd)
+						return ReadTags.new(tagsVar,cmd)
+				end
+				return CtagsTagList.new(tagsVar)
+		end
+		#{{{2
     def Vjde.getTagFiles(tagsVar)
         if ( (tagsVar == "") || (tagsVar == nil) )
             tagsVar = "./tags,/"
@@ -32,8 +39,9 @@ module Vjde
 
         return result
     end
+	#}}}2
 
-
+	#{{{2
     def Vjde.generateIndex(fileName,len=1)
 	    return if !File.exist?(fileName)
         index = 0
@@ -52,6 +60,7 @@ module Vjde
         f_tag.close()
         f_idx.close()
     end
+	#}}}2
 
     def Vjde.curVimDir()
         curDir = Dir.pwd
@@ -83,6 +92,7 @@ module Vjde
     end
 
     # manages one tag.
+	#{{{2
     class CtagsTag
         attr_reader :scope
         attr_reader :name
@@ -228,10 +238,13 @@ module Vjde
         end
 
     end
+	#}}}2
 
     class CtagsTagList
 	    attr_accessor :max
 	    attr_accessor :count
+	    attr_accessor :type_searched
+	    attr_accessor :max_deep
 
 	    RE_CMD_LINE=/((typedef|struct|union|enum|public|prviate|protected|class)*\s)*/
 	def initialize(tagsVar)
@@ -239,6 +252,8 @@ module Vjde
             @local_depth = 0
 	    @max = -1
 	    @count = 0
+	    @type_searched = Array.new
+	    @max_deep = 2
         end
 
 
@@ -258,6 +273,7 @@ module Vjde
 		    f_tag.close()
 		    return seek
 	end
+	#{{{2
 	def get_skip(tagFile,beginning) 
 	    seek = -1
             headLen = -1
@@ -301,6 +317,7 @@ module Vjde
             end
 	    return seek
 	end
+	#}}}2
 	def each_tag(name='',firstfile=true)
 		find = false
 	    @tagFiles.each { |curFile|
@@ -312,6 +329,7 @@ module Vjde
 		    else
 			    len = name.length
 			    each_tag4file(curFile,get_skip(curFile,name),name) { |t|
+					next if firstfile && t.name!=name
 				    tg = t.name[0,len]
 				    yield(t,curFile) if tg==name
 				    break if tg>name
@@ -319,6 +337,7 @@ module Vjde
 		    end
 	    }
 	end
+	#{{{2
         def each_tag4file(tagFile,seek=0,must='')
 		return if seek==-1
             file = File.open(tagFile)
@@ -338,7 +357,9 @@ module Vjde
             file.close
 	    return seek
     end
+	#}}}2
 
+	#{{{2
     def each_class(className='')
 	    if className.length == 0
 		    each_tag() { |t,f|
@@ -355,15 +376,34 @@ module Vjde
 		    }
 	    end
     end
+	#}}}2
     def CtagsTagList.get_type(line2,name) 
-	    re=Regexp.new('[^ \t]+(\s*<.*>)*(\s*\[.*\])*[	 *]+'+name+'\W+')
+	    re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\W')
 	    line = line2[re]
+	    return nil if line==nil
+	    find = true
+	    while find
+		    find = false
+		    line.gsub!(/<[^<>]*>/) { |p|
+			    find = true
+			    ''
+		    }
+	    end
 	    return nil if line==nil
 	    idx = line.index(/[\[<( 	*]/)
 	    return line[0,idx] if idx!= nil
 	    nil
     end
+	#{{{2
     def find_class(className1)
+	    if @type_searched.include?(className1) || @type_searched.length>=@max_deep
+		    if block_given? 
+			    break
+		    else
+			    return nil
+		    end
+	    end
+	    @type_searched << className1
 	    className = className1
 	    idx = className1.rindex("::")
 	    ns = nil
@@ -380,7 +420,14 @@ module Vjde
 			   if ( t.className !=nil)
 				   next if t.className.rindex(className1)!= t.className.length - className1.length
 			   end
-			   return t,f
+			   #puts t.name
+			   #puts t.ns
+			   #puts t.kind
+			   if block_given?
+				   yield(t,f)
+			   else
+				   return t,f
+			   end
 		    elsif t.kind=='t'
 			   if ( t.ns!= nil && ns!=nil) 
 				   next if t.ns.rindex(ns)!= t.ns.length-ns.length
@@ -391,19 +438,29 @@ module Vjde
 			   if t.cmd.length>0
 				   cmd = CtagsTagList.get_type(t.cmd,className)
 				   if cmd!=nil
-					   return find_class(cmd) 
+					   if block_given?
+						   find_class(cmd) { |t,f| yield(t,f) }
+					   else
+						   return find_class(cmd) 
+					   end
 				   end
 			   end
 		   elsif t.kind=='v'
 			   cmd = CtagsTagList.get_type(t.cmd,className)
 			   if cmd!=nil
-				   return find_class(cmd) 
+				   if block_given?
+					   find_class(cmd) { |t,f| yield(t,f) }
+				   else
+					   return find_class(cmd) 
+				   end
 			   end
 		   end
 	    }
 	    return nil
     end
-    def each_member(className1, beginning='')
+	#}}}2
+	#{{{2
+    def each_member(className1, beginning='',full=false)
 	    className = className1
 	    clsTag = nil
 	    seachedFile = nil
@@ -413,17 +470,20 @@ module Vjde
 	    clsTag = cls[0]
 	    seachedFile = cls[1]
 
+
 	    #namespace
 	    if clsTag.kind=='n'
+		    ns = clsTag.ns+"::" + clsTag.name
 		    if beginning.length==0
-			    each_tag4file( seachedFile ,0,className1) { |t|
-				    yield(t,seachedFile) if t.ns==className
+			    each_tag4file( seachedFile ,0,ns) { |t|
+				    yield(t,seachedFile) if t.ns== ns
 			    }
 		    else
 			    each_tag4file( seachedFile,get_skip(seachedFile,beginning),className1) {|t|
+					next if full && t.name!=beginning
 				    tg = t.name[0,beginning.length]
 				    break if tg > beginning 
-				    yield(t,seachedFile) if t.ns==className && t.name[0,beginning.length]==beginning
+				    yield(t,seachedFile) if t.ns==ns && t.name[0,beginning.length]==beginning
 			    }
 		    end
 		    return
@@ -433,21 +493,194 @@ module Vjde
 	    cn = ""
 	    cn = cn + clsTag.ns+"::" if clsTag.ns != nil
 	    cn = cn + clsTag.name
+	    pre = cn
+	    pre = "class:"+cn if clsTag.kind == 'c'
+	    pre = "struct:"+cn if clsTag.kind == 's'
 	    if beginning.length==0
-		    each_tag4file( seachedFile,0,className1) { |t|
+		    each_tag4file( seachedFile,0,pre) { |t|
 			    yield(t,seachedFile) if t.className==cn
 		    }
 	    else
-		    each_tag4file( seachedFile,get_skip(seachedFile,beginning),className1) {|t|
+		    each_tag4file( seachedFile,get_skip(seachedFile,beginning),pre) {|t|
 			    tg = t.name[0,beginning.length]
 			    break if tg > beginning 
 			    yield(t,seachedFile) if t.className==cn && t.name[0,beginning.length]==beginning
 		    }
 	    end
     end
+		#}}}2
 end
+#{{{1
+class ReadTags
+	attr_accessor :cmd
+	attr_accessor :type_searched
+	attr_accessor :max_deep
+	attr_accessor :max_tags
+	attr_accessor :count
+	def initialize(tagsVar,cmd)
+            @tagFiles = Vjde::getTagFiles(tagsVar)
+	    @cmd = cmd
+	    @type_searched = Array.new
+	    @max_deep = 2
+		@max_tags = -1
+    end
+	def max=(m)
+			@max_tags = m
+	end
+	#{{{2
+    def ReadTags.get_type(line2,name) 
+	    re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\W')
+	    line = line2[re]
+	    return nil if line==nil
+	    find = true
+	    while find
+		    find = false
+		    line.gsub!(/<[^<>]*>/) { |p|
+			    find = true
+			    ''
+		    }
+	    end
+	    return nil if line==nil
+	    idx = line.index(/[\[<( 	*]/)
+	    return line[0,idx] if idx!= nil
+	    nil
+    end
+	#}}}2
+	#{{{2
+    def find_class(className1) 
+	    if @type_searched.include?(className1) || @type_searched.length>=@max_deep
+		    if block_given? 
+			    break
+		    else
+			    return nil
+		    end
+	    end
+	    @type_searched << className1
+
+	    className = className1
+	    idx = className1.rindex("::")
+	    ns = nil
+	    if idx != nil
+		    ns = className1[0,idx]
+		    className = className1[idx+2..-1]
+	    end
+
+
+		#{{{3
+	    @tagFiles.each { |f|
+		    next if (!FileTest.exist?(f))
+		    cmdline= @cmd + " -e -k ncstu -t #{f} #{className}"
+		    res = `#{cmdline}`
+		    next if res.length==0
+		    res.each { |l|
+			    t = CtagsTag.getTagFromCtag(l,nil)
+			    if t.kind=='c' || t.kind=='n' || t.kind=='s'
+				   if ( t.ns!= nil && ns!=nil) 
+					   next if t.ns.rindex(ns)!= t.ns.length-ns.length
+				   end
+				   if ( t.className !=nil)
+					   next if t.className.rindex(className1)!= t.className.length - className1.length
+				   end
+				   if block_given?
+					   yield(t,f)
+				   else
+					   return t,f
+				   end
+			   elsif t.kind=='t'
+				   if ( t.ns!= nil && ns!=nil) 
+					   next if t.ns.rindex(ns)!= t.ns.length-ns.length
+				   end
+				   if ( t.className !=nil && ns!=nil)
+					   next if t.className.rindex(ns)!= t.className.length-ns.length
+				   end
+				   if t.cmd.length>0
+					   cmd = ReadTags.get_type(t.cmd,className)
+					   if cmd!=nil
+						   if block_given?
+							   find_class(cmd) { |t,f| yield(t,f) }
+						   else
+							   return find_class(cmd) 
+						   end
+					   end
+				   end
+		   elsif t.kind=='v'
+			   cmd = ReadTags.get_type(t.cmd,className)
+			   if cmd!=nil
+				   if block_given?
+					   find_class(cmd) { |t,f| yield(t,f) }
+				   else
+					   return find_class(cmd) 
+				   end
+			   end
+		   end
+		    }
+	    }
+		nil
+		#}}}3
+    end
+	#}}}2
+	#{{{2
+    def each_member(className1, beginning='',full=false)
+	    className = className1
+	    clsTag = nil
+	    seachedFile = nil
+	    cls = find_class(className)
+	    return if cls==nil
+
+		para = ""
+		para = " -p " if !full
+
+	    clsTag = cls[0]
+	    seachedFile = cls[1]
+
+		cmdline = @cmd + " -e #{para} "
+		cmdline = cmdline + " -m #{@max_tags} " if @max_tags!=-1
+		ns =''
+		ns = clsTag.ns+"::" if clsTag.ns!=nil && clsTag.ns.length!=0
+		ns = ns + clsTag.name
+		if clsTag.kind=='n'
+				cmdline = cmdline + " -f namespace #{ns} "
+		elsif clsTag.kind=='c'
+				cmdline = cmdline + " -f class #{ns} "
+		elsif clsTag.kind=='s'
+				cmdline = cmdline + " -f struct #{ns} "
+		end
+		cmdline = cmdline + " -t #{seachedFile} #{beginning}"
+		res = `#{cmdline}`
+		res.each { |l|
+			    t = CtagsTag.getTagFromCtag(l,nil)
+				yield(t,seachedFile)
+		}
+end
+#}}}2
+	def each_tag(beginning,full=false)
+
+		count = 0
+		para = ""
+		para = " -p " if !full
+		@tagFiles.each { |f|
+				next if (!FileTest.exist?(f))
+				cmdline = @cmd + " -e #{para} "
+				cmdline = cmdline + " -m #{@max_tags-count} " if @max_tags!=-1
+				if beginning!=nil && beginning.length>0
+						cmdline = cmdline + " -t #{f} #{beginning}"
+				else
+						cmdline = cmdline + " -t #{f} -l"
+				end
+				res = `#{cmdline}`
+				res.each { |l|
+						t = CtagsTag.getTagFromCtag(l,nil)
+						yield(t,f)
+						count +=1
+				}
+				break if @max_tags==count
+		}
+	end
+end
+#}}}1
 
 end
+# {{{2
 # this file separator API is badly broken
 # or I missed something..
 
@@ -462,12 +695,36 @@ end
 #arrs = taglist.find_class('NATION')
 #puts arrs[0].name if arrs!=nil
 #d1 = Time.now
-#taglist = Vjde::CtagsTagList.new("d:/boost_1_33_0/tags")
-#cls = taglist.find_class('boost::multi_index::index')
-#puts 'a'
+#taglist.max_deep = 1
+#taglist.find_class('boost::multi_index') do |t,f|
+	#	puts t.name
+	#puts t.ns
+	#puts t.className
+	#puts t.cmd
+	#break
+	#end
+#puts taglist.type_searched
+
+#puts taglist.type_searched
+
 #puts cls[0].name if cls!=nil
-#puts 'a'
 #puts cls[0].ns if cls!=nil
+#{ |t,f|
+	#puts t.name 
+	#puts t.ns
+	#puts t.kind
+#}
+#}}}2
+#taglist.max=100
+# {{{2
+#taglist.max=100 
+#taglist.count=0
+#taglist.each_member('__gnu_cxx::__normal_iterator','') {|t,f|
+	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
+	#taglist.count+=1
+#}
+#puts 'a'
+#puts 'a'
 #puts 'a'
 #puts cls[0].className if cls!=nil
 #puts 'a'
@@ -476,11 +733,6 @@ end
 	#if t.kind=='t'
 	
 	#end
-#}
-#taglist.max=100
-#taglist.each_member('boost::multi_index','') {|t,f|
-	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
-	#taglist.count+=1
 #}
 #taglist.each_tag('VjdeTem') { |t,f|
 	#cmd = t.cmd
@@ -491,4 +743,42 @@ end
 #puts Time.now - d1
 #str='/^ typedef		  abc<def> a;$/'
 #puts str[/\/\^.*\$\//]
-#puts Vjde::CtagsTagList.get_type('/^  string doc_cmd_line;$/','doc_cmd_line')
+#module Vjde
+	#class CtagsTagList 
+		#def CtagsTagList.get_type(t,s)
+			#puts 'hello'+t + s
+		#end
+	#end
+#end
+#taglist = Vjde::CtagsTagList.new("d:/mingw/include/c++/3.4.2/tags")
+#taglist.each_member('std::string','') {|t,f|
+	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
+	#taglist.count+=1
+#}
+#puts Vjde::CtagsTagList.get_type('/^}  NATION;  $/','NATION')
+# }}}2
+
+#taglist = Vjde::getCtags("d:/boost_1_32_0/tags,./tags,tags,d:\\mingw\\include\\tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
+#t1 = Time.now
+#taglist.find_class('multi_index') { |t,f|
+		#puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd}"
+#}
+#puts taglist.find_class('multi_index')
+#taglist.find_class('multi_index')  { |t,f|
+		#puts t
+		#puts f
+#}
+#puts cls[0].name
+#puts cls[0].ns
+#taglist.max_tags = 30
+#taglist.each_member('boost::multi_index::index','t') { |t,f|
+	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
+#}
+#taglist.each_tag('gtk_widget',false) {|t,f|
+	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
+	#puts '---------------'
+	#puts t.cmd
+	#taglist.count+=1
+	#}
+#puts Time.now - t1
+# vim: ft=ruby:fdm=marker:ts=4

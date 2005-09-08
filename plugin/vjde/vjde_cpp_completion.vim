@@ -18,7 +18,7 @@ func! VjdeGetCppType(v)
 	let lnr = line('.')
 	let cnr = col('.')
 	"let pattern='\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*[* \t]\+\<'.a:v.'\>'
-	let pattern='\(\<\i\+\>\(\s*<.*>\)*::\)*\<\i\+\>\(\[.*\]\)*[* \t]\+\<'.a:v.'\>'
+	let pattern='\(\<\i\+\>\(\s*<.*>\s*\)*::\)*\<\i\+\>\(\s*<.*>\s*\)*\(\[.*\]\)*[* \t]\+\<'.a:v.'\>'
 	let pos = VjdeGotoDefPos(pattern,'b')
 	if pos[0]==0
 		call cursor(lnr,cnr)
@@ -95,11 +95,11 @@ func! VjdeCppCFU(line,base,col,findstart) "{{{2
     " call the parameter info
     if a:line[s:last_start-1]=='(' && (s:last_start == a:col)
 	    let s:types=VjdeCppObjectSplit(lstr[0:-2].'.')
-	    if len(s:types)==0
-		    return CtagsCompletion3(header.a:base)
-	    else
-		    let vt = VjdeGetCppType(header.stypes[0])
-		    return CtagsCompletion4(vt,s:types[-1])
+	    if len(s:types)==1
+		    return CtagsCompletion(s:types[0],1)
+	    elseif len(s:types)>1
+		    let vt = VjdeGetCppType(s:types[0])
+		    return CtagsCompletion2(vt,s:types[-1],1)
 	    end
 	    return ""
     endif
