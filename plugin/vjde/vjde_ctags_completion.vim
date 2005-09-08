@@ -14,6 +14,14 @@ endif
 if !exists('g:vjde_max_tags')
 		let g:vjde_max_tags=100
 endif
+if !exists('g:vjde_ctags_ruby')
+		let g:vjde_ctags_ruby = has('ruby')
+endif
+if g:vjde_ctags_ruby && !executable(g:vjde_readtags) 
+		exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_ctags_support.rb'
+else
+		runtime plugin/vjde/vjde_ctags_support.vim
+endif
 let s:matched_tags=[]
 let s:retstr=''
 let s:header=''
@@ -34,6 +42,11 @@ endf
 func! VjdeGetCppCFUTags()
 	return s:matched_tags
 endf
+func!  VjdeHandleTags(tg,ff)
+		call s:VjdeAddToTags(a:tg.name,a:tg.kind,a:tg.cmd)
+		let s:retstr.=a:tg.name."\n"
+		return 1
+endf
 " completion for a word, a:1 is fully or partly
 func! CtagsCompletion(word,...) "{{{2
 	if strlen(a:word)==0
@@ -46,6 +59,13 @@ func! CtagsCompletion(word,...) "{{{2
 	call s:VjdeCleanTags()
 	let word = a:word
 	let s:header = word.':'
+	if !g:vjde_ctags_ruby && executable(g:vjde_readtags)
+			let s:retstr=''
+			let cmp = VjdeReadTags_New(&tags,g:vjde_readtags)
+			let cmp.max_tags = g:vjde_max_tags
+			call cmp.Each(word,'VjdeHandleTags',full)
+			return s:retstr
+	endif
 ruby<<EOF
 	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
 	str=''
@@ -74,8 +94,14 @@ func! CtagsCompletion2(cls,word,...) "{{{2
 	if a:0 > 0
 			let full = a:1
 	endif
+	if !g:vjde_ctags_ruby && executable(g:vjde_readtags)
+			let s:retstr=''
+			let cmp = VjdeReadTags_New(&tags,g:vjde_readtags)
+			let cmp.max_tags = g:vjde_max_tags
+			call cmp.EachMember(cls,word,'VjdeHandleTags',full)
+			return s:retstr
+	endif
 ruby<<EOF
-#taglist = Vjde::CtagsTagList.new(VIM::evaluate('&tags'))
 	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
 	str=''
 	taglist.max=VIM::evaluate("g:vjde_max_tags").to_i 
