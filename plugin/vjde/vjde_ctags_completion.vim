@@ -17,7 +17,7 @@ endif
 if !exists('g:vjde_ctags_ruby')
 		let g:vjde_ctags_ruby = has('ruby')
 endif
-if g:vjde_ctags_ruby && !executable(g:vjde_readtags) 
+if g:vjde_ctags_ruby 
 		exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_ctags_support.rb'
 else
 		runtime plugin/vjde/vjde_ctags_support.vim

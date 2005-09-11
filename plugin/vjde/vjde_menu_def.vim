@@ -291,6 +291,22 @@ func! VjdeSetupIab()
 	imap <buffer> <c-j> <esc>:call VjdePreviewIab({})<cr>a
 endf
 amenu Vim\ &JDE.Se&ttings.&Use\ Iabbr :call VjdeSetupIab()<cr>
+func! VjdeSetupJSP()
+	set cfu=VjdeCompletionFun 
+	let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def") 
+	imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
+	set ft=jsp
+	"if strlen(&ft)==0 | set ft=jsp | endif
+endf
+func! VjdeSetupHTML()
+	set cfu=VjdeHTMLFun
+	let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def") 
+	imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
+	"if strlen(&ft)==0 | set ft=html | endif
+endf
+amenu Vim\ &JDE.Se&ttings.Treat\ as\ java	:call VjdeSetupJSP() <cr>
+amenu Vim\ &JDE.Se&ttings.Treat\ as\ jsp	:call VjdeSetupJSP() <cr>
+amenu Vim\ &JDE.Se&ttings.Treat\ as\ html	:call VjdeSetupHTML() <cr>
 amenu <silent> Vim\ &JDE.Se&ttings.&Show\ Params(on/off) :let g:vjde_show_paras=1-g:vjde_show_paras <CR>
 amenu <silent> Vim\ &JDE.Se&ttings.&Completion\ Child(XML)(on/off) :let g:vjde_xml_advance=1-g:vjde_xml_advance <CR>
 amenu  Vim\ &JDE.Se&ttings.--find-- :

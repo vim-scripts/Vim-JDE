@@ -1,4 +1,135 @@
 module Vjde
+		class SourceReader #{{{2
+				#{{{3
+				RE_TYPEDEFINE = /\s*typedef\s*(struct|union)\s.*$/
+				RE_COMMENTER = /^\s*\/\/.*/
+				RE_COMMENTER2 = /\/\/.*$/
+				RE_COMMENTER3=/\/\*.*\*\//
+				RE_START=/\/\*/
+				RE_END=/\*\//
+				#RE_STRING=/"(\\\\|\\"|[^\\"])*"/
+				RE_STRING=/"(\\|\"|[^\"])*"/
+				RE_DEFINE=/(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+\w+\s*\W/
+				KEY_WORDS=['int','char','long','struct','union','class','enum']
+				def initialize
+						@lines=[]
+						@first = false
+						@found = true
+						@count = 0
+				end
+				def clear
+						@lines=[]
+						@first = false
+						@found = true
+						@count = 0
+				end
+				#}}}3
+				def each_line(f) #{{{3
+						incomment = false
+						f.each { |l|
+								l.chomp!
+								if !incomment
+										l.gsub!(RE_STRING,'')
+										l.gsub!(RE_COMMENTER2,'')
+										next if l.length==0
+								end
+								if l.index(RE_START)!=nil && !incomment
+										incomment = true
+										if incomment && l.index(RE_END)!=nil
+												incomment = false
+												l.gsub!(RE_COMMENTER3,'')
+												#next if l.chomp!.length==0
+												yield(l)
+												next
+										end
+								end
+								if incomment && l.index(RE_END)!=nil
+										l.gsub!(/^.*\*\//,'')
+										incomment = false
+										#next if l.chomp!.length==0
+										yield(l)
+										next
+								end
+								next if incomment
+								next if l.index(RE_COMMENTER)!=nil
+								#next if l.chomp!.length==0
+								yield(l)
+						}
+				end
+				#}}}3
+				def find_typedef(tags,file,cmd,beginning='') #{{{3
+						source = File.dirname(tags)+'/'+file
+						return unless File.exist?(source)
+						f = File.open(source)
+						clear()
+						each_line(f) { |l|
+							do_typedef(l,cmd) { |lines| 
+								lines.each { |ls|
+									tag = get_tag(ls)
+									next if tag==nil
+									tag.file=file 
+									tag.cmd='/^'+ls+'$/'
+									if beginning==nil|| beginning==''
+										yield(tag) 
+									else
+										yield(tag) if tag.name.index(beginning)==0
+									end
+								}
+							}
+						}
+						f.close
+				end
+				#}}}3
+				def get_tag(ls) #{{{3
+						l = ls.sub(/\(\s*[^*][^()]*\)/,'')
+						ld = l[RE_DEFINE]
+						if ld==nil
+								l = ls.sub('(','')
+								l = l.sub(')','')
+								ld = l[RE_DEFINE]
+						end
+						return nil if ld==nil
+						name = ld[/\w+\s*\W$/][0..-2]
+						name.strip!
+						return nil if KEY_WORDS.include?(name)
+						tag = CtagsTag.new('','','','','','','','','','')
+						tag.name=name
+						#tag.cmd='/^'+l+'$/'
+						tag.kind='m'
+						return tag
+				end
+				#}}}3
+				def do_typedef(l,cmd) #{{{3
+						if @found
+								if !@first && @count==0
+										@found = false
+										yield(@lines) if @lines[-1]==cmd
+										break if @lines[-1]==cmd
+										@lines=[]
+										@first=false
+										return
+								end
+								if l.index(RE_TYPEDEFINE)!=nil
+										@lines=[]
+										@first=false
+										return
+								end
+								@lines << l
+								@count += l.count('{')
+								@first =( @count == 0)
+								@count -= l.count('}')
+								return
+						end
+						return if l.index(RE_TYPEDEFINE)==nil
+						@found = true
+						@lines << l
+						@count += l.count('{')
+						@first = ( @count == 0)
+						@count -= l.count('}')
+				end
+				#}}}3
+		end
+		#}}}2
 		def Vjde.getCtags(tagsVar,cmd='')
 				if File.executable?(cmd)
 						return ReadTags.new(tagsVar,cmd)
@@ -67,6 +198,7 @@ module Vjde
         return curDir
     end
 
+	#{{{2
     class MyFile
         def File.dirUp(path)
             # remove final "/" if there is one
@@ -90,20 +222,20 @@ module Vjde
             return false
         end
     end
+	#}}}2
 
     # manages one tag.
-	#{{{2
-    class CtagsTag
+    class CtagsTag #{{{2
         attr_reader :scope
-        attr_reader :name
-	attr_reader :file
-	attr_reader :line
-        attr_reader :className
-        attr_reader :kind
-        attr_reader :inherits
-        attr_reader :access
-	attr_reader :ns
-	attr_reader :cmd
+        attr_accessor:name
+	attr_accessor:file
+	attr_accessor:line
+        attr_accessor :className
+        attr_accessor :kind
+        attr_accessor :inherits
+        attr_accessor :access
+	attr_accessor :ns
+	attr_accessor :cmd
 	RE_CMD_SP=/\/\^.*\$\//
 
         def initialize(name, file, kind, line, scope, inherits, className, access,ns,cmd)
@@ -239,8 +371,7 @@ module Vjde
 
     end
 	#}}}2
-
-    class CtagsTagList
+    class CtagsTagList #{{{2
 	    attr_accessor :max
 	    attr_accessor :count
 	    attr_accessor :type_searched
@@ -273,7 +404,7 @@ module Vjde
 		    f_tag.close()
 		    return seek
 	end
-	#{{{2
+	#{{{3
 	def get_skip(tagFile,beginning) 
 	    seek = -1
             headLen = -1
@@ -317,7 +448,8 @@ module Vjde
             end
 	    return seek
 	end
-	#}}}2
+	#}}}3
+	#{{{3
 	def each_tag(name='',firstfile=true)
 		find = false
 	    @tagFiles.each { |curFile|
@@ -337,7 +469,8 @@ module Vjde
 		    end
 	    }
 	end
-	#{{{2
+	#}}}3
+	#{{{3
         def each_tag4file(tagFile,seek=0,must='')
 		return if seek==-1
             file = File.open(tagFile)
@@ -357,9 +490,9 @@ module Vjde
             file.close
 	    return seek
     end
-	#}}}2
+	#}}}3
 
-	#{{{2
+	#{{{3
     def each_class(className='')
 	    if className.length == 0
 		    each_tag() { |t,f|
@@ -376,9 +509,10 @@ module Vjde
 		    }
 	    end
     end
-	#}}}2
+	#}}}3
+	#{{{3
     def CtagsTagList.get_type(line2,name) 
-	    re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\W')
+	    re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\s*\W')
 	    line = line2[re]
 	    return nil if line==nil
 	    find = true
@@ -394,7 +528,8 @@ module Vjde
 	    return line[0,idx] if idx!= nil
 	    nil
     end
-	#{{{2
+	#}}}3
+	#{{{3
     def find_class(className1)
 	    if @type_searched.include?(className1) || @type_searched.length>=@max_deep
 		    if block_given? 
@@ -438,11 +573,17 @@ module Vjde
 			   if t.cmd.length>0
 				   cmd = CtagsTagList.get_type(t.cmd,className)
 				   if cmd!=nil
-					   if block_given?
-						   find_class(cmd) { |t,f| yield(t,f) }
-					   else
-						   return find_class(cmd) 
-					   end
+						   if block_given?
+								   find_class(cmd) { |t,f| yield(t,f) }
+						   else
+								   return find_class(cmd) 
+						   end
+				   else
+						   if block_given?
+								   yield(t,f) 
+						   else
+								   return t,f
+						   end
 				   end
 			   end
 		   elsif t.kind=='v'
@@ -458,8 +599,8 @@ module Vjde
 	    }
 	    return nil
     end
-	#}}}2
-	#{{{2
+	#}}}3
+	#{{{3
     def each_member(className1, beginning='',full=false)
 	    className = className1
 	    clsTag = nil
@@ -470,6 +611,13 @@ module Vjde
 	    clsTag = cls[0]
 	    seachedFile = cls[1]
 
+		if clsTag.kind=='t'
+				src = SourceReader.new
+				src.find_typedef(seachedFile,clsTag.file,clsTag.cmd[2..-3],beginning) { |tag|
+						yield(tag,seachedFile)
+				}
+				return
+		end
 
 	    #namespace
 	    if clsTag.kind=='n'
@@ -508,10 +656,10 @@ module Vjde
 		    }
 	    end
     end
-		#}}}2
+		#}}}3
 end
-#{{{1
-class ReadTags
+#}}}2
+class ReadTags #{{{1
 	attr_accessor :cmd
 	attr_accessor :type_searched
 	attr_accessor :max_deep
@@ -529,7 +677,7 @@ class ReadTags
 	end
 	#{{{2
     def ReadTags.get_type(line2,name) 
-	    re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\W')
+	    re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\s*\W')
 	    line = line2[re]
 	    return nil if line==nil
 	    find = true
@@ -596,21 +744,27 @@ class ReadTags
 				   if t.cmd.length>0
 					   cmd = ReadTags.get_type(t.cmd,className)
 					   if cmd!=nil
-						   if block_given?
-							   find_class(cmd) { |t,f| yield(t,f) }
-						   else
-							   return find_class(cmd) 
-						   end
+							   if block_given?
+									   find_class(cmd) { |t,f| yield(t,f) }
+							   else
+									   return find_class(cmd) 
+							   end
+					   else
+							   if block_given?
+									   yield(t,f) 
+							   else
+									   return t,f
+							   end
 					   end
 				   end
 		   elsif t.kind=='v'
 			   cmd = ReadTags.get_type(t.cmd,className)
 			   if cmd!=nil
-				   if block_given?
-					   find_class(cmd) { |t,f| yield(t,f) }
-				   else
-					   return find_class(cmd) 
-				   end
+					   if block_given?
+							   find_class(cmd) { |t,f| yield(t,f) }
+					   else
+							   return find_class(cmd) 
+					   end
 			   end
 		   end
 		    }
@@ -632,6 +786,14 @@ class ReadTags
 
 	    clsTag = cls[0]
 	    seachedFile = cls[1]
+		#typedef 
+		if clsTag.kind=='t'
+				src = SourceReader.new
+				src.find_typedef(seachedFile,clsTag.file,clsTag.cmd[2..-3],beginning) { |tag|
+						yield(tag,seachedFile)
+				}
+				return
+		end
 
 		cmdline = @cmd + " -e #{para} "
 		cmdline = cmdline + " -m #{@max_tags} " if @max_tags!=-1
@@ -647,12 +809,16 @@ class ReadTags
 		end
 		cmdline = cmdline + " -t #{seachedFile} #{beginning}"
 		res = `#{cmdline}`
+		find = false
 		res.each { |l|
 			    t = CtagsTag.getTagFromCtag(l,nil)
 				yield(t,seachedFile)
+				find = true
 		}
+		
 end
 #}}}2
+#{{{2
 	def each_tag(beginning,full=false)
 
 		count = 0
@@ -677,6 +843,7 @@ end
 		}
 	end
 end
+#}}}2
 #}}}1
 
 end
@@ -758,8 +925,7 @@ end
 #puts Vjde::CtagsTagList.get_type('/^}  NATION;  $/','NATION')
 # }}}2
 
-#taglist = Vjde::getCtags("d:/boost_1_32_0/tags,./tags,tags,d:\\mingw\\include\\tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
-#t1 = Time.now
+#taglist = Vjde::getCtags("d:/temp/first/tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
 #taglist.find_class('multi_index') { |t,f|
 		#puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd}"
 #}
@@ -771,7 +937,7 @@ end
 #puts cls[0].name
 #puts cls[0].ns
 #taglist.max_tags = 30
-#taglist.each_member('boost::multi_index::index','t') { |t,f|
+#taglist.each_member('QQ','') { |t,f|
 	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
 #}
 #taglist.each_tag('gtk_widget',false) {|t,f|
@@ -780,5 +946,26 @@ end
 	#puts t.cmd
 	#taglist.count+=1
 	#}
+#t1 = Time.now
+#tr = Vjde::SourceReader.new
+#tr.find_typedef('d:/temp/first/tags','./t.c','} QQ  ; ') { |tag|
+		#puts tag.name
+#}
+#tr.find_typedef('d:/temp/first/tags','./t.c','} NATION;  ') { |tag|
+		#puts tag.name
+#}
 #puts Time.now - t1
-# vim: ft=ruby:fdm=marker:ts=4
+  
+#re_string=/"(\\|\"|[^\"])*"/
+#str=<<EOF
+#"this is a test"
+#"this is \\" a test"
+#"this is \\\\"
+#EOF
+#str.each { |l|
+		#puts l
+		#puts l[re_string]
+#}
+# vim:ft=ruby:fdm=marker:ts=4:sw=4:
+
+

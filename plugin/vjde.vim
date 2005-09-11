@@ -55,6 +55,9 @@ endif
 if !exists('g:vjde_use_project')
 	let g:vjde_use_project = 0
 endif
+if !exists('g:vjde_jsp_exts')
+	let g:vjde_jsp_exts=''
+endif
 
 let g:vjde_path_spt=':'
 if has('win32')
@@ -125,8 +128,14 @@ if v:version>=700
     au BufNewFile,BufRead,BufEnter *.xsd set cfu=VjdeHTMLFun | let g:vjde_tag_loader=VjdeTagLoaderGet("xsl",g:vjde_install_path."/vjde/tlds/xsd.def")
     au BufNewFile,BufRead,BufEnter *.java set cfu=VjdeCompletionFun | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
     au BufNewFile,BufRead,BufEnter *.jsp set cfu=VjdeCompletionFun |let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
-
     "au! CursorHold *.java nested call java_previewer.CFU()
+
+    for item in split(g:vjde_jsp_exts,';')
+	    if strlen(item)==0 | continue | endif
+	    exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCompletionFun |let g:vjde_tag_loader=VjdeTagLoaderGet("html",'''.g:vjde_install_path.'/vjde/tlds/html.def'')'
+            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <c-space> <Esc>:call java_previewer.CFU(":")<CR>a'
+            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set ft=jsp'
+    endfor
 endif
     if g:vjde_cfu_java_dot
         au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> . .<Esc>:call java_previewer.CFU('.')<CR>a

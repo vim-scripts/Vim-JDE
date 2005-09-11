@@ -1,7 +1,7 @@
 "{{{1
 if !has('ruby')
-	echo 'C++ completion is ruby required!!'
-	finish
+	"echo 'C++ completion is ruby required!!'
+	"finish
 endif
 
 let g:vjde_cpp_previewer= VjdePreviewWindow_New()
@@ -9,11 +9,29 @@ let g:vjde_cpp_previewer= VjdePreviewWindow_New()
 if !exists('g:vjde_cpp_exts')
 	let g:vjde_cpp_exts='cpp;c;cxx;h;hpp;hh'
 endif
+if !exists('g:vjde_gtk_doc_path')
+	if has('win32')
+		let g:vjde_gtk_doc_path='d:/gtk/share/gtk-doc/html'
+	else
+		let g:vjde_gtk_doc_path='/usr/share/gtk-doc/html'
+		let g:vjde_gtk_doc_path=''
+	endif
+endif
 let s:types=[]
 let g:vjde_cpp_previewer.name = 'g:vjde_cpp_previewer'
 let g:vjde_cpp_previewer.onSelect='VjdeInsertWord'
 let g:vjde_cpp_previewer.previewLinesFun='GetCTAGSCompletionLines'
-let g:vjde_cpp_previewer.docLineFun=''
+let g:vjde_cpp_previewer.docLineFun='VjdeGetCppDocLine'
+func! VjdeGetCppDocLine()
+	if !g:wspawn_available || strlen(g:vjde_gtk_doc_path)==0
+		return "\n"
+	endif
+	let docpath = g:vjde_gtk_doc_path
+	let str = g:vjde_doc_gui_width.';'.g:vjde_doc_gui_height.';'
+	let str = str.g:vjde_doc_delay.';'
+	let str = str.'ruby '.substitute(g:vjde_install_path,'\','/','g').'/vjde/vjde_cpp_doc_reader.rb '.docpath.' '
+	return str.";\n"
+endf
 func! VjdeGetCppType(v)
 	let lnr = line('.')
 	let cnr = col('.')

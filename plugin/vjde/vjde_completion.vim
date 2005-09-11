@@ -8,6 +8,7 @@ let s:preview_buffer=[]
 let s:base_types=["void","int","long","float","double","boolean","char","byte"]
 let s:directives={}
 let s:types=[]
+let s:cfu_type=0
 func! s:VjdeDirectiveAttribute(name,...) "{{{2
 	let attr = VjdeTagAttributeElement_New(a:name)
 	if a:0>0
@@ -39,9 +40,14 @@ func! s:VjdeDirectiveInit() "{{{2
 	call eletaglib.AddAttribute(s:VjdeDirectiveAttribute("tagdir"))
 	call eletaglib.AddAttribute(s:VjdeDirectiveAttribute("prefix"))
 
+	let eleattr = VjdeTagElement_New("attribute")
+	call eleattr.AddAttribute(s:VjdeDirectiveAttribute("name"))
+	call eleattr.AddAttribute(s:VjdeDirectiveAttribute("type"))
+
 	let s:directives['page']=elepage
 	let s:directives['include']=eleinclude
 	let s:directives['taglib']=eletaglib
+	let s:directives['attribute']=eleattr
 endf
 call s:VjdeDirectiveInit()
 
@@ -228,7 +234,7 @@ endf
 "1 java 0 taglib 2 html 3 comment 4 xsl
 func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     if a:findstart 
-        let ext = expand('%:e')
+        let ext = &ft "expand('%:e')
         if ext == 'java'
             if synIDattr(synIDtrans(synID(line('.'),a:col-1,1)),"name") == "Comment"
                 let s:cfu_type=3
@@ -813,9 +819,9 @@ endf
 func! s:VjdeDirectiveCFUVIM(line,base,col,findstart) "{{{2
     let s:preview_buffer=[]
     let str=''
-    let attr= match(a:line,'<%@\s\+\(page\|include\|taglib\)\s')>=0?1:0
+    let attr= match(a:line,'<%@\s\+\(page\|include\|taglib\|attribute\)\s')>=0?1:0
     if attr
-	    let mtag = matchstr(a:line,'\(page\|include\|taglib\)')
+	    let mtag = matchstr(a:line,'\(page\|include\|taglib\|attribute\)')
 	    if mtag==''
 		    return ''
 	    endif

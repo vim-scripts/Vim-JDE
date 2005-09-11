@@ -502,8 +502,7 @@ void   on_cursor_changed(GtkTreeView *treeview,
 				index = index==-1?len:index;
 				doc_cmd_line = docline.substr(curr,index-curr);
 				curr = index+1;
-				if ( useShort)
-					use_doc = TRUE;
+				use_doc = TRUE;
 			}
 		}
 
