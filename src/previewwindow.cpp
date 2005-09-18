@@ -790,7 +790,28 @@ int main(int argc,char* argv[])
 		*/
 		memset(doc_buffer,0,DOC_LENGTH);
 		my_system(cmd_line.c_str(),doc_buffer,DOC_LENGTH);
-		if (strlen(doc_buffer)>0) {
+		if (strlen(doc_buffer)>5) {
+			if ( doc_window == NULL) {
+				doc_window = gtk_window_new(GTK_WINDOW_POPUP);
+				gtk_window_set_decorated(GTK_WINDOW(doc_window),FALSE);
+				gtk_window_set_modal(GTK_WINDOW(doc_window),FALSE);
+				gtk_window_move(GTK_WINDOW(doc_window),doc_rect.x,doc_rect.y);
+				gtk_window_resize(GTK_WINDOW(doc_window),doc_rect.width,doc_rect.height);
+				gtk_window_set_title(GTK_WINDOW(doc_window),"document");
+
+				doc_view = gtk_label_new("");//gtk_text_view_new();
+				gtk_label_set_justify(GTK_LABEL(doc_view),GTK_JUSTIFY_LEFT);
+				//g_object_set(G_OBJECT(doc_view),"editable",FALSE,NULL);
+				scrolledwindow3 = gtk_scrolled_window_new (NULL, NULL);
+				gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow3),doc_view);
+				gtk_container_add(GTK_CONTAINER(doc_window),scrolledwindow3);
+
+				g_signal_connect (G_OBJECT (doc_window), "key_release_event",
+						G_CALLBACK (on_key_release_event2), NULL);
+				gtk_widget_show(scrolledwindow3);
+				gtk_widget_show(doc_view);
+				gtk_widget_show(doc_window);
+			}
 			gtk_label_set_markup(GTK_LABEL(doc_view),doc_buffer);
 		}
 		//	gtk_text_buffer_set_text (buffer, doc_buffer, -1);
@@ -803,6 +824,7 @@ int main(int argc,char* argv[])
 			return FALSE;
 		}
 		*/
+		/*
 		if ( doc_window == NULL) {
 			doc_window = gtk_window_new(GTK_WINDOW_POPUP);
 			gtk_window_set_decorated(GTK_WINDOW(doc_window),FALSE);
@@ -824,6 +846,7 @@ int main(int argc,char* argv[])
 			gtk_widget_show(doc_view);
 			gtk_widget_show(doc_window);
 		}
+		*/
 		//gtk_label_set_text((GtkLabel*)input_label,get_select_tag().c_str());
 		if ( idle_handler ) {
 			g_source_remove(idle_handler);

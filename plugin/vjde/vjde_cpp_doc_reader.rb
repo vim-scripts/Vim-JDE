@@ -290,6 +290,7 @@ if $*.length>=3
 		puts line
 	}
 end
+puts "\n"
 #}}}1
 #{{{1
 #puts Vjde::get_loction_line('g_string_insert_c','d:/workspace/vjde3/plugin/vjde/tlds/gtkdoc.txt')

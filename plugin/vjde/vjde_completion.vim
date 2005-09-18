@@ -230,7 +230,17 @@ func! s:VjdeCompletionByVIM(imps) "{{{2
 	return s:success
 endf
 
-
+func! VjdeCompletionFun0(findstart,base)
+	if a:findstart
+		return VjdeCompletionFun(getline('.'),a:base,col('.'),a:findstart)
+	endif
+	call VjdeCompletionFun(getline('.'),a:base,col('.'),a:findstart)
+	if strlen(s:retstr)<2
+		return []
+	else
+		return split(s:retstr,"\n")
+	endif
+endf
 "1 java 0 taglib 2 html 3 comment 4 xsl
 func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     if a:findstart 
@@ -966,6 +976,17 @@ EOF
 endf
 
 
+func! VjdeHTMLFun0(findstart,base)
+	if a:findstart
+		return VjdeHTMLFun(getline('.'),a:base,col('.'),a:findstart)
+	endif
+	call VjdeHTMLFun(getline('.'),a:base,col('.'),a:findstart)
+	if strlen(s:retstr)<2
+		return []
+	else
+		return split(s:retstr,"\n")
+	endif
+endf
 func! VjdeHTMLFun(line,base,col,findstart) "{{{2
     if a:findstart
         return VjdeFindStart(a:line,a:base,a:col,'[ \t=<"]')
@@ -1072,6 +1093,18 @@ func! VjdeTagCompletion(tag,base,t,...) "{{{2
 	elseif a:t=='4' "children
 	endif
 	let s:retstr=str[0:1024]
+endf
+func! VjdeXMLFun0(findstart,base)
+	if a:findstart
+		return VjdeXMLFun(getline('.'),a:base,col('.'),a:findstart)
+	endif
+	call VjdeXMLFun(getline('.'),a:base,col('.'),a:findstart)
+	if strlen(s:retstr)<2
+		return []
+	else
+		return split(s:retstr,"\n")
+	endif
+
 endf
 func! VjdeXMLFun(line,base,col,findstart) "{{{2
     if a:findstart
@@ -1237,8 +1270,8 @@ func! VjdeJavaParameterPreview(...) "{{{2
 	let lstr = getline(line('.'))
 	let cnr = col('.') - off
 	let Cfu = function(&cfu)
-	let s:last_start = Cfu(lstr,'',cnr,1)
-	let mstr = Cfu(lstr,strpart(lstr,s:last_start,cnr-s:last_start),cnr,0)
+	let s:last_start = Cfu(1,'')
+	let mstr = Cfu(0,strpart(lstr,s:last_start,cnr-s:last_start))
 	if len(s:preview_buffer)>0
 		call g:java_previewer.PreviewInfo(join(s:preview_buffer,"\n"))
 	endif

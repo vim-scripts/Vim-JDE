@@ -85,7 +85,7 @@ if has('ruby')
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_taglib_cfu.rb'
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_xml_cfu.rb'
 	"exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_javadoc.rb'
-	au BufNewFile,BufRead,BufEnter *.xml set cfu=VjdeXMLFun 
+	au BufNewFile,BufRead,BufEnter *.xml set cfu=VjdeXMLFun0 
 	command! -nargs=0 VjdeJstl ruby Vjde::init_jstl(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/")
 endif
 
@@ -122,17 +122,17 @@ if has('win32')
     call VjdeSetJava('javaw')
 endif
 if v:version>=700
-    au BufNewFile,BufRead,BufEnter *.html set cfu=VjdeHTMLFun | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
-    au BufNewFile,BufRead,BufEnter *.htm set cfu=VjdeHTMLFun | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
-    au BufNewFile,BufRead,BufEnter *.xsl set cfu=VjdeHTMLFun | let g:vjde_tag_loader=VjdeTagLoaderGet("xsl",g:vjde_install_path."/vjde/tlds/xsl.def")
-    au BufNewFile,BufRead,BufEnter *.xsd set cfu=VjdeHTMLFun | let g:vjde_tag_loader=VjdeTagLoaderGet("xsl",g:vjde_install_path."/vjde/tlds/xsd.def")
-    au BufNewFile,BufRead,BufEnter *.java set cfu=VjdeCompletionFun | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
-    au BufNewFile,BufRead,BufEnter *.jsp set cfu=VjdeCompletionFun |let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
+    au BufNewFile,BufRead,BufEnter *.html set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
+    au BufNewFile,BufRead,BufEnter *.htm set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
+    au BufNewFile,BufRead,BufEnter *.xsl set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("xsl",g:vjde_install_path."/vjde/tlds/xsl.def")
+    au BufNewFile,BufRead,BufEnter *.xsd set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("xsl",g:vjde_install_path."/vjde/tlds/xsd.def")
+    au BufNewFile,BufRead,BufEnter *.java set cfu=VjdeCompletionFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
+    au BufNewFile,BufRead,BufEnter *.jsp set cfu=VjdeCompletionFun0 |let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
     "au! CursorHold *.java nested call java_previewer.CFU()
 
     for item in split(g:vjde_jsp_exts,';')
 	    if strlen(item)==0 | continue | endif
-	    exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCompletionFun |let g:vjde_tag_loader=VjdeTagLoaderGet("html",'''.g:vjde_install_path.'/vjde/tlds/html.def'')'
+	    exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCompletionFun0 |let g:vjde_tag_loader=VjdeTagLoaderGet("html",'''.g:vjde_install_path.'/vjde/tlds/html.def'')'
             exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <c-space> <Esc>:call java_previewer.CFU(":")<CR>a'
             exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set ft=jsp'
     endfor

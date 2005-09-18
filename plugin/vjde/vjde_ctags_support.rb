@@ -236,6 +236,7 @@ module Vjde
         attr_accessor :access
 	attr_accessor :ns
 	attr_accessor :cmd
+	attr_accessor :typename
 	RE_CMD_SP=/\/\^.*\$\//
 
         def initialize(name, file, kind, line, scope, inherits, className, access,ns,cmd)
@@ -285,6 +286,7 @@ module Vjde
             ctag_infos_base = ctag_infos[0].split("\t")
 	    cmd = ctag_line[RE_CMD_SP]
 	    cmd = '' if cmd==nil
+		typename=''
 
 
             if ( ctag_infos[1] == nil) 
@@ -323,6 +325,8 @@ module Vjde
 			access = info[1].chomp
 		elsif ( info[0]=='namespace')
 			ns = info[1].chomp
+		elsif ( info[0]=='typename')
+			typename=info[1].chomp
 		end
                 index = index + 1
             end
@@ -346,6 +350,7 @@ module Vjde
             # 			# don't parse it again
             # 			return nil
             # 		end
+			result.typename=typename
             return result
         end
 
@@ -788,11 +793,24 @@ class ReadTags #{{{1
 	    seachedFile = cls[1]
 		#typedef 
 		if clsTag.kind=='t'
+			if clsTag.typename!=''
+				idx = clsTag.typename.index(':')
+				ty = clsTag.typename[0..idx-1]
+				tv = clsTag.typename[idx+1..-1]
+				case ty
+				when "struct"
+					clsTag.kind='s'
+				when "union"
+					clsTag.kind='u'
+				end
+				clsTag.name=tv
+			else
 				src = SourceReader.new
 				src.find_typedef(seachedFile,clsTag.file,clsTag.cmd[2..-3],beginning) { |tag|
 						yield(tag,seachedFile)
 				}
 				return
+			end
 		end
 
 		cmdline = @cmd + " -e #{para} "
@@ -806,8 +824,11 @@ class ReadTags #{{{1
 				cmdline = cmdline + " -f class #{ns} "
 		elsif clsTag.kind=='s'
 				cmdline = cmdline + " -f struct #{ns} "
+		elsif clsTag.kind=='u'
+				cmdline = cmdline + " -f union #{ns} "
 		end
 		cmdline = cmdline + " -t #{seachedFile} #{beginning}"
+		#puts cmdline
 		res = `#{cmdline}`
 		find = false
 		res.each { |l|
@@ -925,7 +946,7 @@ end
 #puts Vjde::CtagsTagList.get_type('/^}  NATION;  $/','NATION')
 # }}}2
 
-#taglist = Vjde::getCtags("d:/temp/first/tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
+taglist = Vjde::getCtags("e:/temp/testcpp/tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
 #taglist.find_class('multi_index') { |t,f|
 		#puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd}"
 #}

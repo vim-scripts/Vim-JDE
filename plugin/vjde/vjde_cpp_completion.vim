@@ -14,7 +14,6 @@ if !exists('g:vjde_gtk_doc_path')
 		let g:vjde_gtk_doc_path='d:/gtk/share/gtk-doc/html'
 	else
 		let g:vjde_gtk_doc_path='/usr/share/gtk-doc/html'
-		let g:vjde_gtk_doc_path=''
 	endif
 endif
 let s:types=[]
@@ -104,6 +103,9 @@ func! VjdeCppObjectSplit(lstr)
 	endif
 	return s:types
 endf
+func! VjdeCppCFU0(findstart,base) 
+	return VjdeCppCFU(getline('.'),a:base,col('.'),a:findstart)
+endf
 func! VjdeCppCFU(line,base,col,findstart) "{{{2
     if a:findstart
         let s:last_start  = VjdeFindStart(a:line,a:base,a:col,'[.> \t:?)(+\-*/&|^,]')
@@ -143,13 +145,13 @@ func! VjdeCppCompletion(char,short)
     let lstr = getline(line('.'))
     let cnr = col('.')
     let Cfu=function(&cfu)
-    let s:last_start  = Cfu(lstr,'',cnr,1)
+    let s:last_start  = Cfu(1,'')
     if s:last_start < 0
 	    return
     endif
 
     if lstr[s:last_start-1]=='('
-	    let mstr = Cfu(lstr,strpart(lstr,s:last_start,cnr-s:last_start),cnr,0)
+	    let mstr = Cfu(0,strpart(lstr,s:last_start,cnr-s:last_start))
 	    if mstr == ''
 		    return ''
 	    endif
@@ -179,7 +181,7 @@ endf
 "{{{ auto command 
 for item in split(g:vjde_cpp_exts,';')
 	if strlen(item)>0
-		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCppCFU'
+		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCppCFU0'
 		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <C-space> <Esc>:call VjdeCppCompletion("<C-space>",0)<CR>a'
 	endif
 endfor

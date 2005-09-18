@@ -44,8 +44,10 @@ function! VjdeBrowseProject() " {{{2
         return 
     endif
     
+    if stridx(prj,'/')!=-1 || stridx(prj,'\')!=-1 
+	    exec 'cd '.substitute(prj,'[\\/]\+[^\\/]*$','','')
+    endif
     call s:VjdeLoadProject(prj)
-    exec 'cd '.substitute(prj,'[\\/]\+[^\\/]*$','','')
     if exists(':Project')
 	    if filereadable('.prj') 
 		    exec 'Project .prj'

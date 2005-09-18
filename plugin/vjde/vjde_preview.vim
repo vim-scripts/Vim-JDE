@@ -39,14 +39,14 @@ func! VjdePreviewCFU(char,...) dict "{{{2
 	let g:vjde_show_preview=1
 	let linestr= getline(line('.'))
 	let cnr = col('.')
-	let s = Cfufun(linestr,'',cnr,1)
-	let mretstr=Cfufun(linestr,strpart(linestr,s,cnr-s),cnr,0)
+	let s = Cfufun(1,'')
+	let mretstr=Cfufun(0,strpart(linestr,s,cnr-s))
 	let g:vjde_show_preview=show_prev_old
 
     if ( !empty(self.preview_buffer))
 	    call remove(self.preview_buffer,0,-1)
     endif
-        if mretstr!=""
+        if len(mretstr)!=0
 	    if strlen(self.previewLinesFun)>0 
 		    let FunGetLines = function(self.previewLinesFun)
 		    call FunGetLines(self)
