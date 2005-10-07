@@ -1,4 +1,7 @@
 
+if !exists('g:vjde_loaded') || &cp
+	finish
+endif
 
 if !exists('g:vjde_ctags_exts')
 		let g:vjde_ctags_exts=''

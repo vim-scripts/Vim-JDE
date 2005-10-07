@@ -3,6 +3,12 @@ if !has('ruby')
 	"echo 'C++ completion is ruby required!!'
 	"finish
 endif
+if !exists('g:vjde_loaded') || &cp
+	finish
+endif
+
+
+runtime plugin/vjde/vjde_preview.vim
 
 let g:vjde_cpp_previewer= VjdePreviewWindow_New()
 

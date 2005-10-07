@@ -1,4 +1,7 @@
 
+if !exists('g:vjde_loaded') || &cp
+		finish
+endif
 if exists('g:vjde_template_loaded') || &cp 
 	finish
 endif

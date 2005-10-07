@@ -1,6 +1,10 @@
 if exists("g:vjde_java_utils")
         "finish
 endif
+if !exists('g:vjde_loaded') || &cp
+		finish
+endif
+
 let g:vjde_java_utils=1  "{{{1
 if !exists("g:vjde_utils_setup")
 	let g:vjde_utils_setup=1

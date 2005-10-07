@@ -1,3 +1,7 @@
+
+if !exists('g:vjde_loaded') || &cp
+	finish
+endif
 "{{{2
 func! VjdeGetCtags()
 endf

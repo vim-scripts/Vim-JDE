@@ -1,3 +1,6 @@
+if !exists('g:vjde_loaded') || &cp
+	finish
+endif
 let g:vjde_java_command='java'
 if has('win32')
 	let g:vjde_java_command='javaw'

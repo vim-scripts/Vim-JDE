@@ -5,6 +5,9 @@ let loaded_floatingwindow='yes'
 let enable_floatingwindow=1
 let s:count=0
 
+if !exists('g:floatingwindows')
+	let g:floatingwindows="'__Todo_List__',1,24,1;'.vimproject',1,24,1;'.prj',1,24,1;"
+endif
 function! s:AddFloatingWindow(title,ver,max,min)
 	let s:title_{s:count}=a:title
 	let s:vertical_{s:count}=a:ver
@@ -61,11 +64,15 @@ function! s:OnBufferLeave()
 endfunction
 
 function! s:AddFloatingWindows()
-	call s:AddFloatingWindow('.prj',1,24,1)
-	"call s:AddFloatingWindow('vprj',1,24,1)
-	"call s:AddFloatingWindow('__Tag_List__',1,30,1)
-	"call s:AddFloatingWindow('Vjde_preview',0,&pvh,3)
-	"call s:AddFloatingWindow('__Todo_List__',1,24,1)
+	if v:version>=700
+		for item in split(g:floatingwindows,';')
+			if strlen(item)==0 | continue | endif
+			exec "call s:AddFloatingWindow(".item.")"
+		endfor
+	else
+		call s:AddFloatingWindow('.prj',1,24,1)
+		call s:AddFloatingWindow('__Todo_List__',1,24,1)
+	endif
 endf
 function! s:AddAutoCommands()
 	autocmd BufEnter * silent call s:OnBufferEnter()

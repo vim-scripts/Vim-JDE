@@ -1,6 +1,10 @@
 if exists('g:vjde_completion') || &cp
     finish
 endif
+if !exists('g:vjde_loaded') || &cp
+	finish
+endif
+
 let g:vjde_completion=1 "{{{1
 let s:key_preview=''
 let s:preview_buffer=[]

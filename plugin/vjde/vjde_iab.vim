@@ -1,3 +1,6 @@
+if !exists('g:vjde_loaded') || &cp
+	finish
+endif
 if exists('g:vjde_iab_loaded') || &cp || !has('ruby') "{{{1
 	finish
 endif

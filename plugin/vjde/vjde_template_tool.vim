@@ -1,4 +1,6 @@
-
+if !exists('g:vjde_loaded') || &cp
+	finish
+endif
 
 func! VjdeTemplatePara_New(n,d) 
         return {"name":a:n,"desc":a:d,"value":''}

@@ -1,4 +1,10 @@
-
+if exists('g:vjde_tag_loader_loaded')
+	finish
+endif
+if !exists('g:vjde_loaded') || &cp
+		finish
+endif
+let g:vjde_tag_loader_loaded=1
 
 let s:vjde_tag_loaded={}
 let s:RE_ENUM='[,; \t]'

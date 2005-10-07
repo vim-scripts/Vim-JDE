@@ -1,4 +1,7 @@
 
+if !exists('g:vjde_loaded') || &cp
+		finish
+endif
 let s:project_name=""
 func!  VjdeJavaProjectAddJars()
     let prj=""
@@ -256,7 +259,7 @@ amenu Vim\ &JDE.&Compile\ file    :comp javac <BAR> Vjdec <CR>
 amenu Vim\ &JDE.&Run\ current    :Vjder <CR>
 amenu <silent> Vim\ &JDE.Run\ current(&parameter)\.\.\.    :call <SID>VjdeRunParameter(0) <CR>
 amenu <silent> Vim\ &JDE.Run\ c&lass\.\.\.    :let cls = inputdialog("input the class name(with package) :","") <BAR> call <SID>VjdeRunCurrent(cls) <CR>
-amenu <silent> Vim\ &JDE.Run\ c&lass(parameter)\.\.\.    :call <SID>VjdeRunParameter(1) <CR>
+amenu <silent> Vim\ &JDE.Run\ class(param&eter)\.\.\.    :call <SID>VjdeRunParameter(1) <CR>
 amenu Vim\ &JDE.-Params-    :
 "amenu Vim\ &JDE.Se&ttings.Settings     :
 "amenu Vim\ &JDE.Se&ttings.-Params1-    :
@@ -272,6 +275,7 @@ amenu <silent> Vim\ &JDE.Se&ttings.&Java.Set\ Java\ command :let str=inputdialog
 amenu <silent> Vim\ &JDE.Se&ttings.&Java.&Reload\ lib\ path :let  g:vjde_java_cfu={} <CR>
 amenu <silent> Vim\ &JDE.Se&ttings.&Java.&Document\ path :let  g:vjde_javadoc_path=inputdialog('Input the java document path',g:vjde_javadoc_path)
 amenu  Vim\ &JDE.Se&ttings.&Java.--sp--	:
+amenu  Vim\ &JDE.Se&ttings.&Java.Add\ out\ path\ to\ lib   :let g:vjde_lib_path.=g:vjde_out_path <CR>
 amenu  Vim\ &JDE.Se&ttings.&Java.Add\ source\ to\ path   :exec 'set path+='.g:vjde_src_path <CR>
 amenu  Vim\ &JDE.Se&ttings.&Java.Add\ Test\ source\ to\ path   :exec 'set path+='.g:vjde_src_path <CR>
 

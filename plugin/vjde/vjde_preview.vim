@@ -1,4 +1,11 @@
+if exists('g:vjde_preview_loaded')
+	finish
+endif
 
+if !exists('g:vjde_loaded') || &cp
+		finish
+endif
+let g:vjde_preview_loaded=1
 "{{{1 
 if !exists('g:vjde_show_preview')
     let g:vjde_show_preview=1
