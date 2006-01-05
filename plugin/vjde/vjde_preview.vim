@@ -143,12 +143,17 @@ func! VjdePreviewSelect2(d,k)  "{{{2 remove
 		let word = strpart(word,strlen(d1.base))
 	endif
         match none
-	q!
-	silent! wincmd p
+	silent! wincmd k
+    let nr = winnr()
 	if strlen( d1.onSelect ) > 0 
 		let SelectFun = function(d1.onSelect)
 		call SelectFun(word)
 	endif
+	silent wincmd P
+	q!
+    if nr != winnr()
+        silent! wincmd k
+    endif
 	"call s:VjdeInsertWord(word)
 endf "}}}2
 
@@ -214,7 +219,7 @@ func! VjdePreviewWindowGetBuffer() dict "{{{2 VjdeGetPreviewWindowBuffer
 			let l:b_n = -1
 		end
 	end
-	silent! wincmd p
+	silent! wincmd k
 	return l:b_n
 endf "}}}2
 "{{{2 VjdeCallPreviewWindow
@@ -350,7 +355,7 @@ func! VjdePreviewBufferUpdate(base,...)  dict "{{{2
         if a:0>=3 && type(a:3)==2 
             call a:3()
         endif
-        silent! wincmd p
+        silent! wincmd k
         if a:0>=4 && type(a:4)==2 
             call a:4()
         endif

@@ -188,7 +188,11 @@ endf
 for item in split(g:vjde_cpp_exts,';')
 	if strlen(item)>0
 		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCppCFU0'
-		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <C-space> <Esc>:call VjdeCppCompletion("<C-space>",0)<CR>a'
+        if has('gui_running')
+            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <C-space> <Esc>:call VjdeCppCompletion("<C-space>",0)<CR>a'
+        else
+            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <C-l> <Esc>:call VjdeCppCompletion("<C-space>",0)<CR>a'
+        endif
 	endif
 endfor
 

@@ -363,7 +363,9 @@ public class DynamicClassLoader extends ClassLoader {
   private void listDir(File argFile,Vector v,String pre) {
           //if ( argFile.isDirectory()) {
                   File[] names = argFile.listFiles();
-                  for ( File n : names ) {
+                  for ( int i = 0 ; i < names.length ; i++) 
+                  {
+                          File n = names[i];
                           if ( n.isDirectory() ) {
                                   v.add(pre+n.getName());
                                   listDir(n,v,pre+n.getName()+".");

@@ -530,12 +530,28 @@ module Vjde
 	    end
 	    return nil if line==nil
 	    idx = line.index(/[\[<( 	*]/)
-	    return line[0,idx] if idx!= nil
+		if idx != nil
+			tp = line[0,idx]
+			tp.strip!
+			if $CPtr4Handle.index(tp) != nil
+				p3 = nil
+				line2.sub(Regexp.new('(\w+(\s*<.*>\s*)*::)*'+tp+'(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\s*\W')) { |p|
+					p3 =  $3
+				}
+				if p3!=nil && p3[0,1]=='<'
+					tp = p3[1..-2].strip!
+				end
+			end
+			return tp
+		end
 	    nil
     end
 	#}}}3
 	#{{{3
     def find_class(className1)
+		if className1[0,2]=="::"
+			className1=className1[2..-1]
+		end
 	    if @type_searched.include?(className1) || @type_searched.length>=@max_deep
 		    if block_given? 
 			    break
@@ -626,7 +642,11 @@ module Vjde
 
 	    #namespace
 	    if clsTag.kind=='n'
-		    ns = clsTag.ns+"::" + clsTag.name
+			if clsTag.ns == nil
+				ns=clsTag.name
+			else
+				ns = clsTag.ns+"::" + clsTag.name
+			end
 		    if beginning.length==0
 			    each_tag4file( seachedFile ,0,ns) { |t|
 				    yield(t,seachedFile) if t.ns== ns
@@ -660,6 +680,11 @@ module Vjde
 			    yield(t,seachedFile) if t.className==cn && t.name[0,beginning.length]==beginning
 		    }
 	    end
+		if clsTag.inherits!=nil
+			each_member(clsTag.inherits,beginning,full) { |t,f| 
+				yield(t,f)
+			}
+		end
     end
 		#}}}3
 end
@@ -682,25 +707,29 @@ class ReadTags #{{{1
 	end
 	#{{{2
     def ReadTags.get_type(line2,name) 
-	    re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\s*\W')
-	    line = line2[re]
-	    return nil if line==nil
-	    find = true
-	    while find
-		    find = false
-		    line.gsub!(/<[^<>]*>/) { |p|
-			    find = true
-			    ''
-		    }
-	    end
-	    return nil if line==nil
-	    idx = line.index(/[\[<( 	*]/)
-	    return line[0,idx] if idx!= nil
-	    nil
+		return CtagsTagList.get_type(line2,name)
+	    #re=Regexp.new('(\w+(\s*<.*>\s*)*::)*\w+(<.*>)*(\s*\[.*\])*[	 *]+'+name+'\s*\W')
+	    #line = line2[re]
+	    #return nil if line==nil
+	    #find = true
+	    #while find
+		    #find = false
+		    #line.gsub!(/<[^<>]*>/) { |p|
+			    #find = true
+			    #''
+		    #}
+	    #end
+	    #return nil if line==nil
+	    #idx = line.index(/[\[<( 	*]/)
+	    #return line[0,idx] if idx!= nil
+	    #nil
     end
 	#}}}2
 	#{{{2
     def find_class(className1) 
+		if className1[0,2]=="::"
+			className1=className1[2..-1]
+		end
 	    if @type_searched.include?(className1) || @type_searched.length>=@max_deep
 		    if block_given? 
 			    break
@@ -836,7 +865,11 @@ class ReadTags #{{{1
 				yield(t,seachedFile)
 				find = true
 		}
-		
+		if clsTag.inherits!=nil
+			each_member(clsTag.inherits,beginning,full) { |t,f| 
+				yield(t,f)
+			}
+		end
 end
 #}}}2
 #{{{2
@@ -867,6 +900,22 @@ end
 #}}}2
 #}}}1
 
+$CPtr4Handle =Array.new
+fn = File.expand_path("~/.vim/vjde/ptr.lst")
+Custom = Struct.new("Custom",:name,:namespace)
+if File.exist?(fn)
+	f = File.open(fn)
+	f.each_line { |l|
+		$CPtr4Handle << l.strip!
+		#idx = l.index(' ')
+		#if idx != nil
+			#$CPtr4Handle <<  l[idx+1..-1] +"::"+l[0..idx-1]
+		#end
+	}
+end
+#$CPtr4Handle.each { |l|
+	#puts l
+#}
 end
 # {{{2
 # this file separator API is badly broken
@@ -945,11 +994,15 @@ end
 #}
 #puts Vjde::CtagsTagList.get_type('/^}  NATION;  $/','NATION')
 # }}}2
-
-taglist = Vjde::getCtags("e:/temp/testcpp/tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
-#taglist.find_class('multi_index') { |t,f|
-		#puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd}"
+#taglist = Vjde::getCtags("/usr/local/Ice-3.0.0/include/tags,/usr/local/include/tags",'/usr/local/share/vim/vimfiles/plugin/vjde/readtags')
+#taglist.max_deep=4
+#taglist.find_class('transaction_base') { |t,f|
+		#puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd} #{t.inherits}"
 #}
+#taglist.each_member('CommunicatorPtr','') { |t,f|
+	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
+#}
+#puts taglist.type_searched
 #puts taglist.find_class('multi_index')
 #taglist.find_class('multi_index')  { |t,f|
 		#puts t
@@ -958,7 +1011,7 @@ taglist = Vjde::getCtags("e:/temp/testcpp/tags",'d:/vim/vimfiles/plugin/vjde/rea
 #puts cls[0].name
 #puts cls[0].ns
 #taglist.max_tags = 30
-#taglist.each_member('QQ','') { |t,f|
+#taglist.each_member('Ice','in') { |t,f|
 	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
 #}
 #taglist.each_tag('gtk_widget',false) {|t,f|

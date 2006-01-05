@@ -288,7 +288,7 @@ amenu <silent> Vim\ &JDE.Se&ttings.&Previews.Set\ document(gui)\ h&eight	:let g:
 amenu <silent> Vim\ &JDE.Se&ttings.&Previews.Show\ document(gui)\ &delay 	:let g:vjde_doc_delay=inputdialog("Show the document delay timemillis(ms)",g:vjde_doc_delay) <CR>
 
 func! VjdeSetupCtagsCFU()
-	set cfu=VjdeCtagsCFU 
+	set cfu=VjdeCtagsCFU0
 	imap <buffer> <c-space> <esc>:call g:vjde_cpp_previewer.CFU("<c-space>",0)<cr>a
 endf
 amenu <silent> Vim\ &JDE.Se&ttings.&Ctags.&Use\ ctags\ Completion	:call VjdeSetupCtagsCFU()<cr>
@@ -298,14 +298,14 @@ func! VjdeSetupIab()
 endf
 amenu Vim\ &JDE.Se&ttings.&Use\ Iabbr :call VjdeSetupIab()<cr>
 func! VjdeSetupJSP()
-	set cfu=VjdeCompletionFun 
+	set cfu=VjdeCompletionFun0
 	let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def") 
 	imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
 	set ft=jsp
 	"if strlen(&ft)==0 | set ft=jsp | endif
 endf
 func! VjdeSetupHTML()
-	set cfu=VjdeHTMLFun
+	set cfu=VjdeHTMLFun0
 	let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def") 
 	imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
 	"if strlen(&ft)==0 | set ft=html | endif
@@ -329,7 +329,7 @@ command!  -nargs=0 -complete=file Vjdesave call s:VjdeSaveProject()
 command! -nargs=0 Vjdec :compiler javac_ex <bar> exec "make -d \"".g:vjde_out_path."\" -classpath \"".g:vjde_lib_path."\" ".expand("%")
 command! -nargs=0 Vjder :call s:VjdeRunCurrent()
 if v:version>=700
-    "command!  -nargs=0 Vjdesetup set cfu=VjdeCompletionFun 
+    "command!  -nargs=0 Vjdesetup set cfu=VjdeCompletionFun0 
 endif
 
 " vim:fdm=marker :ff=unix

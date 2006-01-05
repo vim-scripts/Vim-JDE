@@ -116,7 +116,8 @@ public class Document {
 			//}
 			
 
-			temp = temp.replace("&nbsp;"," ");
+			//temp = temp.replace("&nbsp;"," ");
+			temp = temp.replaceAll("&nbsp;"," ");
 			if ( temp.length()>1) {
 				buffer.append(temp);
 				buffer.append("\n");

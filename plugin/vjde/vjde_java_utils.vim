@@ -212,12 +212,20 @@ func! Vjde_get_set() " {{{2
         let l:v_t = s:Java_get_type(str,l:v_v)
         "let l:v_t = VjdeGetTypeName(l:v_v)
         let l:v_Va = substitute(l:v_v,"^\\(.\\)","\\U\\1","")
-        call append(l:line,"\tpublic ".l:v_t." get".l:v_Va."(){")
-        call append(l:line+1,"\t\treturn this.".l:v_v.";")
-        call append(l:line+2,"\t}")
-        call append(l:line+3,"\tpublic void set".l:v_Va."(".l:v_t." ".l:v_v.") {")
-        call append(l:line+4,"\t\tthis.".l:v_v."=".l:v_v.";")
-        call append(l:line+5,"\t}")
+		call append(l:line,"\t/**")
+		call append(l:line+1,"\t * get the value of ".l:v_v)
+		call append(l:line+2,"\t * @return the value of ".l:v_v)
+		call append(l:line+3,"\t */")
+        call append(l:line+4,"\tpublic ".l:v_t." get".l:v_Va."(){")
+        call append(l:line+5,"\t\treturn this.".l:v_v.";")
+        call append(l:line+6,"\t}")
+		call append(l:line+7,"\t/**")
+		call append(l:line+8,"\t * set a new value to ".l:v_v)
+		call append(l:line+9,"\t @param ".l:v_v." the new value to be used")
+		call append(l:line+10,"\t */")
+        call append(l:line+11,"\tpublic void set".l:v_Va."(".l:v_t." ".l:v_v.") {")
+        call append(l:line+12,"\t\tthis.".l:v_v."=".l:v_v.";")
+        call append(l:line+13,"\t}")
 endf 
 func! VjdePackageNameCompare1(i1,i2)
     return a:i1==a:i2?0 : a:i1 > a:i2 ? 1 : -1
@@ -670,33 +678,36 @@ func! Vjde_override(type) " 0 extends 1 implements {{{2
 	let protected=3
 	let abstract=11
 	for item in rallpars
-			let rmymethods+= VjdeSelectMethods(item,imps,5)
+			let rmymethods= VjdeSelectMethods(item,imps,5)
+			for rcm in rmymethods
+					let rstr="\tpublic "
+					let roffset+=Vjde_import_check(rcm.ret_type)
+					let rstr.= s:Vjde_get_cls(rcm.ret_type)
+					let rstr.= " ".rcm.name."("
+					let rindex=0
+					for para in rcm.paras
+							let roffset+= Vjde_import_check(para)
+							let rstr.= ( rindex==0?'':', ' )
+							let rstr.= s:Vjde_get_cls(para).' arg'.rindex
+							let rindex+=1
+					endfor
+					let rstr.=")"
+					let rindex=0
+					for exces in rcm.exces
+							let rstr.= ( rindex==0?"  throws ":",")
+							let rstr.= s:Vjde_get_cls(exces)
+							let roffset += Vjde_import_check(exces)
+					endfor
+					let rstr.=" {"
+					call append(rpos+roffset,"\t/**")
+					call append(rpos+roffset+1,"\t * @see ".g:vjde_java_cfu.class.name."#".rcm.name.'('.join(rcm.paras,', ').') '.rcm.name)
+					call append(rpos+roffset+2,"\t */")
+					call append(rpos+roffset+3,rstr)
+					call append(rpos+roffset+4,"\t}")
+					let roffset+=5
+			endfor
 	endfor
 
-	for rcm in rmymethods
-			let rstr="\tpublic "
-			let roffset+=Vjde_import_check(rcm.ret_type)
-			let rstr.= s:Vjde_get_cls(rcm.ret_type)
-			let rstr.= " ".rcm.name."("
-			let rindex=0
-			for para in rcm.paras
-				let roffset+= Vjde_import_check(para)
-				let rstr.= ( rindex==0?'':', ' )
-				let rstr.= s:Vjde_get_cls(para).' arg'.rindex
-				let rindex+=1
-			endfor
-			let rstr.=")"
-			let rindex=0
-			for exces in rcm.exces
-					let rstr.= ( rindex==0?"  throws ":",")
-					let rstr.= s:Vjde_get_cls(exces)
-					let roffset += Vjde_import_check(exces)
-			endfor
-			let rstr.=" {"
-			call append(rpos+roffset,rstr)
-			call append(rpos+roffset+1,"\t}")
-			let roffset+=2
-	endfor
 	return
 endf "}}}2
 func! VjdeGenerateConstructor() "{{{2
