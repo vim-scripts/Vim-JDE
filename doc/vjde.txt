@@ -712,10 +712,11 @@ override function and parameter types and throws in a preview window.
 g:vjde_javadoc_path
 	setup the javadoc path, must be 'd:\javadocs\api\' , end with a
 splash, and reference to the api document path.
-
+							 *vjde_doc_gui_height*
 g:vjde_doc_gui_height
 	document viewer height
 
+							  *vjde_doc_gui_width*
 g:vjde_doc_gui_width 
 	document viewer width
 
@@ -741,6 +742,15 @@ g:vjde_use_project [0|1]
 While a vjde project is loaded , the project file manager is enabled >
 	if filereadable('.prj') && exists(':Project')
 		exec 'Project .prj'
+	endif
+
+<
+g:vjde_completion_key
+	Completion key for user completion. >
+	if has('gui_running')
+		let g:vjde_completion_key='<c-space>'
+	else
+		let g:vjde_completion_key='<c-l>'
 	endif
 <
 

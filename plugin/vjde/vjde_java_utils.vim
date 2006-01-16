@@ -57,13 +57,14 @@ func! VjdeFindParent(findimps) "{{{2
     else
         call add(res1,'java.lang.Object')
     endif
+	call cursor(x_l,x_c)
     if !a:findimps
-        call cursor(x_l,x_c)
         return res1
     endif
     "let l = search('implements\s\+','nb')
     if l > 0 
-        let pos2 = VjdeGotoDefPos('\(\<implements\>\|{\)','')
+        let pos2 = VjdeGotoDefPos('\<implements\>','b')
+        "let pos2 = VjdeGotoDefPos('\(\<implements\>\|{\)','b')
     else
         let pos2 = VjdeGotoDefPos('\<implements\>','b')
     endif
@@ -358,11 +359,13 @@ func! Vjde_fix_throws() "{{{2
     let pos = s:Java_pos_fun()
     for item in getqflist()
         if item.bufnr == bnum && item.lnum == lnum  
-            let str = matchstr(item.text,'unreported exception [^ \t;]*;') 
+            "let str = matchstr(item.text,'unreported exception [^ \t;]*;') 
+            let str = matchstr(item.text,g:vjde_java_exception) 
             if str==""
                 continue
             endif
-            let str = substitute(str,'\(unreported exception \)\([^ \t;]*\);','\2','')
+            "let str = substitute(str,'\(unreported exception \)\([^ \t;]*\);','\2','')
+            let str = substitute(str,g:vjde_java_exception,'\2','')
             let add = s:Vjde_add_import(str)
             let str = s:Vjde_get_cls(str)
             if !mfind
@@ -394,11 +397,13 @@ func! Vjde_fix_try() "{{{2
         let offset = 1 
         for item in getqflist()
             if item.bufnr == bnum && item.lnum == lnum  
-                let str = matchstr(item.text,'unreported exception [^ \t;]*;') 
+                "let str = matchstr(item.text,'unreported exception [^ \t;]*;') 
+				let str = matchstr(item.text,g:vjde_java_exception) 
                 if str==""
                     continue
                 endif
-                let str = substitute(str,'\(unreported exception \)\([^ \t;]*\);','\2','')
+                "let str = substitute(str,'\(unreported exception \)\([^ \t;]*\);','\2','')
+				let str = substitute(str,g:vjde_java_exception,'\2','')
                 let add = s:Vjde_add_import(str)
                 let str = s:Vjde_get_cls(str)
 
@@ -455,11 +460,14 @@ func! Vjde_fix_import() "{{{2
         let offset = 1 
 		for item in getqflist()
 				if item.bufnr == bnum && item.lnum == lnum  
-						let str = matchstr(item.text,'cannot find symbol\nsymbol\s*: class [^ \t;\s]*\n') 
+						"let str = matchstr(item.text,'cannot find symbol\nsymbol\s*: class [^ \t;\s]*\n') 
+						let str = matchstr(item.text,g:vjde_java_symbol) 
 						if str == ""
+								echo item.text
+								echo g:vjde_java_symbol
 								continue
 						endif
-						let str = substitute(str,'cannot find symbol\nsymbol\s*: class \([^ \t;\s]*\)\n','\1','') 
+						let str = substitute(str,g:vjde_java_symbol,'\1','') 
 						call Vjde_fix_import1(str)
 				endif
 		endfor
@@ -697,6 +705,7 @@ func! Vjde_override(type) " 0 extends 1 implements {{{2
 							let rstr.= ( rindex==0?"  throws ":",")
 							let rstr.= s:Vjde_get_cls(exces)
 							let roffset += Vjde_import_check(exces)
+							let rindex += 1
 					endfor
 					let rstr.=" {"
 					call append(rpos+roffset,"\t/**")

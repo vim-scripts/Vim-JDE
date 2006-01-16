@@ -134,7 +134,7 @@ endf
 for item in split(g:vjde_ctags_exts,';')
 	if strlen(item)>0
 		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCtagsCFU0'
-		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <C-space> <Esc>:call g:vjde_cpp_previewer.CFU("<C-space>",0)<CR>a'
+		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> '.g:vjde_completion_key.' <Esc>:call g:vjde_cpp_previewer.CFU("<C-space>",0)<CR>a'
 	endif
 endfor
 " vim:ft=vim:ts=4:tw=72

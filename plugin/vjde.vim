@@ -13,6 +13,13 @@ let g:vjde_loaded = 1
 if !exists('g:vjde_show_paras') 
     let g:vjde_show_paras = 0
 endif
+if !exists('g:vjde_completion_key')
+	if has('gui_running')
+		let g:vjde_completion_key='<c-space>'
+	else
+		let g:vjde_completion_key='<c-l>'
+	endif
+endif
 
 
 if !exists('g:vjde_out_path')
@@ -59,6 +66,13 @@ if !exists('g:vjde_jsp_exts')
 	let g:vjde_jsp_exts=''
 endif
 
+if !exists('g:vjde_java_exception')
+	let g:vjde_java_exception = '\(unreported exception \)\([^ \t;]*\);'
+endif
+if !exists('g:vjde_java_symbol')
+	let g:vjde_java_symbol= 'cannot find symbol\nsymbol\s*: class \([^ \t;\s]*\)\n'
+endif
+
 let g:vjde_path_spt=':'
 if has('win32')
 	let g:vjde_path_spt=';'
@@ -98,6 +112,9 @@ runtime plugin/vjde/vjde_menu_def.vim
 runtime plugin/vjde/vjde_template.vim
 runtime plugin/vjde/vjde_iab.vim
 
+if has('ruby')
+	runtime plugin/vjde/vjde_ruby_completion.vim
+endif
 
 runtime plugin/vjde/vjde_ctags_completion.vim
 runtime plugin/vjde/vjde_cpp_completion.vim
@@ -133,7 +150,7 @@ if v:version>=700
     for item in split(g:vjde_jsp_exts,';')
 	    if strlen(item)==0 | continue | endif
 	    exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCompletionFun0 |let g:vjde_tag_loader=VjdeTagLoaderGet("html",'''.g:vjde_install_path.'/vjde/tlds/html.def'')'
-            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <c-space> <Esc>:call java_previewer.CFU(":")<CR>a'
+            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> '.g:vjde_completion_key.' <Esc>:call java_previewer.CFU(":")<CR>a'
             exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set ft=jsp'
     endfor
 endif
@@ -154,11 +171,11 @@ endif
 	    au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> ( <Esc>:call VjdeJavaParameterPreview()<CR>a(
     endif
 
-   au BufNewFile,BufRead,BufEnter *.java imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>',1)<CR>a
-   au BufNewFile,BufRead,BufEnter *.jsp imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
-   au BufNewFile,BufRead,BufEnter *.xml imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
-   au BufNewFile,BufRead,BufEnter *.htm imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
-   au BufNewFile,BufRead,BufEnter *.html imap <buffer> <C-space> <Esc>:call java_previewer.CFU('<C-space>')<CR>a
+   exec "au BufNewFile,BufRead,BufEnter *.java imap <buffer> ".g:vjde_completion_key."  <Esc>:call java_previewer.CFU('<C-space>',1)<CR>a"
+   exec "au BufNewFile,BufRead,BufEnter *.jsp imap <buffer>  ".g:vjde_completion_key." <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
+   exec "au BufNewFile,BufRead,BufEnter *.xml imap <buffer>  ".g:vjde_completion_key." <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
+   exec "au BufNewFile,BufRead,BufEnter *.htm imap <buffer>  ".g:vjde_completion_key." <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
+   exec "au BufNewFile,BufRead,BufEnter *.html imap <buffer> ".g:vjde_completion_key."  <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
 
 "autocmd BufReadPost,FileReadPost	.vjde  exec 'Vjdeload '.expand('<afile>')
 "au BufNewFile,BufRead *.xsl set cfu=VjdeXslCompletionFun

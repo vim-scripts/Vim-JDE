@@ -41,14 +41,14 @@ func! VjdeGetCppType(v)
 	let lnr = line('.')
 	let cnr = col('.')
 	"let pattern='\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*[* \t]\+\<'.a:v.'\>'
-	let pattern='\(\<\i\+\>\(\s*<.*>\s*\)*::\)*\<\i\+\>\(\s*<.*>\s*\)*\(\[.*\]\)*[* \t]\+\<'.a:v.'\>'
+	let pattern='\(\<\i\+\>\(\s*<.*>\s*\)*::\)*\<\i\+\>\(\s*<.*>\s*\)*\(\[.*\]\)*[*& \t]\+\<'.a:v.'\>'
 	let pos = VjdeGotoDefPos(pattern,'b')
 	if pos[0]==0
 		call cursor(lnr,cnr)
 		return a:v
 	endif
 	let lstr = getline(pos[0])
-	let lend = match(lstr,'[* \t]\+\<'.a:v.'\>',pos[1])
+	let lend = match(lstr,'[*& \t]\+\<'.a:v.'\>',pos[1])
 	let vt = strpart(lstr,pos[1]-1,lend-pos[1]+1)
 	call cursor(lnr,cnr)
 	while ( stridx(vt,'<')>0) 
@@ -188,11 +188,7 @@ endf
 for item in split(g:vjde_cpp_exts,';')
 	if strlen(item)>0
 		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' set cfu=VjdeCppCFU0'
-        if has('gui_running')
-            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <C-space> <Esc>:call VjdeCppCompletion("<C-space>",0)<CR>a'
-        else
-            exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> <C-l> <Esc>:call VjdeCppCompletion("<C-space>",0)<CR>a'
-        endif
+		exec 'au BufNewFile,BufRead,BufEnter *.'.item.' imap <buffer> '.g:vjde_completion_key.' <Esc>:call VjdeCppCompletion("<C-space>",0)<CR>a'
 	endif
 endfor
 

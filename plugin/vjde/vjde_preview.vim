@@ -151,9 +151,10 @@ func! VjdePreviewSelect2(d,k)  "{{{2 remove
 	endif
 	silent wincmd P
 	q!
-    if nr != winnr()
-        silent! wincmd k
-    endif
+	exec nr.'wincmd w'
+    "if nr != winnr()
+        "silent! wincmd k
+    "endif
 	"call s:VjdeInsertWord(word)
 endf "}}}2
 
