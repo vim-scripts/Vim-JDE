@@ -143,8 +143,8 @@ module Vjde #{{{1
                 next if attr_name!=a.name
                 if ( v == nil || v.length==0) 
                     a.values.each { |s| 
-						if s[0,1]!='%'
-							yield(s) 
+						if s[0,1]!='%' 
+							yield(s) if s[0,5]!='CDATA'
 						else
 							e = @entities.find { |et| et.name == s[1..-2] }
 							return if e == nil
@@ -190,7 +190,9 @@ module Vjde #{{{1
 					else
 						e = @entities.find { |et| et.name == c[1..-2] }
 						return if e == nil
-						e.values.each { |v| yield(v) }
+						e.values.each { |v| 
+                            yield(v)
+                        }
 					end
 				}
 			else
@@ -236,9 +238,48 @@ end
 
 # Test code {{{1
 #loader = Vjde::DTD_Parser.new()
-#loader.parse(File.new("doc/ant.dtd"))
-#loader.each_value("mapper","type",nil) { |a|
-    #puts a
+#loader.parse(File.new("e:/wfc/ant.dtd"))
+#puts "let g:xmldata_ant= {"
+#dchar=''
+#loader.each_element("") { |a|
+#    puts "\\ '#{a.name}': [ " 
+#    cs = [] 
+#    achar=''
+#    cchar=''
+#    print "\\ ["
+#    c = 0
+#    loader.each_child(a.name) { |b| 
+#        if (b.class== Array ) 
+#            cs.concat( b)
+#        else
+#            cs << b
+#        end
+#    }
+#    cs.each { |b| 
+#        print "#{cchar}'#{b}'"
+#        cchar = ','
+#        c=c+1
+#        print "\n\\ " if c%6==5
+#    }
+#    puts "],"
+#    print "\\ { "
+#    loader.each_attr(a.name) { |c|
+#        print "#{achar}'#{c.name}':["
+#        bchar=''
+#        loader.each_value(a.name,c.name) { |d| 
+#            if ( d.class==Array)
+#                print "#{bchar}'",d.join("','"),"'"
+#                bchar=','
+#            else
+#                print "#{bchar}'#{d}'"
+#                bchar=','
+#            end
+#        }
+#        print "]"
+#        achar = ','
+#    }
+#    puts "}"
+#    puts "\\  ],"
 #}
 #loader.each_attr("project") { |a|
 	#puts a.name

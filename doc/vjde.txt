@@ -753,7 +753,23 @@ g:vjde_completion_key
 		let g:vjde_completion_key='<c-l>'
 	endif
 <
-
+g:vjde_iab_exts
+	This variable is used for iab tools. All the extension is add can use
+<c-j> to completion for code template. >
+    let g:vjde_iab_exts='cpp;h;c;hpp'
+<
+g:vjde_java_symbol
+	For fix tool to find a message.You can change it to your own local:  >
+	if !exists('g:vjde_java_symbol')
+		let g:vjde_java_symbol= 'cannot find symbol\nsymbol\s*: class \([^ \t;\s]*\)\n'
+	endif
+<
+g:vjde_java_exception 
+	For fix tool to find a exception message : >
+	if !exists('g:vjde_java_exception')
+		let g:vjde_java_exception = '\(unreported exception \)\([^ \t;]*\);'
+	endif
+<
 ruby 
     $java_command     
          the java command line, linux, is tested for "java",

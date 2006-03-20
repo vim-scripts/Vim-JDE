@@ -222,7 +222,7 @@ func! Vjde_get_set() " {{{2
         call append(l:line+6,"\t}")
 		call append(l:line+7,"\t/**")
 		call append(l:line+8,"\t * set a new value to ".l:v_v)
-		call append(l:line+9,"\t @param ".l:v_v." the new value to be used")
+		call append(l:line+9,"\t * @param ".l:v_v." the new value to be used")
 		call append(l:line+10,"\t */")
         call append(l:line+11,"\tpublic void set".l:v_Va."(".l:v_t." ".l:v_v.") {")
         call append(l:line+12,"\t\tthis.".l:v_v."=".l:v_v.";")

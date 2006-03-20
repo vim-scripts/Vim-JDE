@@ -238,7 +238,10 @@ func! VjdeCompletionFun0(findstart,base)
 	if a:findstart
 		return VjdeCompletionFun(getline('.'),a:base,col('.'),a:findstart)
 	endif
-	call VjdeCompletionFun(getline('.'),a:base,col('.'),a:findstart)
+	let lval = VjdeCompletionFun(getline('.'),a:base,col('.'),a:findstart)
+        if type(lval) ==3 " List
+            return lval
+        endif
 	if strlen(s:retstr)<2
 		return []
 	else
@@ -266,7 +269,7 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     if s:cfu_type == 0 "taglib
             let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==1 "java in jsp
-	    let s:retstr=s:VjdeJspCompletionFun(a:line,a:base,a:col,a:findstart)
+	    return s:VjdeJspCompletionFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==2 "html
 	    let g:vjde_def_loader=VjdeTagLoaderGet('html',g:vjde_install_path.'/vjde/tlds/html.def')
             let s:retstr= VjdeHTMLFun(a:line,a:base,a:col,a:findstart)
@@ -274,16 +277,11 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     elseif s:cfu_type==3 "comment
             let s:retstr= VjdeCommentFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==4 "java
-        let s:retstr = s:VjdeJavaCompletionFun(a:line,a:base,a:col,a:findstart)
-    "elseif s:cfu_type==5 "xsl
-        "return VjdeXslCompletionFun(a:line,a:base,a:col,a:findstart)
+        return s:VjdeJavaCompletionFun(a:line,a:base,a:col,a:findstart)
     endif
     if g:vjde_show_preview && strlen(s:retstr)!=0
 	    let s:beginning=a:base
 	    let s:key_preview=''
-	    "if !g:vjde_preview_gui
-		    "call s:VjdeUpdatePreviewBuffer(a:base)
-	    "endif
     endif
     return s:retstr
 endf
@@ -315,6 +313,7 @@ endf
 
 func! s:VjdeParentCFUVIM(pars,imps) "{{{2
 	let s:preview_buffer=[]
+        let lval=[]
 for par in a:pars
     let s:type = par
     call s:VjdeCompletionByVIM(a:imps)
@@ -324,29 +323,32 @@ for par in a:pars
     if g:vjde_show_preview
 	    call s:VjdeGeneratePreviewBuffer(s:beginning)
     endif
-    let s:retstr.= s:VjdeCreateString4CFU(s:beginning)
+    let lval +=s:VjdeGeneratePreveiewMenu(s:beginning)
 endfor
+return lval
 endf
 
 func! s:VjdePkgCfuByVIM(prefix,base)
 	let s:preview_buffer=[]
     call add(s:preview_buffer,'import '.a:prefix.':')
     let len = strlen(a:prefix)
+    let lval = [] 
     let isclass=0
     for item in VjdeJavaSearchPackagesAndClasses(g:vjde_install_path.'/vjde/vjde.jar',g:vjde_lib_path,a:prefix,a:base)
 	    let part = strpart(item,len) 
 	    let s:retstr.= part."\n"
 	    if isclass
-		    call add(s:preview_buffer,'class '.part.';')
+		    call add(lval,{'word': part , 'info': 'class '.item,'icase':0})
 	    else
 		    if part[0] =~'[a-z]'
-			    call add(s:preview_buffer,'package '.part.'.*;')
+                            call add(lval,{'word': part , 'info': 'package '.item i,'icase':0 })
 		    else
-			    call add(s:preview_buffer,'class '.part.';')
+                            call add(lval,{'word': part , 'info': 'class '.item ,'icase':0})
 			    let isclass = 1
 		    endif
 	    endif
     endfor
+    return lval
 endf
 func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     if a:findstart
@@ -361,8 +363,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     let idx = match(a:line,'^\s*import\s*')
     if ( idx >= 0 ) 
         let str = substitute(a:line,'\s*import\s*\(static\)*\s*\(.*\)','\2','')
-	call s:VjdePkgCfuByVIM(str,a:base)
-        return s:retstr
+	return s:VjdePkgCfuByVIM(str,a:base)
     endif
     if a:line[s:last_start-1]=='@'
         call VjdeCommentFun(a:line,a:base,a:col,a:findstart)
@@ -376,9 +377,9 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     let s:types=[]
     if a:line[s:last_start-1]=~'[ \t]'
         let ps = VjdeFindParent(1)
-        call s:VjdeParentCFUVIM(ps,l:imps)
-	if strlen(s:retstr)==0 " not found , completion for package
-		call s:VjdePkgCfuByVIM('',a:base)
+        let lval = call s:VjdeParentCFUVIM(ps,l:imps)
+        if len(lval)==0 " not found , completion for package
+            return s:VjdePkgCfuByVIM('',a:base)
 	endif
         return s:retstr
     endif
@@ -393,7 +394,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     if   len(s:types)<1 || s:types[0]== "this"|| s:types[0]== "super"
         "TODO add parent implements here
         let ps = VjdeFindParent(len(s:types)<1 || s:types[0]=="this")
-        call s:VjdeParentCFUVIM(ps,l:imps)
+        return s:VjdeParentCFUVIM(ps,l:imps)
         return s:retstr
     endif
     
@@ -401,8 +402,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     let s:type=s:GettypeName(s:types[0])
     if s:type == ""
 	if s:types[0][0]=~'[a-z]' " something like java.util ...
-		call s:VjdePkgCfuByVIM(join(s:types,'.').'.',a:base)
-		return s:retstr
+		return s:VjdePkgCfuByVIM(join(s:types,'.').'.',a:base)
 	endif
         let s:type=s:types[0]
 	let staticcfu = 1
@@ -413,33 +413,34 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     if !g:vjde_java_cfu.success
 	    let s:retstr=""
     else
-	    let s:retstr=s:VjdeCreateString4CFU(s:beginning)
 	    if g:vjde_show_preview
 		  call s:VjdeGeneratePreviewBuffer(s:beginning)
 	    endif
+	    "return s:VjdeCreateString4CFU(s:beginning)
+            return s:VjdeGeneratePreveiewMenu(s:beginning)
     endif
     return s:retstr
 endf
 
 func! s:VjdeCreateString4CFU(base) "{{{2
-	let str=''
-	    if strlen(a:base)==0
-		    for member in g:vjde_java_cfu.class.members
-			    let str.=member.name."\n"
-		    endfor
-		    for method in g:vjde_java_cfu.class.methods
-			    let str.=method.name."\n"
-		    endfor
-	    else
-		    for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
-			    let str.=member.name."\n"
-		    endfor
-		    for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
-			    let str.=method.name."\n"
-		    endfor
+    let str=''
+    if strlen(a:base)==0
+        for member in g:vjde_java_cfu.class.members
+            let str.=member.name."\n"
+        endfor
+        for method in g:vjde_java_cfu.class.methods
+            let str.=method.name."\n"
+        endfor
+    else
+        for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
+            let str.=member.name."\n"
+        endfor
+        for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
+            let str.=method.name."\n"
+        endfor
 
-	    endif
-	    return str
+    endif
+    return str
 endf
 
 func! VjdespFun(line) "{{{2
@@ -746,8 +747,7 @@ func! s:VjdeJspCompletionFun(line,base,col,findstart) "{{{2
         let s:type=s:GettypeName(s:types[0])
         if s:type == ""
 		if s:types[0][0]=~'[a-z]' " something like java.util ...
-			call s:VjdePkgCfuByVIM(join(s:types,'.').'.',a:base)
-			return s:retstr
+			return s:VjdePkgCfuByVIM(join(s:types,'.').'.',a:base)
 		endif
 		let s:type=s:types[0]
         end
@@ -761,10 +761,12 @@ func! s:VjdeJspCompletionFun(line,base,col,findstart) "{{{2
     if !g:vjde_java_cfu.success
 	    let s:retstr=""
     else
-	    let s:retstr=s:VjdeCreateString4CFU(s:beginning)
+	    "let s:retstr=s:VjdeCreateString4CFU(s:beginning)
+            
 	    if g:vjde_show_preview 
 		  call s:VjdeGeneratePreviewBuffer(s:beginning)
 	    endif
+            return s:VjdeGeneratePreveiewMenu(s:beginning)
     endif
     return s:retstr
 endf
@@ -1281,6 +1283,25 @@ func! VjdeJavaParameterPreview(...) "{{{2
 	endif
 	let g:vjde_show_preview=show_prev_old
 endf "}}}2
+func! s:VjdeGeneratePreveiewMenu(base)
+    let lval= []
+    if strlen(a:base)==0
+        for member in g:vjde_java_cfu.class.members
+            call add(lval,{'word': member.name , 'kind': 'm' ,  'info': member.type,'icase':0})
+        endfor
+        for method in g:vjde_java_cfu.class.methods
+            call add(lval,{'word': method.name."(" , 'kind' : 'f', 'info': method.ToString(),'icase':0})
+        endfor
+    else
+        for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
+            call add(lval,{'word': member.name , 'kind': 'm' ,  'info': member.type ,'icase':0})
+        endfor
+        for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
+            call add(lval,{'word': method.name."(" , 'kind' : 'f', 'info': method.ToString(),'icase':0})
+        endfor
+    endif
+    return lval
+endf
 func! s:VjdeGeneratePreviewBuffer(base) "{{{2
 	call VjdeClearPreview()
 	if g:vjde_java_cfu.success
@@ -1322,7 +1343,7 @@ endf "}}}2
 func! GetJavaCompletionLines(arr)
 	let a:arr.preview_buffer += VjdeGetPreview()
 endf
-func! VjdeGetDocWindowLine() 
+func! VjdeGetDocWindowLine() "{{{2
 	if !g:wspawn_available
 		return "\n"
 	endif

@@ -31,11 +31,14 @@ let s:header=''
 func! GetCTAGSCompletionLines(previewer) "{{{2
 	call add(a:previewer.preview_buffer,s:header)
 	for item in s:matched_tags
-		call add(a:previewer.preview_buffer,item.kind.' '.item.name.';'.item.cmd)
+		call add(a:previewer.preview_buffer,item.kind.' '.item.word.';'.item.info)
 	endfor
 endf
+func! VjdeGetMatchedTag() 
+    return s:matched_tags
+endf
 func! s:VjdeAddToTags(name,kind,cmd) "{{{2
-	call add(s:matched_tags,{ 'name' : a:name , 'kind' : a:kind , 'cmd' : a:cmd })
+	call add(s:matched_tags,{ 'word' : a:name , 'kind' : a:kind , 'info' : a:cmd , 'icase': 0 })
 	call add(s:retlines,a:name)
 endf
 func! s:VjdeCleanTags() "{{{2
@@ -50,7 +53,7 @@ func! VjdeGetCppCFUTags()
 	return s:matched_tags
 endf
 func!  VjdeHandleTags(tg,ff)
-		call s:VjdeAddToTags(a:tg.name,a:tg.kind,a:tg.cmd)
+		call s:VjdeAddToTags(a:tg.word,a:tg.kind,a:tg.info)
 		return 1
 endf
 " completion for a word, a:1 is fully or partly
@@ -70,7 +73,7 @@ func! CtagsCompletion(word,...) "{{{2
 			let cmp = VjdeReadTags_New(&tags,g:vjde_readtags)
 			let cmp.max_tags = g:vjde_max_tags
 			call cmp.Each(word,'VjdeHandleTags',full)
-			return s:retlines
+			return s:matched_tags
 	endif
 ruby<<EOF
 	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
@@ -86,7 +89,7 @@ ruby<<EOF
 		#VIM::command('call add(s:retlines,"'+t.name+'")')
 	}
 EOF
-	return s:retlines
+	return s:matched_tags
 endf
 
 func! CtagsCompletion2(cls,word,...) "{{{2
@@ -103,7 +106,7 @@ func! CtagsCompletion2(cls,word,...) "{{{2
 			let cmp = VjdeReadTags_New(&tags,g:vjde_readtags)
 			let cmp.max_tags = g:vjde_max_tags
 			call cmp.EachMember(cls,word,'VjdeHandleTags',full)
-			return s:retlines
+			return s:matched_tags
 	endif
 ruby<<EOF
 	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
@@ -118,7 +121,7 @@ ruby<<EOF
 		#VIM::command('call add(s:retlines,"'+t.name+'")')
 	}
 EOF
-	return s:retlines
+	return s:matched_tags
 endf
 func! VjdeCtagsCFU0(findstart,base)
 		return VjdeCtagsCFU(getline('.'),a:base,col('.'),a:findstart)

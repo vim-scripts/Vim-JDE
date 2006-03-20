@@ -171,13 +171,16 @@ func! s:SearchPackages(jar,lib_path,prefix)
 	let array = split(system(cmd))
 	return array
 endf
+func VjdeSearchClasses(jar,lib_path,prefix,base)
+    return s:SearchClasses(a:jar,a:lib_path,a:prefix,a:base)
+endf
 func! s:SearchClasses(jar,lib_path,prefix,base)
 	let jar_path = substitute(a:jar,'vjde\.jar$','','')
-	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageClasses  "'.a:lib_path.'" '.a:prefix.' "'.jar_path.'/tlds/jdk1.5.lst" '.a:base
-	let array=[]
-	let array += split(system(cmd))
-	return array
+        let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageClasses  '.a:lib_path.' "'.a:prefix.'" "'
+        let cmd.=substitute(jar_path,'\','/','g').'tlds/jdk1.5.lst" '.a:base
+        return  split(system(cmd))
 endf
+
 func! VjdeJavaSearchPackagesAndClasses(jar,lib_path,prefix,base)
 	let lib_path = a:lib_path
 	if lib_path==''

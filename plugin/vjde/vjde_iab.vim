@@ -78,7 +78,7 @@ func! VjdePreviewIab(paras,...) "{{{2
 	if a:0>1
 		let base = a:1
 	else
-		let base = expand('<cword>')
+            let base=substitute(getline('.'),'^\s*\(.*\)$','\1','')
 	endif
 	call s:VjdeInitPreview(base)
 	let s:paras = a:paras

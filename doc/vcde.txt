@@ -45,8 +45,25 @@ Setup~
 files , like >
 	let g:vjde_cpp_exts='cpp;c;cxx;h;hpp;hxx'
 <
+
+Smart pointer support~
+	Sometimes , We had use some smart pointer ,such as  >
+	typedef auto_ptr<MyClass> MyClassPtr;
+<
+At that time , some coding support is read a MyClassPtr as auto_ptr, so , code
+completion is not working correctly. So , add a file which is located : >
+	~/.vim/vjde/ptr.lst
+<
+Add the following line: >
+	auto_ptr
+	std::auto_ptr
+<
+Then , code completion will treat MyClassPtr as MyClass. 
+
 	
 Other language Support ~
+	NOTE: Just now, use <c-x><c-o> omni completion instead of this
+function.
 	VJDE support other language which is ctags supported.
 	Once you want to use with your language, setup the variable >
 	let g:vjde_ctags_exts='vim;rb'

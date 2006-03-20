@@ -539,7 +539,7 @@ module Vjde
 					p3 =  $3
 				}
 				if p3!=nil && p3[0,1]=='<'
-					tp = p3[1..-2].strip!
+					tp = p3[1..-2].strip
 				end
 			end
 			return tp
@@ -914,7 +914,7 @@ if File.exist?(fn)
 	}
 end
 #$CPtr4Handle.each { |l|
-	#puts l
+#	puts l
 #}
 end
 # {{{2
@@ -994,13 +994,13 @@ end
 #}
 #puts Vjde::CtagsTagList.get_type('/^}  NATION;  $/','NATION')
 # }}}2
-#taglist = Vjde::getCtags("/usr/local/Ice-3.0.0/include/tags,/usr/local/include/tags",'/usr/local/share/vim/vimfiles/plugin/vjde/readtags')
+#taglist = Vjde::getCtags("d:/workspace/dicomdecoder/tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
 #taglist.max_deep=4
 #taglist.find_class('transaction_base') { |t,f|
 		#puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd} #{t.inherits}"
 #}
-#taglist.each_member('CommunicatorPtr','') { |t,f|
-	#puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
+#taglist.each_member('DicomReaderPtr','') { |t,f|
+#	puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
 #}
 #puts taglist.type_searched
 #puts taglist.find_class('multi_index')
