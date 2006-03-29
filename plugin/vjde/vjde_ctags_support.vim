@@ -183,12 +183,14 @@ func! VjdeCreateTag(lstr)
 		let cname = cur[0 : iidx-1]
 		let cv = cur[ iidx+1 : -1]
 		
-		if cname=='class' || cname=='interface' || cname=='struct' || cname=='union'
-			let tag.className = cv
+                if cname=='signature'
+                    let tag.cmd= cv
+                elseif cname=='class' || cname=='interface' || cname=='struct' || cname=='union'
+                    let tag.className = cv
 		elseif cname=='namespace'
-			let tag.ns=cv
+                    let tag.ns=cv
 		else
-			let tag[cname]=cv
+                    let tag[cname]=cv
 		endif
 		let idx+=1
 	endwhile

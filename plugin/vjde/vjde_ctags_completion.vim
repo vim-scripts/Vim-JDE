@@ -53,7 +53,7 @@ func! VjdeGetCppCFUTags()
 	return s:matched_tags
 endf
 func!  VjdeHandleTags(tg,ff)
-		call s:VjdeAddToTags(a:tg.word,a:tg.kind,a:tg.info)
+		call s:VjdeAddToTags(a:tg.name,a:tg.kind,a:tg.cmd)
 		return 1
 endf
 " completion for a word, a:1 is fully or partly

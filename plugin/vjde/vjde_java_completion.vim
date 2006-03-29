@@ -1,10 +1,12 @@
 if !exists('g:vjde_loaded') || &cp
 	finish
 endif
-let g:vjde_java_command='java'
-if has('win32')
-	let g:vjde_java_command='javaw'
-endif
+if !exists('g:vjde_java_command')
+    let g:vjde_java_command='java'
+    if has('win32')
+            let g:vjde_java_command='javaw'
+    endif
+end
 
 func! VjdeListStringToList(str) "{{{2
     let lines = split(a:str,"\n")
@@ -118,6 +120,46 @@ func! VjdeJavaClass_New(arr)
     call sort(inst.methods,"VjdeJavaNameCompare")
     return inst
 endf "}}}2
+func! VjdeJavaCompletion_FindClass2(names,imptstr,...) dict "{{{2
+    let level = 0
+    if  a:0 > 0
+        let level = a:1
+    endif
+    let name=a:names[0]
+    let self.success = 0
+    let imptstr = substitute(a:imptstr,'\*','','g')
+    let impts = split(imptstr,'[; \t]')
+    call filter(impts,'strlen(v:val)>0')
+    let qn = 0
+    if len(impts)>0
+        for item in impts
+            if match(item,'\.'.name.'\s*$')>=0
+                let qn=1
+                let name=item
+                break
+            endif
+        endfor
+    else
+        let qn=1
+    endif
+    let cmd=''
+    let namestr = name
+    let namestr .= "|".join(a:names[1:-1],"|")
+    if qn
+        let cmd=g:vjde_java_command.' -jar "'.self.jar.'" "'.self.lib_path.'" "'.namestr.'" '.level
+    else
+	    call filter(impts,'v:val!="."')
+        let cmd=g:vjde_java_command.' -jar "'.self.jar.'" "'.self.lib_path.'" "'.namestr.'" '.level.' '.join(impts,' ')
+    endif
+    let str = system(cmd)
+    if strlen(str)<10
+        let self.success=0
+        return {}
+    end
+    let self.success=1
+    let self.class = VjdeJavaClass_New( VjdeListStringToList(str))
+    return self.class
+endf
 func! VjdeJavaCompletion_FindClass(name,imptstr,...) dict "{{{2
     let level = 0
     if  a:0 > 0
@@ -142,10 +184,10 @@ func! VjdeJavaCompletion_FindClass(name,imptstr,...) dict "{{{2
     endif
     let cmd=''
     if qn
-        let cmd=g:vjde_java_command.' -jar "'.self.jar.'" "'.self.lib_path.'" '.name.' '.level
+        let cmd=g:vjde_java_command.' -jar "'.self.jar.'" "'.self.lib_path.'" "'.name.'" '.level
     else
 	    call filter(impts,'v:val!="."')
-        let cmd=g:vjde_java_command.' -jar "'.self.jar.'" "'.self.lib_path.'" '.a:name.' '.level.' '.join(impts,' ')
+        let cmd=g:vjde_java_command.' -jar "'.self.jar.'" "'.self.lib_path.'" "'.a:name.'" '.level.' '.join(impts,' ')
     endif
     let str = system(cmd)
     if strlen(str)<10
@@ -159,7 +201,8 @@ endf
 
 func! VjdeJavaCompletion_New(jar,path)
     let inst = { 'jar':a:jar, 'lib_path':a:path , 'class':{}, 'success':0 ,
-                \'FindClass':function('VjdeJavaCompletion_FindClass') }
+                \'FindClass':function('VjdeJavaCompletion_FindClass') ,
+                \'FindClass2':function('VjdeJavaCompletion_FindClass2') }
     if inst.lib_path==""
         let inst.lib_path=''
     endif

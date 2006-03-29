@@ -46,6 +46,7 @@
 								   *vjde-desc*
 Desc~
 Now , C++ supported with ruby and ctags. See |vcde| for detail.
+Now , Csharp supported .
 
 This tools wich is named "Vim Java Development Environment".
 Current version, has two tools : Project and Auto Completion
@@ -769,6 +770,17 @@ g:vjde_java_exception
 	if !exists('g:vjde_java_exception')
 		let g:vjde_java_exception = '\(unreported exception \)\([^ \t;]*\);'
 	endif
+<
+g:vjde_cs_libs
+	For completion with csharp, use this parameter, looks like >
+	let g:vjde_cs_libs='d:/mono-1.1.13.4/lib/mono/2.0/mscorlib.dll;..'
+<
+g:vjde_cs_cmd
+	For command line of csharp , looks like: >
+	let g:vjde_cs_cmd='mono.exe d:/vim/vimfiles/plugin/vjde/CSParser.exe'
+<
+	Default value is : >
+	let g:vjde_cs_cmd='mono.exe '.g:vjde_install_path.'/vjde/CSParser.exe'
 <
 ruby 
     $java_command     

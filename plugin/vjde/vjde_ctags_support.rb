@@ -313,6 +313,8 @@ module Vjde
                 # not "just in case" like that.
 		if (info[0] == "line")
 			line = info[1].chomp
+        elsif ( info[0] == 'signature')
+            cmd = info[1]
 		elsif (info[0] == "inherits")
 			inherits = info[1].chomp.split(",")
 		elsif ( (info[0] == "class") || (info[0] == "interface") || info[0]=="struct" )

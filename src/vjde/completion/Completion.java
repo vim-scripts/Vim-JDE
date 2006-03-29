@@ -30,6 +30,7 @@ import java.io.Writer;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * This class provides completion facilities.
@@ -628,6 +629,69 @@ public class Completion {
     }    
   }
     
+  public static void getClassInfo(String path,String[] names,String[] imports) {
+	  DynamicClassLoader dcl = new DynamicClassLoader(path);
+	  Class c= getClass(dcl,path,names[0].trim(),imports);
+	  if ( c == null )  {
+		  return;
+	  }
+	  int i = 1;
+	  while ( i < names.length && c != null ) {
+		  String name = names[i];
+		  String type = null;
+		  Field[] fields= c.getFields();
+		  for ( int j = 0 ; j < fields.length ; j++) {
+			  if ( fields[j].getName().compareTo(name)==0) {
+				  type = fields[j].getType().getName();
+				  break;
+			  }
+		  }
+		  if ( type == null ) {
+			  Method[] methods = c.getMethods();
+			  for ( int j = 0 ; j < methods.length; j++ ) {
+				  if ( methods[j].getName().compareTo(name)==0) {
+					  type = methods[j].getReturnType().getName();
+					  break;
+				  }
+			  }
+		  }
+		  if ( type != null ) {
+			  c = getClass(dcl,path,type,new String[]{""});
+		  }
+		  else {
+			  c = null;
+		  }
+		  i ++;
+	  }
+	  //
+	  if ( c!= null ) {
+        StringBuffer sb = new StringBuffer (3000);
+        listClassInfo(c, PUBLIC, sb);
+        Writer out
+          = new BufferedWriter(new OutputStreamWriter(System.out));
+        try {
+          out.write(sb.toString());
+          out.flush();
+        } catch (IOException e) {
+        }
+	  }
+  }
+  private static Class getClass(DynamicClassLoader dcl,String path,String name,String[] imports) {
+	  Class c = null;
+	  for (int i = 0 ; i < imports.length ; i++) {
+		  try {
+		  c = dcl.loadClass(imports[i].trim() + name);
+		  }
+		  catch(Exception e) {
+			  continue;
+			  //return null ;
+		  }
+		  if (c != null) {
+			  return c;
+		  }
+	  }
+	  return c;
+  }
   /**
    * Looks up an unqualified class name in the class path to find possible
    * fully qualified matches.
@@ -636,12 +700,12 @@ public class Completion {
    * @param imports   an array of imported packages
    */
   public static void getClassInfo(String path,String className,
-                                  String[]imports) {
+                                  String[] imports) {
     String name; 
     Class c;
     DynamicClassLoader dcl = new DynamicClassLoader(path);
     for (int i = 0 ; i < imports.length ; i++) {
-      name = imports[i] + className;
+      name = imports[i].trim() + className.trim();
       try {
           c = dcl.loadClass(name);
           //System.out.println(name);
@@ -707,6 +771,18 @@ public class Completion {
           if ( args.length >= 3 ) {
                   level = Integer.parseInt(args[2]);
           }
+		  if ( args[1].indexOf("|",0)>0 ) {
+			  if ( args.length >=4 ) {
+                  String[] as = new String[args.length-2];
+                  as[0]="";
+                  System.arraycopy(args,3,as,1,args.length-3);
+                  getClassInfo(args[0],args[1].split("\\|"),as);
+				  return ;
+			  }
+			  else {
+                  getClassInfo(args[0],args[1].split("\\|"),new String[]{""});
+			  }
+		  }
           if ( args.length >= 4 ) {
 
                   String[] as = new String[args.length-2];

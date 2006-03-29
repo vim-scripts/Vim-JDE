@@ -197,41 +197,49 @@ func! s:VjdeCompletionByVIM(imps) "{{{2
 	if index(s:base_types,s:type)>=0
 		return 0
 	endif
-	call g:vjde_java_cfu.FindClass(s:type,a:imps)
-	if !g:vjde_java_cfu.success
-		return 0
-	endif
-	let index =1
-	let length = len(s:types)
-	let success = g:vjde_java_cfu.success
-	while index < length && success
-		let returntype = ''
-		for member in g:vjde_java_cfu.class.members
-			if s:types[index]==member.name
-				let returntype = member.type
-			endif
-		endfor
-		if returntype==''
-			for method in g:vjde_java_cfu.class.methods
-				if s:types[index] == method.name
-					let returntype=method.ret_type
-				endif
-			endfor
-		endif
-		if returntype==''
-			let success = 0
-		else
-			if index(s:base_types,returntype)>=0
-				let success = 0
-			else
-				call g:vjde_java_cfu.FindClass(returntype,'')
-				let success = g:vjde_java_cfu.success
-			endif
-		endif
-		let index+=1
-	endwhile
-	let s:success = success
-	return s:success
+	"call g:vjde_java_cfu.FindClass(s:type,a:imps)
+	"if !g:vjde_java_cfu.success
+	"	return 0
+	"endif
+    let s:types[0]=s:type
+    if len(s:types)>1
+        call g:vjde_java_cfu.FindClass2(s:types,a:imps)
+    else
+        call g:vjde_java_cfu.FindClass(s:type,a:imps)
+    endif
+    let s:success=g:vjde_java_cfu.success
+    return s:success
+"	let index =1
+"	let length = len(s:types)
+"	let success = g:vjde_java_cfu.success
+"	while index < length && success
+"		let returntype = ''
+"		for member in g:vjde_java_cfu.class.members
+"			if s:types[index]==member.name
+"				let returntype = member.type
+"			endif
+"		endfor
+"		if returntype==''
+"			for method in g:vjde_java_cfu.class.methods
+"				if s:types[index] == method.name
+"					let returntype=method.ret_type
+"				endif
+"			endfor
+"		endif
+"		if returntype==''
+"			let success = 0
+"		else
+"			if index(s:base_types,returntype)>=0
+"				let success = 0
+"			else
+"				call g:vjde_java_cfu.FindClass(returntype,'')
+"				let success = g:vjde_java_cfu.success
+"			endif
+"		endif
+"		let index+=1
+"	endwhile
+"	let s:success = success
+"	return s:success
 endf
 
 func! VjdeCompletionFun0(findstart,base)
@@ -377,14 +385,15 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     let s:types=[]
     if a:line[s:last_start-1]=~'[ \t]'
         let ps = VjdeFindParent(1)
-        let lval = call s:VjdeParentCFUVIM(ps,l:imps)
+        let lval = s:VjdeParentCFUVIM(ps,l:imps)
         if len(lval)==0 " not found , completion for package
             return s:VjdePkgCfuByVIM('',a:base)
 	endif
         return s:retstr
     endif
 
-    let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(a:line,0,a:col)))
+    "let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(a:line,0,a:col)))
+    let s:types=VjdeObejectSplit(VjdeFormatLine(strpart(a:line,0,s:last_start)))
 
 
     if  len(s:types)<1 

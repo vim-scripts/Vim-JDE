@@ -90,16 +90,17 @@ let g:wspawn_available=1
 if has('win32')
 	let g:wspawn_available = executable('wspawn.exe')
 	if !g:wspawn_available
-		echoerr 'wspawn.exe which come from plugin/vjde/ is not runable'
-		echoerr ':h vjde-install for detail'
+		"echoerr 'wspawn.exe which come from plugin/vjde/ is not runable'
+		"echoerr ':h vjde-install for detail'
+                let g:vjde_preview_gui=0
 	endif
 endif
 
 if has('ruby')
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_taglib_cfu.rb'
-	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_xml_cfu.rb'
+	"exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_xml_cfu.rb'
 	"exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_javadoc.rb'
-	au BufNewFile,BufRead,BufEnter *.xml set cfu=VjdeXMLFun0 
+	"au BufNewFile,BufRead,BufEnter *.xml set cfu=VjdeXMLFun0 
 	command! -nargs=0 VjdeJstl ruby Vjde::init_jstl(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/")
 endif
 
@@ -111,6 +112,7 @@ runtime plugin/vjde/vjde_completion.vim
 runtime plugin/vjde/vjde_menu_def.vim
 runtime plugin/vjde/vjde_template.vim
 runtime plugin/vjde/vjde_iab.vim
+runtime plugin/vjde/vjde_cs_completion.vim
 
 if has('ruby') && exists('g:vjde_for_ruby')
 	runtime plugin/vjde/vjde_ruby_completion.vim
@@ -134,9 +136,6 @@ let java_previewer.docLineFun='VjdeGetDocWindowLine'
 
 if g:vjde_autoload_stl && has('ruby')
     ruby Vjde::init_jstl(VIM::evaluate("g:vjde_install_path")+"/vjde/tlds/")
-endif
-if has('win32')
-    call VjdeSetJava('javaw')
 endif
 if v:version>=700
     "au BufNewFile,BufRead,BufEnter *.html set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
@@ -173,14 +172,6 @@ endif
 	    au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> ( <Esc>:call VjdeJavaParameterPreview()<CR>a(
     endif
 
-   exec "au BufNewFile,BufRead,BufEnter *.java imap <buffer> ".g:vjde_completion_key."  <Esc>:call java_previewer.CFU('<C-space>',1)<CR>a"
-   exec "au BufNewFile,BufRead,BufEnter *.jsp imap <buffer>  ".g:vjde_completion_key." <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
-   exec "au BufNewFile,BufRead,BufEnter *.xml imap <buffer>  ".g:vjde_completion_key." <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
-   exec "au BufNewFile,BufRead,BufEnter *.htm imap <buffer>  ".g:vjde_completion_key." <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
-   exec "au BufNewFile,BufRead,BufEnter *.html imap <buffer> ".g:vjde_completion_key."  <Esc>:call java_previewer.CFU('<C-space>')<CR>a"
-
-"autocmd BufReadPost,FileReadPost	.vjde  exec 'Vjdeload '.expand('<afile>')
-"au BufNewFile,BufRead *.xsl set cfu=VjdeXslCompletionFun
 
 "------------------------------------------------------
 "vim:fdm=marker:ff=unix
