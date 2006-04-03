@@ -13,6 +13,7 @@ let s:base_types=["void","int","long","float","double","boolean","char","byte"]
 let s:directives={}
 let s:types=[]
 let s:cfu_type=0
+let s:xml_start = -1
 func! s:VjdeDirectiveAttribute(name,...) "{{{2
 	let attr = VjdeTagAttributeElement_New(a:name)
 	if a:0>0
@@ -275,13 +276,31 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     endif
 
     if s:cfu_type == 0 "taglib
-            let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
+            "let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
+            if a:findstart 
+                call s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
+                let s:xml_start = xmlcomplete#CompleteTags(1,'')
+                return s:last_start
+            endif
+            if (s:xml_start>= 0 ) 
+                let l:str2 = strpart(getline('.'),s:xml_start,col('.')-s:xml_start)
+                return xmlcomplete#CompleteTags(0,l:str2)
+            else
+                return ""
+            endif
     elseif s:cfu_type==1 "java in jsp
 	    return s:VjdeJspCompletionFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==2 "html
-	    let g:vjde_def_loader=VjdeTagLoaderGet('html',g:vjde_install_path.'/vjde/tlds/html.def')
-            let s:retstr= VjdeHTMLFun(a:line,a:base,a:col,a:findstart)
-            let s:retstr.=join(s:VjdeGetAllTaglibPrefix(),"\n")
+        if a:findstart 
+            let s:last_start = htmlcomplete#CompleteTags(1,'')
+            return s:last_start
+        endif
+            if (s:last_start >= 0 ) 
+                let l:str2 = strpart(getline('.'),s:last_start,col('.')-s:last_start)
+                return htmlcomplete#CompleteTags(0,l:str2)
+            else
+                return ""
+            endif
     elseif s:cfu_type==3 "comment
             let s:retstr= VjdeCommentFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==4 "java
@@ -1292,21 +1311,21 @@ func! VjdeJavaParameterPreview(...) "{{{2
 	endif
 	let g:vjde_show_preview=show_prev_old
 endf "}}}2
-func! s:VjdeGeneratePreveiewMenu(base)
+func! s:VjdeGeneratePreveiewMenu(base) "{{{2
     let lval= []
     if strlen(a:base)==0
         for member in g:vjde_java_cfu.class.members
-            call add(lval,{'word': member.name , 'kind': 'm' ,  'info': member.type,'icase':0})
+            call add(lval,{'word': member.name ,'menu': member.type , 'kind': 'm' ,  'info': member.type,'icase':0})
         endfor
         for method in g:vjde_java_cfu.class.methods
-            call add(lval,{'word': method.name."(" , 'kind' : 'f', 'info': method.ToString(),'icase':0})
+            call add(lval,{'word': method.name."(" ,'menu': method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0})
         endfor
     else
         for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
-            call add(lval,{'word': member.name , 'kind': 'm' ,  'info': member.type ,'icase':0})
+            call add(lval,{'word': member.name , 'kind': 'm' ,'menu':member.type ,  'info': member.type ,'icase':0})
         endfor
         for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
-            call add(lval,{'word': method.name."(" , 'kind' : 'f', 'info': method.ToString(),'icase':0})
+            call add(lval,{'word': method.name."(" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0})
         endfor
     endif
     return lval

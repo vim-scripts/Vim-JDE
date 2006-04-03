@@ -6,7 +6,7 @@ if v:version<700
 	finish
 endif
 if !has('ruby')
-    echo 'VJDE need +ruby future is enabled!'
+   " echo 'VJDE need +ruby future is enabled!'
 endif
 let g:vjde_loaded = 1
 
@@ -98,9 +98,6 @@ endif
 
 if has('ruby')
 	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_taglib_cfu.rb'
-	"exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_xml_cfu.rb'
-	"exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_javadoc.rb'
-	"au BufNewFile,BufRead,BufEnter *.xml set cfu=VjdeXMLFun0 
 	command! -nargs=0 VjdeJstl ruby Vjde::init_jstl(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/")
 endif
 
@@ -171,7 +168,24 @@ endif
     if g:vjde_cfu_java_para
 	    au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> ( <Esc>:call VjdeJavaParameterPreview()<CR>a(
     endif
-
+if has('ruby')
+    func! s:VjdeGenTldData(file,name)
+        if has('win32') || has('dos')
+            exec '!ruby '.g:vjde_install_path.'/vjde/tld2xmldata.rb '.a:file.' '.a:name.' >'.g:vjde_install_path[0:-8].'\autoload\xml\'.a:name.'.vim'
+        else
+            exec '!ruby '.g:vjde_install_path.'/vjde/tld2xmldata.rb '.a:file.' '.a:name.' >'.g:vjde_install_path[0:-8].'/autoload/xml/'.a:name.'.vim'
+        endif
+    endf
+    func! s:VjdeGenDtdData(file,name)
+        if has('win32') || has('dos')
+            exec '!ruby '.g:vjde_install_path.'/vjde/genvimdata.rb '.a:file.' '.a:name.' >'.g:vjde_install_path[0:-8].'\autoload\xml\'.a:name.'.vim'
+        else
+            exec '!ruby '.g:vjde_install_path.'/vjde/genvimdata.rb '.a:file.' '.a:name.' >'.g:vjde_install_path[0:-8].'/autoload/xml/'.a:name.'.vim'
+        endif
+    endf
+    command -nargs=+ -complete=file VjdeTld2Data call s:VjdeGenTldData(<f-args>)
+    command -nargs=+ -complete=file VjdeDtd2Data call s:VjdeGenTldData(<f-args>)
+endif
 
 "------------------------------------------------------
 "vim:fdm=marker:ff=unix

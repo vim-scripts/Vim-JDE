@@ -3,7 +3,7 @@ if !exists('g:vjde_loaded') || &cp
 endif
 if !exists('g:vjde_cs_libs')
 	let g:vjde_cs_libs=''
-	"echo 'Add g:vjde_cs_libs in your _vimrc!'
+	echo 'Add g:vjde_cs_libs in your _vimrc!'
 endif
 if !exists('g:vjde_cs_cmd')
 	let g:vjde_cs_cmd='mono.exe '.g:vjde_install_path.'/vjde/CSParser.exe'

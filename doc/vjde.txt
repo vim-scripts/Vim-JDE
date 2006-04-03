@@ -147,35 +147,11 @@ the same as for jsp files >
 <
         
 Taglib completion ~
-								 *vjde-tablib*
-for the taglib ( std taglib is default available ->apache.org) 
+								 *vjde-taglib*
+I add the taglib completion for jsp developer. 
+Just now, completion with tld use xml-completion of |ft-xml-omni|.
 
-        in a jsp file , taglib is declared:
-The default <jsp:...> is defined as "http://java.sun.com/jsp/jsp"
-
->
-        <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-        <%@ taglib prefix="sql" uri="http://java.sun.com/jsp/jstl/sql" %>
-
-<
-
-default , the std taglib is enabled , you can use >
-	let g:vjde_autoload_stl=0
-< for your vimrc to disable it.
-use this command line : >
-    ruby Vjde::init_jstl(VIM::evaluate("$VIM")+"/vimfiles/plugin/vjde/tlds/")
-< or >
-    :VjdeJstl 
-<
-To enable std taglib during your working.
-Add your own taglibs : >
-	:VjdeaddTld <file> [uri]
-<         
-file : is the taglib define file , *.tld as usual 
-uri  : the taglib uri, if not , the default is used , 
-<taglib>...<uri>this one</uri></tablib>
-
-auto completion : >
+For Example ,  I want to use completion for the following: >
         <c:<CTR>-X<CTR>-U
            out forEach...
         <c:o<CTR>-X<CTR>-U
@@ -186,12 +162,29 @@ auto completion : >
              include useBean ....
            
 <
-Directivation for jsp file , like <%@ (page include taglib).. >
-	<%@ <CTR>-x<CTR>-u
-            page include taglib
-        <%@ page <CTR-x><CTR>-u
-                 language ..
+
+At first , I had use this command : >
+    :XMLns stl_c c
+< See |XMLns| for detail of this command.
+I had generate xmldata for STL taglib, use the following name: >
+    stl_c 
+    stl_sql
+    stl_fn
+    stl_fmt
+    stl_x
 <
+You had to use you own prefix , For example , your coding is: >
+    <%@ taglib uri="http://java.sun.com/jsp/jstl/sql" prefix="sql"%>
+< You should use following command: >
+    :XMLns stl_sql sql
+<
+To generate your own taglib from the tld file , You can use the following
+command. >
+    :VjdeTld2Data <a TLD file> <name>
+< TLD file is your own TLD file. Name is used to identify your xmldata. See
+|xml-omni-datafile| for Detail. I will generate the file at 
+$VJDE/autoload/xml/<name>.vim . 
+NOTE: This function is |ruby| required.
 								   *vjde-html*
 Html auto completion :~
 use it like: >
@@ -206,42 +199,13 @@ use it like: >
 <
 
 Xml auto completion:~
-default, HTML and XSL is Schema is enabled.
-for example , if you want to use hibernate-mapping-3.0.dtd as your xml document
-type. you must do: >
-    :VjdeaddDtd /tmp/hibernate/hibernate-mapping-3.0.dtd  
-          http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd 
-
-Then , you can use it : >
-    <!DOCTYPE hibernate-mapping PUBLIC "..." "http://hibernate....3.0.dtd">
+						     *vjde-xmldata* *vjde-xml*
+Use the system xml completion for xml . See |ft-xml-omni| .
+Vjde Has a tool to generate the data file. >
+	:VjdeDtd2Data <a dtd file> <name>
 <
-    completion for element >
-    <h<CTR>-x<CTR>-u
-     hibernate-mapping ...
-<
-    Completion for element >
-    <hibernate-mapping <CTR>-x<CTR>-u>
-                       package= .... 
-<
-    Completion for value >
-    <class lazy="<CTR>-x<CTR>-u
-                "ture" "false"
-<
-    And default the g:vjde_xml_advance == 1
-then , while auto completion is used for element , the auto completion would
-search the child of last element. for example: >
-    <hibernate-mapping ...>
-        <class ... >
-        <id class="...">
-              <<CTR>-x<CTR>-u 
-               generator meta column ...
-               the child of id would be promoted.
-	</id>
-	<CTR>-x<CTR>-u
-         meta subselect ....
-        </class>
-    
-<
+See |vjde-xmldata| for detail.
+Note: This function is |ruby| required.
 Xdoclet completion~
 						 *vjde-xdoclet* *vjde-javadoc*
 Xdoclet completion is used for xdoclet.
