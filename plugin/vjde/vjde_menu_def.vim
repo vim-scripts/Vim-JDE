@@ -113,18 +113,6 @@ function! s:VjdeSaveProjectAs(prj) " {{{2
 	call s:VjdeWriteStr("g:vjde_java_command")
 	call s:VjdeWriteNumber("g:vjde_show_paras")
 	call s:VjdeWriteNumber("g:vjde_xml_advance")
-	if has('ruby')
-ruby<<EOF
-$vjde_tlds.each { |file,u|
-#f.puts "VjdeaddTld "+file+" " + u 
-VIM::command("call add(s:lines,'VjdeaddTld '.escape('#{file}',' ').' '.escape('#{u}',' '))")
-}
-$vjde_dtd_loader.dtds.each { |s|
-#f.puts "VjdeaddDtd " + s.mname + " " + s.malias
-VIM::command("call add(s:lines,'VjdeaddDtd '.escape('#{s.mname}',' ').' '.escape('#{s.malias}',' '))")
-}
-EOF
-	endif
 	call add(s:lines,'" vim :ft=vim:')
 	call writefile(s:lines,a:prj)
 	let s:lines=[]

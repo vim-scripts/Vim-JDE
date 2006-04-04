@@ -278,7 +278,7 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     if s:cfu_type == 0 "taglib
             "let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
             if a:findstart 
-                call s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
+                call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
                 let s:xml_start = xmlcomplete#CompleteTags(1,'')
                 return s:last_start
             endif
@@ -603,19 +603,6 @@ func! s:VjdeTaglibInfo() "{{{2
     endif
 endf
 
-func! s:VjdeTaglibInfoRuby(uri,base,attr,tag) "{{{2
-ruby<<EOF
-if VIM::evaluate('a:attr')=="1"
-   $vjde_tld_loader.each_attr4uri(VIM::evaluate('a:uri'),VIM::evaluate('a:tag'),VIM::evaluate('a:base')) { |t|
-        t.to_s.each_line { |s| puts s}
-    }
-else
-    $vjde_tld_loader.each_tag4uri(VIM::evaluate('a:uri'),VIM::evaluate('a:base')) { |t|
-        t.to_s.each_line { |s| puts s}
-    }
-end
-EOF
-endf
 func! VjdeInfo(...) "{{{2
     let key = expand('<cword>')
     let m_line = line('.')
@@ -890,34 +877,6 @@ func! s:VjdeDirectiveCFUVIM(line,base,col,findstart) "{{{2
 endf
 " uri http://java.... ; base ; attr 1 find attr 0 find tag
 "
-func! s:VjdeTaglibCompletionRuby(uri,base,attr,tag) "{{{2
-    let s:preview_buffer=[]
-ruby<<EOF
-str = ""
-if VIM::evaluate('a:attr')=="1"
-    VIM::command('call add(s:preview_buffer,"'+VIM::evaluate('a:tag')+'=>attributes:")')
-   $vjde_tld_loader.each_attr4uri(VIM::evaluate('a:uri'),VIM::evaluate('a:tag'),VIM::evaluate('a:base')) { |t|
-   name= t.get_text("name").value
-    str << name
-    VIM::command('call add(s:preview_buffer,"attribute '+name+';")')
-    if (name[-1,1]!='"')
-        str << "=\\\"\n"
-    else
-        str << "\n"
-    end
-    }
-    else
-    VIM::command('call add(s:preview_buffer,"'+VIM::evaluate('a:uri')+':")')
-    $vjde_tld_loader.each_tag4uri(VIM::evaluate('a:uri'),VIM::evaluate('a:base')) { |t|
-        name = t.get_text("name").value
-        str << name
-        VIM::command('call add(s:preview_buffer,"tag '+name+';")')
-        str << "\n"
-    }
-end
-VIM::command("let s:retstr=\""+str+"\"")
-EOF
-endf
 
 func! s:VjdeXslInfo() "{{{2
     let key = expand('<cword>')
@@ -950,12 +909,9 @@ func! s:VjdeXslInfo() "{{{2
             echo "no found tag for :".line
             return
         endif
-        call s:VjdeTaglibInfoRuby(uri,key,"1",tag)
     else
-        call s:VjdeTaglibInfoRuby(uri,key,"0","")
     endif
 endf
-
 
 func! s:VjdeXMLSetupNSLoader(prefix) "{{{2
     let l:line_imp = search('\sxmlns:'.a:prefix.'="[^"]*"','nb') " find xmlns:{name}=\".............\"

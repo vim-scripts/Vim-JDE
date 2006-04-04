@@ -97,8 +97,8 @@ if has('win32')
 endif
 
 if has('ruby')
-	exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_taglib_cfu.rb'
-	command! -nargs=0 VjdeJstl ruby Vjde::init_jstl(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/")
+	"exec 'rubyf '.g:vjde_install_path.'/vjde/vjde_taglib_cfu.rb'
+	"command! -nargs=0 VjdeJstl ruby Vjde::init_jstl(VIM::evaluate('g:vjde_install_path')+"/vjde/tlds/")
 endif
 
 runtime plugin/vjde/vjde_preview.vim
