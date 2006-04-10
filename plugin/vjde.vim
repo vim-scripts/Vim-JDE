@@ -43,17 +43,17 @@ if !exists('g:vjde_cfu_downcase')
     let g:vjde_cfu_downcase="0"
 endif
 if !exists('g:vjde_autoload_stl')
-    let g:vjde_autoload_stl=1
+    let g:vjde_autoload_stl=0
 endif
 if !exists('g:vjde_auto_mark')
     let g:vjde_auto_mark=1
 endif
 if !exists('g:vjde_xml_advance')
-    let g:vjde_xml_advance=1
+    let g:vjde_xml_advance=0
 endif
 
 if !exists('g:vjde_cfu_java_dot')
-	let g:vjde_cfu_java_dot = 1
+	let g:vjde_cfu_java_dot = 0
 endif
 if !exists('g:vjde_cfu_java_para')
 	let g:vjde_cfu_java_para = 0
@@ -131,9 +131,9 @@ let java_previewer.onSelect='VjdeInsertWord'
 let java_previewer.previewLinesFun='GetJavaCompletionLines'
 let java_previewer.docLineFun='VjdeGetDocWindowLine'
 
-if g:vjde_autoload_stl && has('ruby')
-    ruby Vjde::init_jstl(VIM::evaluate("g:vjde_install_path")+"/vjde/tlds/")
-endif
+"if g:vjde_autoload_stl && has('ruby')
+"    ruby Vjde::init_jstl(VIM::evaluate("g:vjde_install_path")+"/vjde/tlds/")
+"endif
 if v:version>=700
     "au BufNewFile,BufRead,BufEnter *.html set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
     "au BufNewFile,BufRead,BufEnter *.htm set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")

@@ -9,6 +9,8 @@
 		VJDE    project                      |vjde-project|
 		search auto-completion	             |vjde-auto-comp|
                     java 			     |vjde-java|
+		    cpp				     |vcde|
+		    ruby			     |vjde-ruby|
                     java 			     |vjde-java-pkg|
 		    jsp                              |vjde-jsp|
 		    taglib                           |vjde-taglib|

@@ -70,7 +70,24 @@ function.
 <
 	Then, the vim and ruby file can be previewed!
 
-
+Ruby completion support ~
+								   *vjde-ruby*
+I had add a simple support for Ruby with <c-x><c-u> .
+To enable this function, Just now, you must add the following to your .vimrc >
+	let g:vjde_for_ruby=1
+<
+Now, I know the instance of a String , a Array, a Hash , and which is defined
+by the following : >
+	aobj = Some.new
+<
+Then , I will treat aobj as a instance of Some
+Another way, You can comment your object by : >
+	#@var aobj TcpSocket
+	aobj = TcpSocket.open(
+<
+At this time , @aobj and aobj will be treat as the same . I will ignor the
+'@'.
+So , It's a simple completion for ruby.
 
 
  vim:ts=8 sw=8 noexpandtab tw=78 ft=help:
