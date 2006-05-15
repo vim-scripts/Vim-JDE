@@ -247,7 +247,7 @@ func! VjdeCompletionFun0(findstart,base)
 	if a:findstart
 		return VjdeCompletionFun(getline('.'),a:base,col('.'),a:findstart)
 	endif
-	let lval = VjdeCompletionFun(getline('.'),a:base,col('.'),a:findstart)
+	let lval = VjdeCompletionFun(strpart(getline('.'),0,col('.')),a:base,col('.'),a:findstart)
         if type(lval) ==3 " List
             return lval
         endif
@@ -278,9 +278,11 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     if s:cfu_type == 0 "taglib
             "let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
             if a:findstart 
-                call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
+                "call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
                 let s:xml_start = xmlcomplete#CompleteTags(1,'')
-                return s:last_start
+                "let s:last_start = s:xml_start
+                return s:xml_start
+                "return s:last_start
             endif
             if (s:xml_start>= 0 ) 
                 let l:str2 = strpart(getline('.'),s:xml_start,col('.')-s:xml_start)
@@ -970,7 +972,7 @@ func! VjdeHTMLFun0(findstart,base)
 	if a:findstart
 		return VjdeHTMLFun(getline('.'),a:base,col('.'),a:findstart)
 	endif
-	call VjdeHTMLFun(getline('.'),a:base,col('.'),a:findstart)
+	call VjdeHTMLFun(strpart(getline('.'),0,col('.')),a:base,col('.'),a:findstart)
 	if strlen(s:retstr)<2
 		return []
 	else
@@ -1274,14 +1276,14 @@ func! s:VjdeGeneratePreveiewMenu(base) "{{{2
             call add(lval,{'word': member.name ,'menu': member.type , 'kind': 'm' ,  'info': member.type,'icase':0})
         endfor
         for method in g:vjde_java_cfu.class.methods
-            call add(lval,{'word': method.name."(" ,'menu': method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0})
+            call add(lval,{'word': method.name."(" ,'menu': method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0,'dup':1})
         endfor
     else
         for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
             call add(lval,{'word': member.name , 'kind': 'm' ,'menu':member.type ,  'info': member.type ,'icase':0})
         endfor
         for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
-            call add(lval,{'word': method.name."(" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0})
+            call add(lval,{'word': method.name."(" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0, 'dup':1})
         endfor
     endif
     return lval

@@ -9,11 +9,11 @@ let g:xmldata_stl_c= {
 \  ],
 \ 'if': [ 
 \ [],
-\ { 'test' : [],'var' : [],'scope' : []}
+\ { 'test' : [],'var' : [],'scope' : ['page','session','request','application']}
 \  ],
 \ 'import': [ 
 \ [],
-\ { 'url' : [],'var' : [],'scope' : [],'varReader' : [],'context' : [],'charEncoding' : []}
+\ { 'url' : [],'var' : [],'scope' : ['page','request','session','application'],'varReader' : [],'context' : [],'charEncoding' : []}
 \  ],
 \ 'forEach': [ 
 \ [],
@@ -45,11 +45,11 @@ let g:xmldata_stl_c= {
 \  ],
 \ 'set': [ 
 \ [],
-\ { 'var' : [],'value' : [],'target' : [],'property' : [],'scope' : []}
+\ { 'var' : [],'value' : [],'target' : [],'property' : [],'scope' : ['page','session','application','request','']}
 \  ],
 \ 'url': [ 
 \ [],
-\ { 'var' : [],'scope' : [],'value' : [],'context' : []}
+\ { 'var' : [],'scope' : ['page','session','application','request',''],'value' : [],'context' : []}
 \  ],
 \ 'when': [ 
 \ [],

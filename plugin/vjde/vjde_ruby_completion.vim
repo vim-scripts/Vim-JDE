@@ -28,17 +28,17 @@ func! VjdeGetRubyType(v)
 	let vtp=''
 	let pos=getpos('.')
 	"lvim /^\s*require\s\+.\+$/ %
-	let [lnum,lcol] = searchpos('^\s*#\s*@var\s*\<'.a:v.'\>\s\+[^ \t]\+\s*$','nb',stopline)
+	let [lnum,lcol] = searchpos('^\s*#\s*@var\s*'.a:v.'\>\s\+[^ \t]\+\s*$','nb',stopline)
 	if lnum!=0 && lcol!=0
 		call setpos('.',pos)
 		let str = getline(lnum)
-		let vtp = substitute(str,'^\s*#\s*@var\s*\<'.a:v.'\>\s\+\([^ \t]\+\)\s*$','\1','')
+		let vtp = substitute(str,'^\s*#\s*@var\s*'.a:v.'\>\s\+\([^ \t]\+\)\s*$','\1','')
 		return vtp
 	endif
 	call setpos('.',pos)
-	let [lnum,lcol] = searchpos('\<'.a:v.'\>\s*[+\-*/]*=\s*\([^ \t]\+.new\>\|[\[{"'']\)','nb',stopline)
+	let [lnum,lcol] = searchpos(''.a:v.'\>\s*[+\-*/]*=\s*\([^ \t]\+.\(new\|open\|get_instance\)\>\|[\[{"''/]\|%r{\)','nb',stopline)
 	if lnum!=0 && lcol!=0
-		let str = matchstr(getline(lnum),'=\s*\([^ \t]\+.new\>\|[\[{"'']\)',lcol)
+		let str = matchstr(getline(lnum),'=\s*\([^ \t]\+.\(new\|open\|get_instance\)\>\|[\[{"''/]\|%r{\)',lcol)
 		let str = substitute(str,'^=\s*','','')
 		call setpos('.',pos)
 		if str=='"' || str==''''
@@ -47,8 +47,11 @@ func! VjdeGetRubyType(v)
 			return 'Array'
 		elseif str=='{'
 			return 'Hash'
+                elseif str=='/' || str=='%'
+                        return 'Regexp'
 		elseif strlen(str)>4
-			return str[0:-5]
+                    let l = stridx(str,'.')
+                    return str[0:l-1]
 		end
 		return 'Object'
 	endif

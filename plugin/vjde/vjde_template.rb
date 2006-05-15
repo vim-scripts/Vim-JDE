@@ -158,7 +158,7 @@ module Vjde #{{{1
                 when RE_TEMPLATE
                     arr = l.scan(RE_TEMP_SPLIT)
                     temp =  VjdeTemplate.new(arr[0][0],self)
-                    temp.desc=arr[0][1]
+                    temp.desc=arr[0][1].strip
                 when RE_END
                     break
                 when RE_BODY

@@ -158,13 +158,19 @@ func! VjdeCppCompletion(char,short)
 
     if lstr[s:last_start-1]=='('
 	    let mstr = Cfu(0,strpart(lstr,s:last_start,cnr-s:last_start))
-	    if mstr == ''
-		    return ''
+	    if type(mstr)==1 "String
+		    if mstr == ''
+			    return ''
+		    endif
+	    else
+		    if len(mstr) < 1
+			    return ''
+		    endif
 	    endif
 	    let str = ''
 	    let items = VjdeGetCppCFUTags()
 	    for item in items
-		    let str.=item.cmd."\n"
+		    let str.=item.word."\n"
 	    endfor
 	    call g:vjde_cpp_previewer.PreviewInfo(str)
 	    return mstr

@@ -185,7 +185,7 @@ func! VjdeBrowsTemplate()
 endf
 let s:templates=[]
 func! s:VjdeTemplatesAdd(name,desc)
-	call add(s:templates,{'name':a:name,'desc':a:desc})
+	call add(s:templates,{'name':a:name,'desc': substitute(a:desc,'\s*\(.*\)[\n\r]*\s*$','\1','') })
 endf
 func! s:VjdeTemplatesCreateMenu(f)
 for item in s:templates
