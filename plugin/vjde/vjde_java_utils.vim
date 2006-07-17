@@ -412,31 +412,31 @@ func! Vjde_fix_try() "{{{2
                     let lastpos =[0,0]
                     let lastpos[0:1] = bpos[4:5]
 					if lnum > bpos[2] && lnum < bpos[4]
-							let cpos = VjdeFindBlockDown('\<\(catch\|finally\)\>')
-									while cpos[0]!=0 && cpos[2]!= 0 && cpos[4]!=0
-											let checkpos = VjdeGotoDefPos('}','b')
-											if checkpos[0]==lastpos[0] && checkpos[1]==lastpos[1]
-													"call cursor(cpos[0],cpos[1]+1)  " fix for
-													"try catch statment
-													call cursor(cpos[0],cpos[1])
-													if getline(cpos[0])[cpos[1]-1]=='c'
-															let lastpos[0:1] = cpos[4:5]
-													else
-															break
-													endif
-											else " not the last
-													break
-											endif
-											let cpos = VjdeFindBlockDown('\<\(catch\|finally\)\>')
-											endw
-											let offset = lastpos[0]-lnum -1
-											let mfind = 1
-									endif
-							endif
+                        let cpos = VjdeFindBlockDown('\<\(catch\|finally\)\>')
+                            while cpos[0]!=0 && cpos[2]!= 0 && cpos[4]!=0
+                                let checkpos = VjdeGotoDefPos('}','b')
+                                if checkpos[0]==lastpos[0] && checkpos[1]==lastpos[1]
+                                    "call cursor(cpos[0],cpos[1]+1)  " fix for
+                                    "try catch statment
+                                    call cursor(cpos[0],cpos[1])
+                                    if getline(cpos[0])[cpos[1]-1]=='c'
+                                        let lastpos[0:1] = cpos[4:5]
+                                    else
+                                        break
+                                    endif
+                                else " not the last
+                                    break
+                                endif
+                                let cpos = VjdeFindBlockDown('\<\(catch\|finally\)\>')
+                                endw
+                                let offset = lastpos[0]-lnum -1
+                                let mfind = 1
+                            endif
+                        endif
 
 							if mfind
-									call append(lnum+offset+add,'}')
-									call append(lnum+offset+add+1,'catch('.str.' e'.offset.') {')
+									call append(lnum+offset+add,'catch('.str.' e'.offset.') {')
+									call append(lnum+offset+add+1,'}')
 									let offset += (2+add)
 							else
 									let mfind = 1

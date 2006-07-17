@@ -370,7 +370,7 @@ func! s:VjdePkgCfuByVIM(prefix,base)
 		    call add(lval,{'word': part , 'info': 'class '.item,'icase':0})
 	    else
 		    if part[0] =~'[a-z]'
-                            call add(lval,{'word': part , 'info': 'package '.item i,'icase':0 })
+                            call add(lval,{'word': part , 'info': 'package '.item,'icase':0 })
 		    else
                             call add(lval,{'word': part , 'info': 'class '.item ,'icase':0})
 			    let isclass = 1
