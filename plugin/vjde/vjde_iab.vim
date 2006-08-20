@@ -267,14 +267,14 @@ if g:vjde_iab_old
 		endfor
 	endif
 else
-	exec "au BufNewFile,BufRead,BufEnter *.java inoremap <expr> <buffer> ".g:vjde_iab_key."    VjdeIabCompletionPUM()"
-	exec "au BufNewFile,BufRead,BufEnter *.jsp inoremap <expr> <buffer> ".g:vjde_iab_key."  VjdeIabCompletionPUM()"
-	exec "au BufNewFile,BufRead,BufEnter *.htm inoremap <expr> <buffer> ".g:vjde_iab_key."  VjdeIabCompletionPUM()"
-	exec "au BufNewFile,BufRead,BufEnter *.html inoremap <expr> <buffer> ".g:vjde_iab_key."  VjdeIabCompletionPUM()"
+	exec "au BufNewFile,BufRead,BufEnter *.java inoremap  <buffer> ".g:vjde_iab_key."    <c-r>=VjdeIabCompletionPUM()<cr>"
+	exec "au BufNewFile,BufRead,BufEnter *.jsp inoremap  <buffer> ".g:vjde_iab_key."  <c-r>=VjdeIabCompletionPUM()<cr>"
+	exec "au BufNewFile,BufRead,BufEnter *.htm inoremap  <buffer> ".g:vjde_iab_key."  <c-r>=VjdeIabCompletionPUM()<cr>"
+	exec "au BufNewFile,BufRead,BufEnter *.html inoremap  <buffer> ".g:vjde_iab_key."  <c-r>=VjdeIabCompletionPUM()<cr>"
 
 	if exists('g:vjde_iab_exts')
 		for item in split(g:vjde_iab_exts,';')
-			exe 'au BufNewFile,BufRead,BufEnter *.'.item.' inoremap <expr> <buffer> '.g:vjde_iab_key.' VjdeIabCompletionPUM()'
+			exe 'au BufNewFile,BufRead,BufEnter *.'.item.' inoremap  <buffer> '.g:vjde_iab_key.' <c-r>=VjdeIabCompletionPUM()<cr>'
 		endfor
 	endif
 endif
