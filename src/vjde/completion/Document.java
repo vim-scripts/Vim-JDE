@@ -58,6 +58,9 @@ public class Document {
 		StringTokenizer stks = new StringTokenizer(paths,File.pathSeparator);
 		while ( stks.hasMoreTokens()) {
 			String str = stks.nextToken();
+            if (!str.endsWith("/") ) {
+                str = str+"/";
+            }
 			File file = new File( str+fn+".html" );
 			if ( file.exists()) {
 				return readFile(file);
@@ -93,6 +96,7 @@ public class Document {
 		Pattern pattern = Pattern.compile("<([^ >]+)[^>]*>");
 		//Pattern pattern = Pattern.compile("<[^>]*>");
 		Pattern pattern2 = Pattern.compile("&nbsp;");
+		Pattern spacePattern = Pattern.compile("^\\s*$");
 		while ( ( line = reader.readLine())!= null) {
 			if ((!find) && line.indexOf("<A NAME=\"" + member +"\">",0)!=0) {
 				continue;
@@ -118,9 +122,12 @@ public class Document {
 
 			//temp = temp.replace("&nbsp;"," ");
 			temp = temp.replaceAll("&nbsp;"," ");
-			if ( temp.length()>1) {
+			//if ( temp.length()>1) {
+			if (!spacePattern.matcher(temp).find()) {
 				buffer.append(temp);
-				buffer.append("\n");
+				if ( temp.compareTo("\n")!=0) {
+					buffer.append("\n");
+				}
 			}
 			//String temp = pattern.matcher(line).replaceAll("");
 			//if ( temp.length()>1) 
@@ -140,16 +147,24 @@ public class Document {
 		}
 		try {
 			Document doc = new Document(args[0],args[1],args[2],args4);
-			System.out.println("<span background=\"yellow\">");
+            doc.useHTML = false;
+			//System.out.println("<span background=\"yellow\">");
 			System.out.println(doc.read().replaceFirst("\n",""));
-			System.out.println("</span>");
+			//System.out.println("</span>");
 		}
 		catch(Exception ex) {
 			ex.printStackTrace();
 			//TODO: Add Exception handler here
 		}
         }
+        boolean useHTML = true;
 	private String getTags(String old) {
+        if (!useHTML) {
+			if (old.compareToIgnoreCase("DD")==0) {
+				return "\n";
+			}
+            return " ";
+        }
 		if (tagMaps.containsKey(old)) 
 			return (String) tagMaps.get(old);
 		return "";

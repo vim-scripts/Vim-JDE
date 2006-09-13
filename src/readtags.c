@@ -7,7 +7,9 @@
 *
 *   This module contains functions for reading tag files.
 */
-
+/* Compile command:
+ * gcc -o ../plugin/vjde/readtags -DREADTAGS_MAIN readtags.c
+ */
 /*
 *   INCLUDE FILES
 */
@@ -1050,7 +1052,7 @@ const char *const Usage =
     "    -f field value      Use specified tag file (default: \"tags\").\n"
     "    -t file      Use specified tag file (default: \"tags\").\n"
     "Note that options are acted upon as encountered, so order is significant.\n";
-extern int main( int argc, char *argv[] )
+int main( int argc, char* argv[] )
 {
     int options = 0;
     int actionSupplied = 0;

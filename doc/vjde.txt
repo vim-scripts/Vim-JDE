@@ -380,7 +380,7 @@ normal mode:
 <		change  current variable as local variable.
 								*vjde-rft-arg*
 >
-	<Leader>ra 
+	<Leader>rp 
 <		Add current variable as argument of method.
 
 							      *vjde-rft-const*
@@ -772,7 +772,7 @@ the last class which is be searched.
 Note: Most of setting is auto command enabled .
 see vjde.vim for detail.
 
-    Q1. I had install this plugin, but , when I use <CTR>-x<CTR>-x, it said, not
+    Q1. I had install this plugin, but , when I use <CTR>-x<CTR>-u, it said, not
 found, why?
     A1. Check your |cfu| settings. "VjdeCompletionFun" is expected.
 

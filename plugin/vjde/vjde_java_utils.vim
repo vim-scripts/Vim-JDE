@@ -12,6 +12,25 @@ endif
 let s:cursor_l=1
 let s:cursor_c=0
    
+func! VjdeGetFullImportsList() "{{{2
+    let lnum = line('.')
+    let lcol = col('.')
+    call cursor(line('$'),1)
+    let l:line_imp = search ("^\\s*import\\s\\+","b")
+    let l:res = []
+    while l:line_imp > 0 
+        let l:str = getline(l:line_imp)
+        let l:cend = matchend(l:str,"^\\s*import\\s")
+        if  l:cend!= -1
+            if l:str  !~ '\*\s*;$'
+                call add(l:res,{ 'impt' : substitute(matchstr(l:str,".*$",l:cend),'\s*\(.*\)\s*;\s*$','\1',''),'line' : l:line_imp})
+            endif
+        endif
+        let l:line_imp -= 1
+    endw
+    call cursor(lnum,lcol)
+    return l:res
+endf "}}}2
 func! GetImportsStr() "{{{2
     let l:line_imp = search ("^\\s*import\\s\\+","nb")
     let l:res = "java.lang.*;"
@@ -351,6 +370,23 @@ func! s:Vjde_add_import(cls) "{{{2
         call append(l:line_imp,'import '.a:cls.';')
         return 1
 endf
+func! Vjde_remove_imports()
+    let impts = VjdeGetFullImportsList()
+    let lnum = line('.')
+    let lcol = col('.')
+    let cls=''
+    let res=[]
+    for  item in impts
+        let cls = s:Vjde_get_cls(item.impt)
+        call cursor(item.line+1,1)
+        let res = VjdeGotoDefPos('\<'.cls.'\>','')
+        if  res[0] == 0  || res[0] == item.line " not found
+            call cursor(item.line,1)
+            normal dd
+        endif
+    endfor
+    call cursor(lnum,lcol)
+endf
 func! Vjde_fix_throws() "{{{2
     let bnum = bufnr('%')
     let lnum = line('.')
@@ -444,7 +480,7 @@ func! Vjde_fix_try() "{{{2
 									call append(lnum+1+add,'}')
 									call append(lnum+2+add,'catch('.str.' e'.offset.') {')
 									call append(lnum+3+add,'}')
-									let offset = 3+add
+									let offset = 4+add
 							endif
 					endif
         endfor
@@ -511,7 +547,7 @@ func! s:Java_add_arg(firstl,lastl,str_def) "{{{2
 endf
 func! s:Java_pos_fun() "{{{2
     "return VjdeFindDefination('^\s*\(public\|private\|protected\)\?\(\s\+final\|\s\+static\|\s\+synchronized\)*\s*[^ \t]\+\s\+\i\+(')
-    return VjdeFindDefination('^\s*\(\(public\|private\|protected\|final\|static\|synchronized\|native\|abstract\|synchronized\)\s\+\)*\s*[^ \t]\+\s\+\(if\|while\|for\|catch\)\@!\(\i\+\)\s*(')
+    return VjdeFindDefination('^\s*\(\(public\|private\|protected\|final\|static\|synchronized\|native\|abstract\|synchronized\)\s\+\)*\s*\(new\|return\)\@!\([^ \t]\+\)\s\+\(if\|while\|for\|catch\)\@!\(\i\+\)\s*(')
 endf
 func! s:Java_pos_class() "{{{2
     return VjdeFindDefination('^\s*\(public\|private\|protected\)\?\(\s*abstract\|\s*final\|\s*static\)*\s*\(class\|interface\)\s\+\i\+')
@@ -611,7 +647,7 @@ func! Vjde_rft_const() range "{{{2
         return
     endif
     let firstcol = col('''<')
-    let lastcol = col('''>') -1
+    let lastcol = col('''>') 
     let str = ''
     if a:firstline == a:lastline
         let ll  = getline(a:firstline)
@@ -807,6 +843,7 @@ endf
 function! s:Vjde_utils_setup() "{{{2
     nnoremap <buffer> <silent> <Leader>je :call Vjde_ext_import()<CR>
     nnoremap <buffer> <silent> <Leader>jg :call Vjde_get_set()<CR>
+    nnoremap <buffer> <silent> <Leader>jc :call VjdeGenerateConstructor()<CR>
     nnoremap <buffer> <silent> <Leader>jt :call Vjde_surround_try()<CR>
     vnoremap <buffer> <silent> <Leader>jt :call Vjde_surround_try()<CR>
     vnoremap <buffer> <silent> <Leader>js :call Vjde_sort_import()<CR>
@@ -815,15 +852,17 @@ function! s:Vjde_utils_setup() "{{{2
     nnoremap <buffer> <silent> <Leader>ft :call Vjde_fix_try()<CR>
     nnoremap <buffer> <silent> <Leader>fi :call Vjde_fix_import()<CR>
     nnoremap <buffer> <silent> <Leader>ai :call Vjde_fix_import1()<CR>
+    nnoremap <buffer> <silent> <Leader>ri :call Vjde_remove_imports()<CR>
     " extract variable to local
     nnoremap <buffer> <silent> <Leader>el :call Vjde_rft_var(2)<CR>
     " extract variable to member
     nnoremap <buffer> <silent> <Leader>em :call Vjde_rft_var(1)<CR>
-    nnoremap <buffer> <silent> <Leader>ea :call Vjde_rft_arg()<CR>
+    nnoremap <buffer> <silent> <Leader>ep :call Vjde_rft_arg()<CR>
     vnoremap <buffer> <silent> <Leader>en :call Vjde_rft_const()<CR>
 
     nnoremap <buffer> <silent> <Leader>oe :call Vjde_override(0)<CR>
     nnoremap <buffer> <silent> <Leader>oi :call Vjde_override(1)<CR>
+    nnoremap <buffer> <silent> <Leader>as :call VjdeAppendTemplate("Singleton")<CR>
     "imap <M-g> <ESC> :call <SID> Vjde_get_set()<cr>
     "map <M-g> :call <SID>Vjde_get_set()<cr>
 endf "}}}2

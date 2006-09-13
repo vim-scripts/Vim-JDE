@@ -1,6 +1,6 @@
-require 'd:/workspace/vjdelocal/plugin/vjde/vjde_xml_cfu.rb'
-loader = Vjde::DTD_Parser.new()
-loader.parse(File.new("e:/wfc/ant.dtd"))
+require 'vjde_xml_cfu.rb'
+#loader = Vjde::DTD_Parser.new()
+#loader.parse(File.new("e:/wfc/ant.dtd"))
 
 class Generator
     attr_accessor   :ns

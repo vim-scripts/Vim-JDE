@@ -384,8 +384,13 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
         return VjdeFindStart(a:line,a:base,a:col,'[.@ \t(]')
     endif
     if a:line[s:last_start-1]=='('
-	    call VjdeJavaParameterPreview(1)
-	    return
+	    let retdict = VjdeJavaParameterPreview(2)
+            for item in retdict
+                let item.abbr= item.word
+                let item.word=' '
+                let item.dup=1
+            endfor
+            return retdict
     endif
 
     let s:retstr=""
@@ -538,17 +543,22 @@ func! s:VjdeGotoDecl() "{{{2
     if g:vjde_auto_mark == 1
         mark J
     endif
-    let fp = findfile(substitute(classname,'\.','/','g').'.java')
-    if fp != ''
-        exec 'edit '.fp
-    else
+    for mpath in split(&path.';'.g:vjde_src_path,';')
+
+        let fp = findfile(substitute(classname,'\.','/','g').'.java',mpath)
+        if fp != ''
+            exec 'edit '.fp
+        else
+            continue
+        endif
+        if s:beginning == "" 
+            return 
+        endif
+        call search('\s*\(\<public\|protected\|\)\s*\(static\s\|virtual\s\|final\s\)*[^ \t]\+\s\+\<'.s:beginning.'\>','w')
+            return
+        endfor
         echo 'source for :'.classname.' is not found in[path]:'.&path
-	return
-    endif
-    if s:beginning == "" 
-        return 
-    endif
-    call search('\s*\(\<public\|protected\|\)\s*\(static\s\|virtual\s\|final\s\)*[^ \t]\+\s\+\<'.s:beginning.'\>','w')
+        return
 endf
 func! s:VjdeTaglibPrefix(line) "{{{2
     let id1 = stridx(a:line,'<')
@@ -1256,31 +1266,32 @@ func! VjdeJavaParameterPreview(...) "{{{2
 	if a:0 > 0
 		let off=a:1
 	endif
-	let show_prev_old = g:vjde_show_preview
-	let g:vjde_show_preview=1
-	"call VjdeInfo(1) " call vjdei, not show the infomation
+	"let show_prev_old = g:vjde_show_preview
+	"let g:vjde_show_preview=1
 	let lstr = getline(line('.'))
 	let cnr = col('.') - off
 	let Cfu = function(&cfu)
-	let s:last_start = Cfu(1,'')
+        let s:last_start = VjdeCompletionFun(getline('.'),'',col('.')-2,1)
 	let mstr = Cfu(0,strpart(lstr,s:last_start,cnr-s:last_start))
-	if len(s:preview_buffer)>0
-		call g:java_previewer.PreviewInfo(join(s:preview_buffer,"\n"))
-	endif
-	let g:vjde_show_preview=show_prev_old
+        
+	"if len(s:preview_buffer)>0
+	"	call g:java_previewer.PreviewInfo(join(s:preview_buffer,"\n"))
+	"endif
+	"let g:vjde_show_preview=show_prev_old
+        return mstr
 endf "}}}2
 func! s:VjdeGeneratePreveiewMenu(base) "{{{2
     let lval= []
     if strlen(a:base)==0
         for member in g:vjde_java_cfu.class.members
-            call add(lval,{'word': member.name ,'menu': member.type , 'kind': 'm' ,  'info': member.type,'icase':0})
+            call add(lval,{'word': member.name ,'menu': member.type , 'kind': 'm' ,  'info': member.type.' '.member.name,'icase':0})
         endfor
         for method in g:vjde_java_cfu.class.methods
             call add(lval,{'word': method.name."(" ,'menu': method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0,'dup':1})
         endfor
     else
         for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
-            call add(lval,{'word': member.name , 'kind': 'm' ,'menu':member.type ,  'info': member.type ,'icase':0})
+            call add(lval,{'word': member.name , 'kind': 'm' ,'menu':member.type ,  'info': member.type.' '.member.name ,'icase':0})
         endfor
         for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
             call add(lval,{'word': method.name."(" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0, 'dup':1})

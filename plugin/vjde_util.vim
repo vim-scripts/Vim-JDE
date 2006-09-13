@@ -135,7 +135,7 @@ func! VjdeFormatLine(line) "{{{2 remove
     else
         return ""   " incorrectly line
     endif
-    let l:index2 = matchend(a:line,'^\(return\s\+\|new\s\+\|([^)]*)\s*\)',ret_index)
+    let l:index2 = matchend(a:line,'^\s*\(return\s\+\|new\s\+\|([^)]*)\s*\)',ret_index)
     if  l:index2 != -1
         let ret_index = l:index2 
     endif

@@ -189,12 +189,16 @@ func! s:VjdeRunCurrent(...)
 
         let cname = expand("%:t:r")
         let cpath= expand("%:h")
-        if  strlen(g:vjde_src_path)!=0 && match(cpath,g:vjde_src_path)==0 
+        if strlen(cpath)>0
+            if  strlen(g:vjde_src_path)!=0 && match(cpath,g:vjde_src_path)==0 
                 let cpath = strpart(cpath,strlen(g:vjde_src_path)+1)
-        elseif strlen(g:vjde_test_path)!=0 && match(cpath,g:vjde_test_path)==0  
+            elseif strlen(g:vjde_test_path)!=0 && match(cpath,g:vjde_test_path)==0  
                 let cpath = strpart(cpath,strlen(g:vjde_test_path)+1)
-        endif
-        exec "!java  -cp \"".g:vjde_lib_path."\" ".substitute(cpath,'[/\\]','.','g').".".cname.' '.args
+            endif
+            exec "!java  -cp \"".g:vjde_lib_path."\" ".substitute(cpath,'[/\\]','.','g').".".cname.' '.args
+    else
+        exec "!java  -cp \"".g:vjde_lib_path."\" ".cname.' '.args
+    endif
 endf
 " create menu here {{{2
 "amenu Vim\ &JDE.&Project.Project :

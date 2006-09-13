@@ -1,4 +1,5 @@
 // wspawn
+// g++ -o ../plugin/vjde/wspawn wspawn.cpp -mwindows
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -109,7 +109,8 @@ runtime plugin/vjde/vjde_completion.vim
 runtime plugin/vjde/vjde_menu_def.vim
 runtime plugin/vjde/vjde_template.vim
 runtime plugin/vjde/vjde_iab.vim
-runtime plugin/vjde/vjde_cs_completion.vim
+"runtime plugin/vjde/vjde_cs_completion.vim
+runtime plugin/vjde/vjde_javadoc.vim
 
 if has('ruby') && exists('g:vjde_for_ruby')
 	runtime plugin/vjde/vjde_ruby_completion.vim
@@ -139,9 +140,11 @@ if v:version>=700
     "au BufNewFile,BufRead,BufEnter *.htm set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
     "au BufNewFile,BufRead,BufEnter *.xsl set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("xsl",g:vjde_install_path."/vjde/tlds/xsl.def")
     "au BufNewFile,BufRead,BufEnter *.xsd set cfu=VjdeHTMLFun0 | let g:vjde_tag_loader=VjdeTagLoaderGet("xsl",g:vjde_install_path."/vjde/tlds/xsd.def")
-    au BufNewFile,BufRead,BufEnter *.java set cfu=VjdeCompletionFun0
+    au BufNewFile,BufRead,BufEnter *.java set cfu=VjdeCompletionFun0 
+    "| inoremap <buffer> <expr> <f1> VjdeJavaDoc()
 
-    au BufNewFile,BufRead,BufEnter *.jsp set cfu=VjdeCompletionFun0  | let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
+    au BufNewFile,BufRead,BufEnter *.jsp set cfu=VjdeCompletionFun0  
+    "| let g:vjde_tag_loader=VjdeTagLoaderGet("html",g:vjde_install_path."/vjde/tlds/html.def")
 
     "au! CursorHold *.java nested call java_previewer.CFU()
 

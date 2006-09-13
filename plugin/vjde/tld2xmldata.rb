@@ -1,4 +1,4 @@
-require 'd:/workspace/vjdelocal/plugin/vjde/vjde_taglib_cfu.rb'
+require 'vjde_taglib_cfu.rb'
 #puts loader.tlds
 #loader.tlds.each { |key,val|
 #        val.each_tag { |tg|
