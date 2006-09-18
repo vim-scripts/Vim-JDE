@@ -8,7 +8,7 @@
 *   This module contains functions for reading tag files.
 */
 /* Compile command:
- * gcc -o ../plugin/vjde/readtags -DREADTAGS_MAIN readtags.c
+ * gcc -o ../plugin/vjde/readtags -DREADTAGS_MAIN readtags.c -mwindows
  */
 /*
 *   INCLUDE FILES

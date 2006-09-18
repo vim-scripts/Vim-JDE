@@ -103,5 +103,5 @@ if has('win32') && has('gui_running')
     au BufWinEnter * if &pvw | let t:vjde_preview_num = bufnr('%') | endif
     au BufWinLeave * if &pvw | let t:vjde_preview_num = -1 | endif
     au BufNewFile,BufRead,BufEnter *.java inoremap <buffer> <expr> <f1> VjdeJavaDoc()
-	au! BufEnter * silent call VjdeAdjustCaretPos(1)
+    au! WinEnter * silent call VjdeAdjustCaretPos(1)
 endif
