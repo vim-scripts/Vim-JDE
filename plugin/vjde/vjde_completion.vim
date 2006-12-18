@@ -276,20 +276,33 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     endif
 
     if s:cfu_type == 0 "taglib
-            "let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
-            if a:findstart 
-                "call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
-                let s:xml_start = xmlcomplete#CompleteTags(1,'')
-                "let s:last_start = s:xml_start
-                return s:xml_start
-                "return s:last_start
-            endif
-            if (s:xml_start>= 0 ) 
-                let l:str2 = strpart(getline('.'),s:xml_start,col('.')-s:xml_start)
-                return xmlcomplete#CompleteTags(0,l:str2)
-            else
-                return ""
-            endif
+		if  s:xml_start == -1
+			let id1 = VjdeFindUnendPair(a:line,'<','>',0,a:col) " TODO:find uncompleted <
+			let id2 = stridx(a:line,':',id1)
+			if ( id2 == -1 && id1>=0 ) " this is a <%@ ....
+				if a:findstart
+					call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
+					return s:last_start
+				endif
+				call s:VjdeDirectiveCFUVIM(a:line,a:base,a:col,a:findstart)
+				return s:retstr
+			endif
+		endif
+		"let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
+		if a:findstart 
+			"call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
+			let s:xml_start = xmlcomplete#CompleteTags(1,'')
+			"let s:last_start = s:xml_start
+			return s:xml_start
+			"return s:last_start
+		endif
+		if (s:xml_start>= 0 ) 
+			let l:str2 = strpart(getline('.'),s:xml_start,col('.')-s:xml_start)
+			let s:xml_start = -1
+			return xmlcomplete#CompleteTags(0,l:str2)
+		else
+			return ""
+		endif
     elseif s:cfu_type==1 "java in jsp
 	    return s:VjdeJspCompletionFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==2 "html
@@ -390,6 +403,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
                 let item.word=' '
                 let item.dup=1
             endfor
+	    call add(retdict,{'abbr' : 'Parameters' , 'word' : ' ', 'dup' : 1})
             return retdict
     endif
 
@@ -863,23 +877,41 @@ func! s:VjdeDirectiveCFUVIM(line,base,col,findstart) "{{{2
     let s:preview_buffer=[]
     let str=''
     let attr= match(a:line,'<%@\s\+\(page\|include\|taglib\|attribute\)\s')>=0?1:0
+    "let attr = ( a:line[s:last_start-1]=='"' )
     if attr
 	    let mtag = matchstr(a:line,'\(page\|include\|taglib\|attribute\)')
 	    if mtag==''
 		    return ''
 	    endif
 	    call add(s:preview_buffer,mtag.'=>attributes:')
-	    for attribute in s:directives[mtag].attributes
-		    if  stridx(attribute.name,a:base)==0
-			    let str.=attribute.name."\n"
-			    call add(s:preview_buffer,'attribute '.attribute.name.';')
+	    let attr = ( a:line[s:last_start-1]=='"' )
+	    if attr
+		    let id1=VjdeFindStart(a:line,'',a:col,'[ \t]')
+		    let id2=VjdeFindStart(a:line,'',a:col,'[=]')
+		    if ( id1 < 0 || id2<id1)
+			    return ""
 		    endif
-	    endfor
+		    let attrname = strpart(a:line,id1,id2-id1-1)
+		    for attribute in s:directives[mtag].attributes
+			    if  attribute.name==attrname
+				    let str = join(attribute.values,"\n")
+				    break
+				    "call add(s:preview_buffer,'attribute '.attribute.name.';')
+			    endif
+		    endfor
+	    else 
+		    for attribute in s:directives[mtag].attributes
+			    if  stridx(attribute.name,a:base)==0
+				    let str.=attribute.name."\n"
+				    "call add(s:preview_buffer,'attribute '.attribute.name.';')
+			    endif
+		    endfor
+	    endif
     else
 	    for mdir in keys(s:directives)
 		    if  stridx(mdir,a:base)==0
 			    let str.=mdir."\n"
-			    call add(s:preview_buffer,'Directive '.mdir.';')
+			    "call add(s:preview_buffer,'Directive '.mdir.';')
 		    endif
 	    endfor
     endif

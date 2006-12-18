@@ -138,15 +138,15 @@ func! VjdeTemplateManager_New()
                                 \"LoadIndex":function('VjdeTemplateManager_LoadIndex'),
                                 \"GetTemplate":function('VjdeTemplateManager_GetTemplate')}
 endf
-let mana2 = VjdeTemplateManager_New()
-call mana2.LoadIndex('plugin/vjde/tlds/java.vjde')
-let temp = mana2.GetTemplate("NewClass")
-for item in temp.GetParas()
-        let str = inputdialog(item.desc)
-        temp.SetPara(item.name,str)
-endfor
-for line in temp.GetLines()
-        echo line
-endfor
+"let mana2 = VjdeTemplateManager_New()
+"call mana2.LoadIndex('plugin/vjde/tlds/java.vjde')
+"let temp = mana2.GetTemplate("NewClass")
+"for item in temp.GetParas()
+"        let str = inputdialog(item.desc)
+"        temp.SetPara(item.name,str)
+"endfor
+"for line in temp.GetLines()
+"        echo line
+"endfor
 
 "vim:fdm=marker:ff=unix

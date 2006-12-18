@@ -17,6 +17,9 @@ endif
 if !exists('g:vjde_max_tags')
 		let g:vjde_max_tags=100
 endif
+if !exists('g:vjde_max_deeps')
+		let g:vjde_max_deeps=2
+endif
 if !exists('g:vjde_ctags_ruby')
 		let g:vjde_ctags_ruby = has('ruby')
 endif
@@ -78,6 +81,7 @@ func! CtagsCompletion(word,...) "{{{2
 ruby<<EOF
 	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
 	taglist.max=VIM::evaluate("g:vjde_max_tags").to_i + 50
+	taglist.max_deep=VIM::evaluate("g:vjde_max_deeps").to_i
 	taglist.count=0
 	taglist.each_tag(VIM::evaluate('word'),VIM::evaluate("full")==1) { |t,f|
 		cmd = t.cmd
@@ -111,6 +115,7 @@ func! CtagsCompletion2(cls,word,...) "{{{2
 ruby<<EOF
 	taglist = Vjde::getCtags(VIM::evaluate('&tags'),VIM::evaluate('g:vjde_readtags'))
 	taglist.max=VIM::evaluate("g:vjde_max_tags").to_i 
+	taglist.max_deep=VIM::evaluate("g:vjde_max_deeps").to_i
 	taglist.count=0
 	taglist.each_member(VIM::evaluate('cls'),VIM::evaluate('word'),VIM::evaluate("full")==1) { |t,f|
 		cmd = t.cmd

@@ -609,7 +609,7 @@ module Vjde
 						   end
 				   end
 			   end
-		   elsif t.kind=='v'
+		   elsif t.kind=='v' || t.kind=='m'
 			   cmd = CtagsTagList.get_type(t.cmd,className)
 			   if cmd!=nil
 				   if block_given?
@@ -696,10 +696,12 @@ class ReadTags #{{{1
 	attr_accessor :type_searched
 	attr_accessor :max_deep
 	attr_accessor :max_tags
+	attr_accessor :exttp
 	attr_accessor :count
-	def initialize(tagsVar,cmd)
+	def initialize(tagsVar,cmd,exttp='')
             @tagFiles = Vjde::getTagFiles(tagsVar)
 	    @cmd = cmd
+		@exttp=exttp
 	    @type_searched = Array.new
 	    @max_deep = 2
 		@max_tags = -1
@@ -753,9 +755,10 @@ class ReadTags #{{{1
 		#{{{3
 	    @tagFiles.each { |f|
 		    next if (!FileTest.exist?(f))
-		    cmdline= @cmd + " -e -k ncstu -t #{f} #{className}"
+		    cmdline= @cmd + " -e -k ncstuv#{@exttp} -t #{f} #{className}"
 		    res = `#{cmdline}`
 		    next if res.length==0
+			lastt = nil
 		    res.each { |l|
 			    t = CtagsTag.getTagFromCtag(l,nil)
 			    if t.kind=='c' || t.kind=='n' || t.kind=='s'
@@ -793,17 +796,29 @@ class ReadTags #{{{1
 							   end
 					   end
 				   end
-		   elsif t.kind=='v'
-			   cmd = ReadTags.get_type(t.cmd,className)
-			   if cmd!=nil
-					   if block_given?
-							   find_class(cmd) { |t,f| yield(t,f) }
-					   else
-							   return find_class(cmd) 
-					   end
-			   end
+		   elsif t.kind=='v' || ( t.kind==@exttp)
+			   lastt = t
+			   #cmd = ReadTags.get_type(t.cmd,className)
+			   #if cmd!=nil
+			   # 	   if block_given?
+			   # 			   find_class(cmd) { |t,f| yield(t,f) }
+			   # 	   else
+			   # 			   return find_class(cmd) 
+			   # 	   end
+			   #end
 		   end
 		    }
+			if lastt!= nil && (lastt.kind=='v' || (lastt.kind=@exttp ))
+				cmd = ReadTags.get_type(lastt.cmd,className)
+				@exttp=''
+				if cmd!=nil
+					if block_given?
+						find_class(cmd) { |t,f| yield(t,f) }
+					else
+						return find_class(cmd) 
+					end
+				end
+			end
 	    }
 		nil
 		#}}}3
@@ -814,7 +829,13 @@ class ReadTags #{{{1
 	    className = className1
 	    clsTag = nil
 	    seachedFile = nil
+		@exttp=''
 	    cls = find_class(className)
+		if cls==nil
+			@exttp='m'
+			@type_searched.clear
+			cls = find_class(className)
+		end
 	    return if cls==nil
 
 		para = ""
@@ -864,6 +885,7 @@ class ReadTags #{{{1
 		find = false
 		res.each { |l|
 			    t = CtagsTag.getTagFromCtag(l,nil)
+				next if t == nil
 				yield(t,seachedFile)
 				find = true
 		}
@@ -996,12 +1018,18 @@ end
 #}
 #puts Vjde::CtagsTagList.get_type('/^}  NATION;  $/','NATION')
 # }}}2
-#taglist = Vjde::getCtags("d:/workspace/dicomdecoder/tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
+#taglist = Vjde::getCtags("d:/workspace/mmterminal/tags",'d:/vim/vimfiles/plugin/vjde/readtags.exe')
+#taglist = Vjde::getCtags('d:/workspace/mmterminal/tags,./tags,d:\cbuilder6\include\tagsf,d:\cbuilder6\include\tagsm,d:\cbuilder6\include\tagsz,d:\cbuilder6\include\vcl\tagsd,d:\cbuilder6\include\vcl\tagsi,d:\cbuilder6\include\vcl\tagsp,d:\cbuilder6\include\vcl\tagsz','d:/vim/vimfiles/plugin/vjde/readtags.exe')
+
+#taglist.find_class('AnsiString') { |t,f|
+#		puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd} #{t.inherits}"
+#}
+#puts '----------'
 #taglist.max_deep=4
 #taglist.find_class('transaction_base') { |t,f|
 		#puts "#{t.name} #{t.ns} #{t.className} #{t.kind} #{t.cmd} #{t.inherits}"
 #}
-#taglist.each_member('DicomReaderPtr','') { |t,f|
+#taglist.each_member('MoviesListURL','') { |t,f|
 #	puts "#{t.name} , #{t.kind}  #{t.className} #{t.ns}"
 #}
 #puts taglist.type_searched

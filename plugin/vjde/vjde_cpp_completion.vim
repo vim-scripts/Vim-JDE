@@ -41,7 +41,8 @@ func! VjdeGetCppType(v)
 	let lnr = line('.')
 	let cnr = col('.')
 	"let pattern='\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*[* \t]\+\<'.a:v.'\>'
-	let pattern='\(\<\i\+\>\(\s*<.*>\s*\)*::\)*\<\i\+\>\(\s*<.*>\s*\)*\(\[.*\]\)*[*& \t]\+\<'.a:v.'\>'
+	"let pattern='\(\<\i\+\>\(\s*<.*>\s*\)*::\)*\<\(new\|delete\|return\)\@!\(\i\+\)\>\(\s*<.*>\s*\)*\(\[.*\]\)*\([ \t*]*\|[&]\?\)\<'.a:v.'\>'
+	let pattern='\(\<\i\+\>\(\s*<.*>\s*\)*::\)*\<\(new\|delete\|return\)\@!\(\i\+\)\>\(\s*<.*>\s*\)*\(\[.*\]\)*\([ \t*]*\|[&]\?[ \t]\+[&]\?\)\<'.a:v.'\>'
 	let pos = VjdeGotoDefPos(pattern,'b')
 	if pos[0]==0
 		call cursor(lnr,cnr)

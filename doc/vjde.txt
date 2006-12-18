@@ -419,7 +419,7 @@ function  to generate code .
 
 								 *vjde-fix-im*
 Automatically add import for Word under cursor. >
-	<leader>fi
+	<leader>ai
 <
 
 
