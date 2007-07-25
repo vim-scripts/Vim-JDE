@@ -16,6 +16,7 @@ public class ClassesByName {
 
 
 		// grep jdk1.5lst
+        /*
 		try {
 			BufferedReader in = new BufferedReader(new FileReader(args[1]));	
 			String str = null;
@@ -32,6 +33,7 @@ public class ClassesByName {
 		for ( Iterator it = buffer.iterator() ; it.hasNext(); ) {
 			System.out.println(it.next());
 		}
+            */
 		if ( args.length < 3)
 			return ;
 		String[] names = new DynamicClassLoader(args[2]).getClass4Name(args[0]);

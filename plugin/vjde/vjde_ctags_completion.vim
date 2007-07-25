@@ -75,7 +75,7 @@ func! CtagsCompletion(word,...) "{{{2
 	if !g:vjde_ctags_ruby && executable(g:vjde_readtags)
 			let cmp = VjdeReadTags_New(&tags,g:vjde_readtags)
 			let cmp.max_tags = g:vjde_max_tags
-			call cmp.Each(word,'VjdeHandleTags',full)
+			call cmp.EachTag(word,'VjdeHandleTags',full)
 			return s:matched_tags
 	endif
 ruby<<EOF

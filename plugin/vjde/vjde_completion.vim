@@ -377,15 +377,16 @@ func! s:VjdePkgCfuByVIM(prefix,base)
     let lval = [] 
     let isclass=0
     for item in VjdeJavaSearchPackagesAndClasses(g:vjde_install_path.'/vjde/vjde.jar',g:vjde_lib_path,a:prefix,a:base)
-	    let part = strpart(item,len) 
+	    let part = strlen(item) > len ? strpart(item,len) : item
+	    
 	    let s:retstr.= part."\n"
 	    if isclass
-		    call add(lval,{'word': part , 'info': 'class '.item,'icase':0})
+		    call add(lval,{'word': item, 'info': 'class '.item,'icase':0})
 	    else
-		    if part[0] =~'[a-z]'
+		    if item[0] =~'[a-z]'
                             call add(lval,{'word': part , 'info': 'package '.item,'icase':0 })
 		    else
-                            call add(lval,{'word': part , 'info': 'class '.item ,'icase':0})
+                            call add(lval,{'word': item , 'info': 'class '.item.'.class' ,'icase':0})
 			    let isclass = 1
 		    endif
 	    endif
@@ -1303,6 +1304,22 @@ func! VjdeJavaParameterPreview(...) "{{{2
 	let lstr = getline(line('.'))
 	let cnr = col('.') - off
 	let Cfu = function(&cfu)
+	let mystr = strpart(lstr,0,col('.')-2)
+	let myv = substitute(mystr,'^.*\<new\>\s\+\(\i\+\)$','\1','')
+	if  strlen(myv) != strlen(mystr)
+		if empty(g:vjde_java_cfu)
+			let g:vjde_java_cfu = VjdeJavaCompletion_New(g:vjde_install_path.'/vjde/vjde.jar',g:vjde_out_path.g:vjde_path_spt.g:vjde_lib_path)
+		endif
+		call g:vjde_java_cfu.FindClass(myv,GetImportsStr())
+		let lval=[]
+		if g:vjde_java_cfu.success
+			for constructor in g:vjde_java_cfu.class.constructors
+				call add(lval,{'word': myv ,'menu': ' ', 'kind' : 'c', 'info': constructor.ToString(),'icase':0,'dup':1})
+			endfor
+        else
+		endif
+		return lval
+	endif
         let s:last_start = VjdeCompletionFun(getline('.'),'',col('.')-2,1)
 	let mstr = Cfu(0,strpart(lstr,s:last_start,cnr-s:last_start))
         

@@ -23,6 +23,7 @@ public class PackageClasses {
 			check = false;
 		}
 
+        /*
 		// grep jdk1.5lst
 		try {
 			BufferedReader in = new BufferedReader(new FileReader(args[2]));	
@@ -45,23 +46,27 @@ public class PackageClasses {
 		catch(Exception ex) {
 			//TODO: Add Exception handler here
 		}
+        */
 
 		Arrays.sort(names);
 
+        /*
 		for ( Iterator it = buffer.iterator() ; it.hasNext(); ) {
 			System.out.println(it.next());
 		}
+        */
 
 		if (args.length >= 4 && args[3].length()>0) {
 			for ( int i = 0 ; i < names.length ; i++) {
-				if ( names[i].startsWith(args[3])) {
-					System.out.println(names[i]);
+				if ( names[i].startsWith(args[3]) && names[i].indexOf('$')<0 && names[i].endsWith(".class")) {
+					System.out.println(names[i].substring(0,names[i].length()-6));
 				}
 			}
 		}
 		else {
 			for ( int i = 0 ; i < names.length ; i++) {
-				System.out.println(names[i]);
+                if ( names[i].indexOf('$') < 0 && names[i].endsWith(".class")) 
+				System.out.println(names[i].substring(0,names[i].length()-6));
 			}
 		}
 	}

@@ -1,12 +1,21 @@
 if !exists('g:vjde_loaded') || &cp
 	finish
 endif
+let g:vjde_java_rt=';'
 if !exists('g:vjde_java_command')
     let g:vjde_java_command='java'
     if has('win32')
             let g:vjde_java_command='javaw'
     endif
 end
+let s:java_home = expand('$JAVA_HOME')
+if s:java_home != '$JAVA_HOME' && strlen(s:java_home) > 0 
+    if s:java_home[strlen(s:java_home)-1]=='/' || s:java_home[strlen(s:java_home)-1]=='\'
+        let g:vjde_java_rt =';'.s:java_home.'jre/lib/rt.jar'
+    else
+        let g:vjde_java_rt =';'.s:java_home. '/jre/lib/rt.jar'
+    endif
+endif
 
 func! VjdeListStringToList(str) "{{{2
     let lines = split(a:str,"\n")
@@ -210,7 +219,13 @@ func! VjdeJavaCompletion_New(jar,path)
 endf "}}}2
 
 func! s:SearchPackages(jar,lib_path,prefix)
-	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageCompletion  '.a:lib_path.' '.a:prefix
+    let lib=''
+    if  a:lib_path=='""'
+        let lib=g:vjde_java_rt 
+    else
+        let lib=a:lib_path.g:vjde_java_rt
+    endif
+	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageCompletion  "'.lib.'" '.a:prefix
 	let array = split(system(cmd))
 	return array
 endf
@@ -218,8 +233,14 @@ func VjdeSearchClasses(jar,lib_path,prefix,base)
     return s:SearchClasses(a:jar,a:lib_path,a:prefix,a:base)
 endf
 func! s:SearchClasses(jar,lib_path,prefix,base)
+    let lib=''
+    if  a:lib_path=='""'
+        let lib=g:vjde_java_rt 
+    else
+        let lib=a:lib_path.g:vjde_java_rt
+    endif
 	let jar_path = substitute(a:jar,'vjde\.jar$','','')
-        let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageClasses  '.a:lib_path.' "'.a:prefix.'" "'
+        let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.PackageClasses  "'.lib.'" "'.a:prefix.'" "'
         let cmd.=substitute(jar_path,'\','/','g').'tlds/jdk1.5.lst" '.a:base
         return  split(system(cmd))
 endf
@@ -242,7 +263,7 @@ func! VjdeJavaSearchPackagesAndClasses(jar,lib_path,prefix,base)
 endf
 func! VjdeJavaSearch4Classes(jar,cname,lib_path)
 	let jar_path = substitute(a:jar,'vjde\.jar$','','')
-	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.ClassesByName '.a:cname.' "'.jar_path.'/tlds/jdk1.5.lst" '.a:lib_path
+	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.ClassesByName '.a:cname.' "'.jar_path.'/tlds/jdk1.5.lst" '.a:lib_path.g:vjde_java_rt
 	let array=[]
 	let array += split(system(cmd))
 	return array

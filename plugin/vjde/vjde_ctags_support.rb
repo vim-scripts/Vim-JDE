@@ -104,7 +104,7 @@ module Vjde
 								if !@first && @count==0
 										@found = false
 										yield(@lines) if @lines[-1]==cmd
-										break if @lines[-1]==cmd
+										return if @lines[-1]==cmd
 										@lines=[]
 										@first=false
 										return
