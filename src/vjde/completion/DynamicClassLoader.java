@@ -30,6 +30,7 @@ import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.Vector;
+import java.util.HashMap;
 
 
 /**
@@ -49,6 +50,7 @@ import java.util.Vector;
  */
 public class DynamicClassLoader extends ClassLoader {
   
+    HashMap loaded = new HashMap();
   /**
    * Class path.
    *
@@ -97,8 +99,12 @@ public class DynamicClassLoader extends ClassLoader {
   public Class loadClass(String argClassName) throws ClassNotFoundException {
     File file;
     byte[] classBytes = null;
-    Class c;
+    Class c = null;
 
+    if (loaded.containsKey(argClassName))
+    {
+        return (Class) loaded.get(argClassName);
+    }
     //Checking if the class belong to either java.* or javax.*
     if ((argClassName.startsWith("java.")) 
             //|| (argClassName.startsWith("javax."))
@@ -168,10 +174,27 @@ public class DynamicClassLoader extends ClassLoader {
       } catch (NoClassDefFoundError e) {
         c = Class.forName(argClassName);
       }
+      catch (LinkageError e) {
+              c = Class.forName(argClassName);
+      }
+      if ( c != null ) {
+          if (!loaded.containsKey(argClassName))
+          {
+              loaded.put(argClassName,c);
+          }
+      }
       return c;
-    } else {
+    } 
+    else {
       try {
-        return Class.forName(argClassName);
+       c = Class.forName(argClassName);
+      if ( c != null ) {
+          if (!loaded.containsKey(argClassName))
+          {
+              loaded.put(argClassName,c);
+          }
+      }
+      return c;
       } catch (ClassNotFoundException e) {
         throw new ClassNotFoundException(argClassName);
       } // end of try-catch

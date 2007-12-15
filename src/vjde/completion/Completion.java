@@ -118,12 +118,15 @@ public class Completion {
     case PUBLIC:    // member is accessible if it has public access
       return  Modifier.isPublic    (modifiers);
     case PROTECTED: // accessible if member is protected
-      return  Modifier.isProtected (modifiers);
+      return  Modifier.isProtected (modifiers) || Modifier.isPublic(modifiers);
     case DEFAULT: // accessible if member is not public, protected
       // or private
+      /*
       return (!Modifier.isPublic (modifiers)
 	      && !Modifier.isProtected(modifiers)
 	      && !Modifier.isPrivate  (modifiers));
+          */
+      return !Modifier.isPrivate(modifiers);
     case PRIVATE:   // accessible if member is private
       return  Modifier.isPrivate   (modifiers);
     default:
@@ -630,6 +633,9 @@ public class Completion {
   }
     
   public static void getClassInfo(String path,String[] names,String[] imports) {
+      getClassInfo(path,names,imports,PUBLIC);
+  }
+  public static void getClassInfo(String path,String[] names,String[] imports,int level) {
 	  DynamicClassLoader dcl = new DynamicClassLoader(path);
 	  Class c= getClass(dcl,path,names[0].trim(),imports);
 	  if ( c == null )  {
@@ -639,17 +645,20 @@ public class Completion {
 	  while ( i < names.length && c != null ) {
 		  String name = names[i];
 		  String type = null;
-		  Field[] fields= c.getFields();
+		  Field[] fields= c.getDeclaredFields();
 		  for ( int j = 0 ; j < fields.length ; j++) {
-			  if ( fields[j].getName().compareTo(name)==0) {
+			  if (  isAccessible(fields[j].getModifiers(),level) &&
+                      fields[j].getName().compareTo(name)==0 
+                      ) {
 				  type = fields[j].getType().getName();
 				  break;
 			  }
 		  }
 		  if ( type == null ) {
-			  Method[] methods = c.getMethods();
+			  Method[] methods = c.getDeclaredMethods();
 			  for ( int j = 0 ; j < methods.length; j++ ) {
-				  if ( methods[j].getName().compareTo(name)==0) {
+				  if ( isAccessible(methods[j].getModifiers(),level) && 
+                          methods[j].getName().compareTo(name)==0) {
 					  type = methods[j].getReturnType().getName();
 					  break;
 				  }
@@ -666,7 +675,13 @@ public class Completion {
 	  //
 	  if ( c!= null ) {
         StringBuffer sb = new StringBuffer (3000);
-        listClassInfo(c, PUBLIC, sb);
+        //System.out.println(c.getName());
+        //System.out.println(imports[imports.length-1]);
+        if (imports.length>1 && c.getName().startsWith(imports[imports.length-1])) {
+            if ( c.getName().substring(imports[imports.length-1].length()).indexOf('.')<0)
+                level = DEFAULT;
+        }
+        listClassInfo(c, level, sb);
         Writer out
           = new BufferedWriter(new OutputStreamWriter(System.out));
         try {
@@ -692,6 +707,10 @@ public class Completion {
 	  }
 	  return c;
   }
+  public static void getClassInfo(String path,String className,
+                                  String[] imports) {
+      getClassInfo(path,className,imports,PUBLIC);
+  }
   /**
    * Looks up an unqualified class name in the class path to find possible
    * fully qualified matches.
@@ -700,7 +719,7 @@ public class Completion {
    * @param imports   an array of imported packages
    */
   public static void getClassInfo(String path,String className,
-                                  String[] imports) {
+                                  String[] imports,int level) {
     String name; 
     Class c;
     DynamicClassLoader dcl = new DynamicClassLoader(path);
@@ -713,7 +732,7 @@ public class Completion {
         if (c != null) {
           //getClassInfo(path,name);
           StringBuffer sb = new StringBuffer (3000);
-          listClassInfo(c, PUBLIC, sb);
+          listClassInfo(c, level, sb);
 
         Writer out
           = new BufferedWriter(new OutputStreamWriter(System.out));
@@ -776,11 +795,11 @@ public class Completion {
                   String[] as = new String[args.length-2];
                   as[0]="";
                   System.arraycopy(args,3,as,1,args.length-3);
-                  getClassInfo(args[0],args[1].split("\\|"),as);
+                  getClassInfo(args[0],args[1].split("\\|"),as,level);
 				  return ;
 			  }
 			  else {
-                  getClassInfo(args[0],args[1].split("\\|"),new String[]{""});
+                  getClassInfo(args[0],args[1].split("\\|"),new String[]{""},level);
 			  }
 		  }
           if ( args.length >= 4 ) {
@@ -788,7 +807,7 @@ public class Completion {
                   String[] as = new String[args.length-2];
                   as[0]="";
                   System.arraycopy(args,3,as,1,args.length-3);
-                  getClassInfo(args[0],args[1],as);
+                  getClassInfo(args[0],args[1],as,level);
           }
           else {
                   getClassInfo(args[0],args[1],level);

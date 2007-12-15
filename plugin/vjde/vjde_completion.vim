@@ -78,7 +78,7 @@ func! s:GettypeName(var) " {{{2
     "let l:pattern = '\(return\|new\)\@!\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*\s\+\<'.a:var.'\>'
     "let l:pattern = '\(return\)\@!\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*\s\+\<'.a:var.'\>'
     "let l:pattern = '\(return\|import\|package\)\@!\<[^@\$=<>+\-\*\/%?:\&|\^ \t]\+\(\s*<.*>\)*\(\s*\[.*\]\)*\s*\<'.a:var.'\>'
-    let l:pattern = '\(return\|import\|package\|public\|private\|protected\|static\|final\|synchronzied\|native\)\@!\(\<\i\+\>\.\)*\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*\s\+\<'.a:var.'\>'
+    let l:pattern = '\(case\|return\|import\|package\|public\|private\|protected\|static\|final\|synchronzied\|native\)\@!\(\<\i\+\>\.\)*\<\i\+\>\(\s*<.*>\)*\(\s*\[.*\]\)*\s\+\<'.a:var.'\>'
     let l:ldefine=search(l:pattern,"b")
     while l:ldefine > 0 
         let l:curr_line = getline(l:ldefine)
@@ -190,7 +190,11 @@ func! s:GetJspImportStr() "{{{2
 endf
 
 
-func! s:VjdeCompletionByVIM(imps) "{{{2
+func! s:VjdeCompletionByVIM(imps,...) "{{{2
+    let level=0
+    if ( a:0  > 0 ) 
+        let level = a:1
+    endif
 	if empty(g:vjde_java_cfu)
 		"let g:vjde_java_cfu = VjdeJavaCompletion_New(g:vjde_install_path.'/vjde/vjde.jar',g:vjde_lib_path)
 		let g:vjde_java_cfu = VjdeJavaCompletion_New(g:vjde_install_path.'/vjde/vjde.jar',g:vjde_out_path.g:vjde_path_spt.g:vjde_lib_path)
@@ -204,9 +208,9 @@ func! s:VjdeCompletionByVIM(imps) "{{{2
 	"endif
     let s:types[0]=s:type
     if len(s:types)>1
-        call g:vjde_java_cfu.FindClass2(s:types,a:imps)
+        call g:vjde_java_cfu.FindClass2(s:types,a:imps,level)
     else
-        call g:vjde_java_cfu.FindClass(s:type,a:imps)
+        call g:vjde_java_cfu.FindClass(s:type,a:imps,level)
     endif
     let s:success=g:vjde_java_cfu.success
     return s:success
@@ -358,7 +362,7 @@ func! s:VjdeParentCFUVIM(pars,imps) "{{{2
         let lval=[]
 for par in a:pars
     let s:type = par
-    call s:VjdeCompletionByVIM(a:imps)
+    call s:VjdeCompletionByVIM(a:imps,1)
     if !g:vjde_java_cfu.success
         continue
     endif

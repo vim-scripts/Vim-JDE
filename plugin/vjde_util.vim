@@ -96,11 +96,17 @@ func! VjdeFormatLine(line) "{{{2 remove
     endw
     let index0 = MatchToIgnoreString(a:line,index+1,'^return')
     if  index0 != -1
-        let index = index0+6
-    endif
-    let index0 = MatchToIgnoreString(a:line,index+1,'^new')
-    if  index0 != -1
-        let index = index0+3
+			let index = index0+6
+	else	
+			let index0 = MatchToIgnoreString(a:line,index+1,'^new')
+			if  index0 != -1
+					let index = index0+3
+			else
+					let index0 = MatchToIgnoreString(a:line,index+1,'^case')
+					if  index0 != -1
+							let index = index0+4
+					endif
+			endif
     endif
     let index = SkipToIgnoreString(a:line,index,'[^=<>+\-\*\/%?:\&\^|,;]')
     if index == -1

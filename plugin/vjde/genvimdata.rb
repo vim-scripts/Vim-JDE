@@ -61,4 +61,4 @@ end
 if $*.length == 2 
 gen = Generator.new($*[1],$*[0])
 gen.to_stdout
-endif
+end

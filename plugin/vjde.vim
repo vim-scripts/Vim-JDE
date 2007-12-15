@@ -78,6 +78,9 @@ if has('win32')
 	let g:vjde_path_spt=';'
 endif
 let g:vjde_install_path=expand('<sfile>:p:h')
+if has('win32unix') 
+	let g:vjde_install_path=expand('`cygpath -wp '.g:vjde_install_path.'`')
+endif
 let g:vjde_preview_lib = ''
 if has('gui_running')
 if has('gui_win32') 
@@ -187,7 +190,7 @@ if has('ruby')
         endif
     endf
     command -nargs=+ -complete=file VjdeTld2Data call s:VjdeGenTldData(<f-args>)
-    command -nargs=+ -complete=file VjdeDtd2Data call s:VjdeGenTldData(<f-args>)
+    command -nargs=+ -complete=file VjdeDtd2Data call s:VjdeGenDtdData(<f-args>)
 endif
 
 "------------------------------------------------------
