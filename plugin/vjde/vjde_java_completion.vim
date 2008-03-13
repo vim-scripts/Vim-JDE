@@ -11,17 +11,21 @@ end
 let s:java_home = expand('$JAVA_HOME')
 if s:java_home != '$JAVA_HOME' && strlen(s:java_home) > 0 
     if s:java_home[strlen(s:java_home)-1]=='/' || s:java_home[strlen(s:java_home)-1]=='\'
-    if has('win32')
-        let g:vjde_java_rt =';'.s:java_home.'jre/lib/rt.jar'
-	else
-        let g:vjde_java_rt =':'.s:java_home.'jre/lib/rt.jar'
-	endif
+	    if has('win32')
+		    let g:vjde_java_rt =';'.s:java_home.'jre/lib/rt.jar'
+	    elseif has('mac')
+		    let g:vjde_java_rt =':'.s:java_home.'Classes/classes.jar'
+	    else
+		    let g:vjde_java_rt =':'.s:java_home.'jre/lib/rt.jar'
+	    endif
     else
-    if has('win32')
-        let g:vjde_java_rt =';'.s:java_home. '/jre/lib/rt.jar'
-	else
-        let g:vjde_java_rt =':'.s:java_home. '/jre/lib/rt.jar'
-	endif
+	    if has('win32')
+		    let g:vjde_java_rt =';'.s:java_home. '/jre/lib/rt.jar'
+	    elseif has('mac')
+		    let g:vjde_java_rt =':'.s:java_home.'/Classes/classes.jar'
+	    else
+		    let g:vjde_java_rt =':'.s:java_home. '/jre/lib/rt.jar'
+	    endif
     endif
 endif
 
