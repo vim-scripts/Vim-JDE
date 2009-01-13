@@ -31,6 +31,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.Vector;
 import java.util.HashMap;
+import java.util.jar.JarFile;
 
 
 /**
@@ -107,7 +108,7 @@ public class DynamicClassLoader extends ClassLoader {
     }
     //Checking if the class belong to either java.* or javax.*
     if ((argClassName.startsWith("java.")) 
-            //|| (argClassName.startsWith("javax."))
+            || (argClassName.startsWith("javax."))
         ) {
       return Class.forName(argClassName);
     } // end of if ()
@@ -249,56 +250,56 @@ public class DynamicClassLoader extends ClassLoader {
 	  return (String[]) v.toArray(new String[v.size()]);
   }
   public String[] getClassNames(String pkg_path) {
-          //Vector<String> v = new Vector<String>();
-          Vector v = new Vector();
+	  //Vector<String> v = new Vector<String>();
+	  Vector v = new Vector();
 
-          String classpath = null;
-          if ( load_path != null) {
-                  classpath = load_path;
-          }
-    
-          if (classpath == null || classpath.equals("")) {
-                  classpath = CLASS_PATH;
-          } // end of if (classpath == null )
+	  String classpath = null;
+	  if ( load_path != null) {
+		  classpath = load_path;
+	  }
+
+	  if (classpath == null || classpath.equals("")) {
+		  classpath = CLASS_PATH;
+	  } // end of if (classpath == null )
 	  pkg_path = pkg_path.replace(PACKAGE_SEPARATOR,'/');
-    
-          StringTokenizer st = new StringTokenizer(classpath, PATH_SEPARATOR);
 
-          ZipFile zf;
-          File file;
-          while (st.hasMoreTokens()) {
-                  String t = st.nextToken();
-                  file = new File(t);  
-                  try {
-                          if (file.isDirectory()) {
+	  StringTokenizer st = new StringTokenizer(classpath, PATH_SEPARATOR);
+
+	  ZipFile zf;
+	  File file;
+	  while (st.hasMoreTokens()) {
+		  String t = st.nextToken();
+		  file = new File(t);  
+		  try {
+			  if (file.isDirectory()) {
 				  String pkg = file.getAbsolutePath();//+"/"+pkg_path;
 				  if ( pkg_path.length()>0) {
 					  pkg += "/"+pkg_path;
 				  }
 				  listClass(pkg,v);
-                          } else {
-                                  zf = new ZipFile(file);
-                                  Enumeration enums = zf.entries();
+			  } else {
+				  zf = new ZipFile(file);
+				  Enumeration enums = zf.entries();
 				  int len = pkg_path.length();
-                                  while ( enums.hasMoreElements()) {
-                                          ZipEntry etry = (ZipEntry) enums.nextElement();
-                                          String n ;
-                                          if ( !etry.isDirectory()) {
-                                                  n = etry.getName();
+				  while ( enums.hasMoreElements()) {
+					  ZipEntry etry = (ZipEntry) enums.nextElement();
+					  String n ;
+					  if ( !etry.isDirectory()) {
+						  n = etry.getName();
 						  //System.out.println(n);
-                                                  
+
 						  if ( n.startsWith(pkg_path) && len < n.length()&&n.indexOf('/',len)==-1) {
 							  v.add(n.substring(len).replace('/',PACKAGE_SEPARATOR));
 						  }
-                                                  //n = n.replace('/',PACKAGE_SEPARATOR);
-                                                  //v.add(n.substring(0,n.length()-1));
-                                          }
-                                  }
-                          }// end of if-else
-                  } catch (IOException e) {
-                          //ignore
-                  } // end of try-catch
-          } // end of while (st.hasMoreTokens())
+						  //n = n.replace('/',PACKAGE_SEPARATOR);
+						  //v.add(n.substring(0,n.length()-1));
+					  }
+				  }
+			  }// end of if-else
+		  } catch (IOException e) {
+			  //ignore
+		  } // end of try-catch
+	  } // end of while (st.hasMoreTokens())
     
 	  return (String[]) v.toArray(new String[v.size()]);
   }
@@ -332,16 +333,26 @@ public class DynamicClassLoader extends ClassLoader {
                           if (file.isDirectory()) {
                                   listDir(file,v,"");
                           } else {
-                                  zf = new ZipFile(file);
+                                  zf = new JarFile(file);
                                   Enumeration enums = zf.entries();
                                   while ( enums.hasMoreElements()) {
                                           ZipEntry etry = (ZipEntry) enums.nextElement();
                                           String n ;
-                                          if ( etry.isDirectory()) {
+                                          if (etry.isDirectory()) {
                                                   n = etry.getName();
                                                   n = n.replace('/',PACKAGE_SEPARATOR);
                                                   v.add(n.substring(0,n.length()-1));
                                           }
+										  else {
+                                                  n = etry.getName();
+												  int l = n.lastIndexOf('/');
+												  if ( l> 0) {
+													  n = n.substring(0,l).replace('/',PACKAGE_SEPARATOR);
+													  if (!v.contains(n)) {
+														  v.add(n);
+													  }
+												  }
+										  }
                                   }
                           }// end of if-else
                   } catch (IOException e) {

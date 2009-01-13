@@ -9,6 +9,9 @@ if !exists('g:vjde_java_command')
     endif
 end
 let s:java_home = expand('$JAVA_HOME')
+if has('mac')
+	let s:java_home = '/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/'
+end
 if s:java_home != '$JAVA_HOME' && strlen(s:java_home) > 0 
     if s:java_home[strlen(s:java_home)-1]=='/' || s:java_home[strlen(s:java_home)-1]=='\'
 	    if has('win32')
