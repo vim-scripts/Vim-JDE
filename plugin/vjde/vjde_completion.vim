@@ -8,7 +8,7 @@ endif
 let g:vjde_completion=1 "{{{1
 let s:key_preview=''
 let s:preview_buffer=[]
-
+let s:taglib_loaded=[]
 let s:base_types=["void","int","long","float","double","boolean","char","byte"]
 let s:directives={}
 let s:types=[]
@@ -292,6 +292,16 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
 				return s:retstr
 			endif
 		endif
+			let line = getline('.')
+			let prefix = s:VjdeTaglibPrefix(line)
+			let uri = s:VjdeTaglibGetURI(prefix)
+			if index(s:taglib_loaded,uri) < 0 
+				echo uri
+				if ( has_key(g:vjde_taglib_uri,uri))
+					exec 'XMLns '. g:vjde_taglib_uri[uri].' '.prefix
+				endif
+				call add(s:taglib_loaded,uri)
+			endif
 		"let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
 		if a:findstart 
 			"call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
@@ -301,7 +311,7 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
 			"return s:last_start
 		endif
 		if (s:xml_start>= 0 ) 
-			let l:str2 = strpart(getline('.'),s:xml_start,col('.')-s:xml_start)
+			let l:str2 = strpart(line,s:xml_start,col('.')-s:xml_start)
 			let s:xml_start = -1
 			return xmlcomplete#CompleteTags(0,l:str2)
 		else
@@ -871,7 +881,7 @@ func! s:VjdeTaglibCompletionFun(line,base,col,findstart) "{{{2
 endf
 
 func! s:VjdeTaglibGetURI(prefix)  "{{{2
-    let l:line_tld = search('prefix\s*=\s*"'.a:prefix.'"\s\+',"nb")
+    let l:line_tld = search('prefix\s*=\s*"'.a:prefix.'"\s*',"nb")
     if l:line_tld==0
         return ''
     endif
@@ -898,6 +908,10 @@ func! s:VjdeDirectiveCFUVIM(line,base,col,findstart) "{{{2
 		    endif
 		    let attrname = strpart(a:line,id1,id2-id1-1)
 		    for attribute in s:directives[mtag].attributes
+			    if attribute.name == 'uri'
+				    let str=join(keys(g:vjde_taglib_uri),"\n")
+				    break
+			    endif
 			    if  attribute.name==attrname
 				    let str = join(attribute.values,"\n")
 				    break

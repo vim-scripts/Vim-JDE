@@ -105,7 +105,7 @@ func! VjdeTemplateJavaRuby(tn,paras) "{{{2
     endif
 ruby<<EOF
     tn = VIM::evaluate("a:tn")
-    $vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("mf"),VIM::evaluate("g:vjde_install_path"))
+    $vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("mf"))
     tplt = $vjde_template_manager.getTemplate(tn)
     if tplt != nil
 	tplt.each_para { |p|
@@ -152,7 +152,7 @@ func! VjdeAppendTemplate(name)
 endf
 func! VjdeTemplateWizard()
 ruby<<EOF
-$vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("&ft"),VIM::evaluate("g:vjde_install_path"))
+$vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("&ft"))
 $vjde_template_manager.indexs.each_with_index { |ti,i|
 	VIM::command("echo \" #{i}\t#{ti.name}\t#{ti.desc}\"")
 }
@@ -165,7 +165,7 @@ end
 EOF
 endf
 func! s:VjdeAddTemplate(fname)
-	ruby $vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("&ft"),VIM::evaluate("g:vjde_install_path"))
+	ruby $vjde_template_manager = Vjde::VjdeTemplateManager.[](VIM::evaluate("&ft"))
 	ruby $vjde_template_manager.add_file(VIM::evaluate("a:fname"))
 	call VjdeTemplateReload()
 endf

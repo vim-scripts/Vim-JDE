@@ -10,6 +10,9 @@ if !has('ruby')
 endif
 let g:vjde_loaded = 1
 
+if !exists('g:vjde_taglib_uri') 
+	let g:vjde_taglib_uri={}
+endif
 if !exists('g:vjde_show_paras') 
     let g:vjde_show_paras = 0
 endif
@@ -42,8 +45,8 @@ endif
 if !exists('g:vjde_cfu_downcase')
     let g:vjde_cfu_downcase="0"
 endif
-if !exists('g:vjde_autoload_stl')
-    let g:vjde_autoload_stl=0
+if !exists('g:vjde_autoload_taglib')
+    let g:vjde_autoload_taglib=1
 endif
 if !exists('g:vjde_auto_mark')
     let g:vjde_auto_mark=1
@@ -135,6 +138,16 @@ let java_previewer.onSelect='VjdeInsertWord'
 let java_previewer.previewLinesFun='GetJavaCompletionLines'
 let java_previewer.docLineFun='VjdeGetDocWindowLine'
 
+if g:vjde_autoload_taglib 
+	let g:vjde_taglib_uri['http://java.sun.com/jsp/jstl/core']='stl_c'
+	let g:vjde_taglib_uri['http://java.sun.com/jsp/jstl/sql']='stl_sql'
+	let g:vjde_taglib_uri['http://java.sun.com/jsp/jstl/fmt']='stl_fmt'
+	let g:vjde_taglib_uri['http://java.sun.com/jsp/jstl/xml']='stl_x'
+	let g:vjde_taglib_uri['http://myfaces.apache.org/tobago/component']='tc'
+	let g:vjde_taglib_uri['http://myfaces.apache.org/tobago/extension']='tx'
+	let g:vjde_taglib_uri['http://java.sun.com/jsf/core']='jsf_c'
+	let g:vjde_taglib_uri['http://java.sun.com/jsf/html']='jsf_h'
+endif
 "if g:vjde_autoload_stl && has('ruby')
 "    ruby Vjde::init_jstl(VIM::evaluate("g:vjde_install_path")+"/vjde/tlds/")
 "endif

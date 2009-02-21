@@ -652,6 +652,26 @@ g:vjde_web_app
 							   *vjde_autoload_stl*
 g:vjde_autoload_stl  [1|0]
 	load the Standard Tag libray on startup
+							*vjde_autoload_taglib*
+g:vjde_autoload_taglib  [1|0]
+	load the Tag libray on startup
+							   *g:vjde_taglib_uri*
+g:vjde_taglib_uri
+	a dictory for relation-ship of xml-datafile and taglib uri. >
+	g:vjde_taglib_uri={'http://java.sun.com/jsp/jstl/core' : 'stl_c' ,
+	    'http://java.sun.com/jsp/jstl/sql' : 'stl_sql' }
+<
+	when this relation is exists, once you used taglib in your file : >
+	<%@ taglib prefix='c' uri='http://java.sun.com/jsp/jstl/core'%>
+<
+	when your input like : >
+	<c:<c-x><c-u>
+<
+	I whill call >
+    :XMLns stl_c c
+<
+	so , autocompletion will do for you.
+    
 							      *vjde_auto_mark*
 g:vjde_auto_mark [1|0]
 	Once Goto the declaration, see |Vjdegd|,mark current as J

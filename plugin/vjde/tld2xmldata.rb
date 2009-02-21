@@ -29,40 +29,45 @@ class Generator
             cchar=''
             print "\\ ["
             c = 0
-            #loader.each_child(a.name) { |b| 
-            #    if (b.class== Array ) 
-            #        cs.concat( b)
-            #    else
-            #        cs << b
-            #    end
-            #}
-            #cs.each { |b| 
-            #    print "#{cchar}'#{b}'"
-            #    cchar = ' , '
-            #    c=c+1
-            #    print "\n\\ " if c%6==5
-            #}
             puts "],"
             print "\\ { "
             doc.each_attr(a) { |c|
                 print "#{achar}'"+c.get_text("name").to_s+"' : ["
                 bchar=''
-                #loader.each_value(a.name,c.name) { |d| 
-                #    if ( d.class==Array)
-                #        print "#{bchar}'",d.join("' , '"),"'"
-                #        bchar=','
-                #    else
-                #        print "#{bchar}'#{d}'"
-                #        bchar=','
-                #    end
-                #}
                 print "]"
                 achar = ','
             }
             puts "}"
             line = "\\  ],\n"
         }
-        puts "\\ ]}"
+        puts "\\ ],"
+	achar=' '
+	print "\\ 'vimxmltaginfo': {"
+        doc.each_tag { |a|
+		puts achar
+		print "\\ '" + a.get_text("name").to_s+"' : [ ' ', '" + xml_data(a.get_text("description").to_s)+"']"
+		achar=',';
+	}
+	puts ""
+	puts "\\ },"
+	achar=' '
+	print "\\ 'vimxmlattrinfo': {"
+	attrs=[]
+        doc.each_tag { |a|
+		doc.each_attr(a) { |c|
+			next if  attrs.index(c.get_text("name").to_s) 
+			attrs.push( c.get_text("name").to_s)
+			puts achar
+			print "\\ '" + c.get_text("name").to_s+"' : [ ' ', '" + xml_data(c.get_text("description").to_s)+"']"
+			achar=',';
+		}
+	}
+	puts ""
+	puts "\\ },"
+	puts "\\}"
+    end
+    def xml_data(str)
+	    return str.gsub("\n"," ").gsub("'","\"")
     end
 end
 if $*.length == 2

@@ -4,7 +4,7 @@ LEX = flex -I
 CC = gcc -DYYDEBUG=1
 
 dll	:
-	flex tipswnd.lex
+	#flex tipswnd.lex
 	$(CC) -o ../plugin/vjde/tipswnd.dll -shared lex.yy.c -DDLL -lcomctl32 -lgdi32 -mwindows
 	$(CC) -o ../plugin/vjde/readtags -DREADTAGS_MAIN readtags.c -mwindows
 	g++ -o ../plugin/vjde/wspawn wspawn.cpp -mwindows

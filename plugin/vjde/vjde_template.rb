@@ -94,43 +94,52 @@ module Vjde #{{{1
 		if @@iabs[name]==nil 
 			tm = VjdeTemplateManager.new
 			if path!=''
-				tm.add_file(path+"/vjde/tlds/"+name+".iab")
-				tm.add_file(File.expand_path("~/.vim/vjde/"+name+".iab"))
+				tm.add_file(path+name+".iab")
 			end
+			#tm.add_file(File.expand_path("~/.vim/vjde/"+name+".iab"))
 			@@iabs[name]=tm
+		else
+			tm = @@iabs[name]
+			tm.add_file(path+name+".iab")
 		end
 		@@iabs[name]
 	end
 	def VjdeTemplateManager.[](name,path='')
+		#puts path+name+".vjde"
 		if @@loaded[name]==nil
 			tm = VjdeTemplateManager.new
 			if path!=''
-				tm.add_file(path+"/vjde/tlds/"+name+".vjde")
-				tm.add_file(File.expand_path("~/.vim/vjde/"+name+".vjde"))
+				tm.add_file(path+name+".vjde")
 			end
+			#tm.add_file(File.expand_path("~/.vim/vjde/"+name+".vjde"))
 			@@loaded[name]=tm
+		else
+			tm = @@loaded[name]
+			tm.add_file(path+name+".vjde")
 		end
 		@@loaded[name]
 	end
 	def VjdeTemplateManager.load_all(path1)
 		len1 = path1.length+11
+		path1 = path1.gsub("\\","/")
 		Dir[path1+'/vjde/tlds/*.vjde'].each { |fn|
 			name = fn[len1..-6]
-			VjdeTemplateManager.[](name,path1)
+			VjdeTemplateManager.[](name,path1+'/vjde/tlds/')
 		}
 		Dir[path1+'/vjde/tlds/*.iab'].each { |fn|
 			name = fn[len1..-5]
-			VjdeTemplateManager.GetIAB(name,path1)
+			VjdeTemplateManager.GetIAB(name,path1+'/vjde/tlds/')
 		}
+		
 		path2 = File.expand_path('~/.vim/vjde/')
 		len1 = path2.length+1
 		Dir[path2+'/*.vjde'].each { |fn|
 			name = fn[len1..-6]
-			VjdeTemplateManager.[](name,path2)
+			VjdeTemplateManager.[](name,path2+"/")
 		}
 		Dir[path2+'/*.iab'].each { |fn|
 			name = fn[len1..-5]
-			VjdeTemplateManager.GetIAB(name,path2)
+			VjdeTemplateManager.GetIAB(name,path2+"/")
 		}
 	end
         def add_file(t)
@@ -206,10 +215,14 @@ end #}}}1
 #}
 
 #tmps = Vjde::VjdeTemplateManager.new('d:\vim\vimfiles\plugin\vjde\tlds\java.vjde')
-#tmps = Vjde::VjdeTemplateManager.new
-#tmps.add_file('D:\vim\vimfiles\plugin\vjde\tlds\iab.vjde')
+#Vjde::VjdeTemplateManager.load_all('d:/vim/vimfiles/plugin')
+#tmps = Vjde::VjdeTemplateManager['java']
+#template = tmps.getTemplate('NewClass')
+#template.set_para('classname','Wfc1')
+#template.set_para('package','com.wfc.pkg')
+#template.each_line { |l| puts l }
 #tmps.indexs.each { |p|
-	#puts p
+#	puts p
 #}
 #template.set_para('classname','Wfc1')
 #template.set_para('package','com.wfc.pkg')
