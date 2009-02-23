@@ -1,5 +1,5 @@
 if exists('g:vjde_completion') || &cp
-    finish
+    "finish
 endif
 if !exists('g:vjde_loaded') || &cp
 	finish
@@ -274,6 +274,7 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
         elseif ext=='jsp' " 0 1 2
             let t = s:VjdeJspTaglib() 
             let s:cfu_type=t
+			"call confirm(s:cfu_type)
         elseif ext=='xsl'
             let s:cfu_type=5
         endif
@@ -310,6 +311,7 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
 			return ""
 		endif
     elseif s:cfu_type==1 "java in jsp
+		"call confirm('here')
 	    return s:VjdeJspCompletionFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==2 "html
         if a:findstart 
@@ -318,12 +320,6 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
 			return VjdeFindStart(a:line,a:base,a:col,'[ \t:@"<]')
         endif
 			return s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
-            if (s:last_start >= 0 ) 
-                let l:str2 = strpart(getline('.'),s:last_start,col('.')-s:last_start)
-                return htmlcomplete#CompleteTags(0,l:str2)
-            else
-                return ""
-            endif
     elseif s:cfu_type==3 "comment
             let s:retstr= VjdeCommentFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==4 "java
@@ -341,15 +337,6 @@ func! s:VjdeJspTaglib() "{{{2
         if (grp == 'jspExpr' || grp=='jspScriptlet' || grp=='jspDecl')
             return 1
         else
-			call VjdeFindStart(getline(line('.')),'',col('.'),'[ \t:@"]')
-			let pf = VjdeXMLPrefix(getline(line('.')),'',col('.'),1)
-			if pf[1] != -1 
-				if strlen(pf[0]) > 0 
-					return 0
-				else
-					return 2
-				endif
-			endif
              let ed = matchend(getline(line('.')),'^\s*<%') 
              if ( ed != -1)
                  return 0
@@ -366,7 +353,19 @@ func! s:VjdeJspTaglib() "{{{2
              if ( ed != -1)
                  return 2
              endif
-             return 1
+			call VjdeFindStart(getline(line('.')),'',col('.'),'[ \t:@"]')
+			let pf = VjdeXMLPrefix(getline(line('.')),'',col('.'),1)
+			if pf[1] != -1 
+				if strlen(pf[0]) > 0 
+					return 0
+				else
+					if match(getline(pf[1]),':')> 0 
+						return 2
+					endif
+					return 1
+				endif
+			endif
+			return 1
          endif
 endf
 
@@ -915,6 +914,10 @@ func! s:VjdeTaglibCompletionFun(line,base,col,findstart) "{{{2
 		"html
 		if strlen(prefix2[0])==0 
 			"element
+			if match(a:line,'<%') >=0
+				call s:VjdeDirectiveCFUVIM(a:line,a:base,a:col,a:findstart)
+				return s:retstr
+			endif
 			if a:line[id5]=='<' 
 				return s:VjdeTaglibCompletionXmldata2(g:xmldata_html401t,a:base,0,'')
 			else " attribute
@@ -927,7 +930,6 @@ func! s:VjdeTaglibCompletionFun(line,base,col,findstart) "{{{2
 				return s:VjdeTaglibCompletionXmldata2(g:xmldata_html401t,a:base,1,tag)
 			endif
 		endif
-        call s:VjdeDirectiveCFUVIM(a:line,a:base,a:col,a:findstart)
         return s:retstr
     endif
     let prefix=prefix2[0]
@@ -1549,7 +1551,7 @@ func! VjdeGetDocWindowLine() "{{{2
 endf
  "{{{2
 command! -nargs=0 Vjdei call  s:VjdeInfomation()  
-"command! -nargs=0 Vjdei2 echo s:VjdeJspTaglib()
+command! -nargs=0 Vjdei2 echo s:VjdeJspTaglib()
 command! -nargs=0 Vjdegd call  s:VjdeGotoDecl()  
 "command! -nargs=+ Vjdetld echo s:VjdeTaglibCompletionFun(<f-args>) 
 "command! -nargs=1 Vjdeft echo s:VjdeFormatLine(<f-args>)  
