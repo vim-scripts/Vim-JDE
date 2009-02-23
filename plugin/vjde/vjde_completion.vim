@@ -280,7 +280,8 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
     endif
 
     if s:cfu_type == 0 "taglib
-		if  s:xml_start == -1
+		return s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
+		if  s:xml_start == 0
 			let id1 = VjdeFindUnendPair(a:line,'<','>',0,a:col) " TODO:find uncompleted <
 			let id2 = stridx(a:line,':',id1)
 			if ( id2 == -1 && id1>=0 ) " this is a <%@ ....
@@ -292,28 +293,19 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
 				return s:retstr
 			endif
 		endif
-			let line = getline('.')
-			let prefix = s:VjdeTaglibPrefix(line)
-			let uri = s:VjdeTaglibGetURI(prefix)
-			if index(s:taglib_loaded,uri) < 0 
-				echo uri
-				if ( has_key(g:vjde_taglib_uri,uri))
-					exec 'XMLns '. g:vjde_taglib_uri[uri].' '.prefix
-				endif
-				call add(s:taglib_loaded,uri)
-			endif
-		"let s:retstr= s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
 		if a:findstart 
-			"call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
-			let s:xml_start = xmlcomplete#CompleteTags(1,'')
-			"let s:last_start = s:xml_start
-			return s:xml_start
-			"return s:last_start
+			call VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
+			return s:last_start
 		endif
-		if (s:xml_start>= 0 ) 
-			let l:str2 = strpart(line,s:xml_start,col('.')-s:xml_start)
-			let s:xml_start = -1
-			return xmlcomplete#CompleteTags(0,l:str2)
+		if (s:last_start>= 0 ) 
+			"call confirm(getline('.'))
+			"call confirm(s:last_start)
+			"call confirm(col('.'))
+			"let l:str2 = strpart(line,s:last_start,col('.')-s:last_start)
+			"call confirm(l:str2)
+			return s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
+			"let l:str2 = strpart(line,s:xml_start,col('.')-s:xml_start)
+			"return xmlcomplete#CompleteTags(0,l:str2)
 		else
 			return ""
 		endif
@@ -321,9 +313,11 @@ func! VjdeCompletionFun(line,base,col,findstart) "{{{2
 	    return s:VjdeJspCompletionFun(a:line,a:base,a:col,a:findstart)
     elseif s:cfu_type==2 "html
         if a:findstart 
-            let s:last_start = htmlcomplete#CompleteTags(1,'')
-            return s:last_start
+            "let s:last_start = htmlcomplete#CompleteTags(1,'')
+            "return s:last_start
+			return VjdeFindStart(a:line,a:base,a:col,'[ \t:@"<]')
         endif
+			return s:VjdeTaglibCompletionFun(a:line,a:base,a:col,a:findstart)
             if (s:last_start >= 0 ) 
                 let l:str2 = strpart(getline('.'),s:last_start,col('.')-s:last_start)
                 return htmlcomplete#CompleteTags(0,l:str2)
@@ -347,6 +341,15 @@ func! s:VjdeJspTaglib() "{{{2
         if (grp == 'jspExpr' || grp=='jspScriptlet' || grp=='jspDecl')
             return 1
         else
+			call VjdeFindStart(getline(line('.')),'',col('.'),'[ \t:@"]')
+			let pf = VjdeXMLPrefix(getline(line('.')),'',col('.'),1)
+			if pf[1] != -1 
+				if strlen(pf[0]) > 0 
+					return 0
+				else
+					return 2
+				endif
+			endif
              let ed = matchend(getline(line('.')),'^\s*<%') 
              if ( ed != -1)
                  return 0
@@ -827,58 +830,138 @@ func! s:VjdeJspCompletionFun(line,base,col,findstart) "{{{2
     return s:retstr
 endf
 
+"attr 1 is attribute completion
+func! s:VjdeTaglibCompletionXmldata2(datafile,base,attr,tag) "{{{2
+	let retitems=[]
+	let ff=strlen(a:base)
+	let datafile=a:datafile
+if a:attr==1
+	if !has_key(datafile,a:tag)
+		let s:retstr=''
+		return ""
+	endif
+	let t = datafile[a:tag]
+	let ainfo={}
+	if has_key(datafile, 'vimxmlattrinfo') 
+		let ainfo= datafile['vimxmlattrinfo']
+	endif
+	"attrbiute for
+	for key in keys(t[1])
+		if ff>0
+			if stridx(key,a:base) != 0 
+				continue
+			endif
+		endif
+		let row={'word' : key }
+		if has_key(ainfo , key) 
+			let row['menu']= ainfo[key][0]
+			let row['info']= ainfo[key][1]
+		endif
+		call add(retitems,row)
+	endfor
+	if ( strlen(a:base)>0)
+	endif
+	return retitems
+else
+	let ainfo={}
+	if has_key(datafile, 'vimxmltaginfo') 
+		let ainfo= datafile['vimxmltaginfo']
+	endif
+	for key in keys(datafile)
+		if ff>0
+			if stridx(key,a:base) != 0 
+				continue
+			endif
+		endif
+		if stridx(key, 'vimxml')==0
+			continue
+		endif
+		let row={'word' : key }
+		if has_key(ainfo , key) 
+			let row['menu']= ainfo[key][0]
+			let row['info']= ainfo[key][1]
+		endif
+		call add(retitems,row)
+	endfor	
+endif
+return retitems
+endf
+func! s:VjdeTaglibCompletionXmldata(uri,base,attr,tag) "{{{2
+	let xf = g:vjde_taglib_uri[a:uri]
+	let datafile = g:xmldata{'_'.xf}
+	return s:VjdeTaglibCompletionXmldata2(datafile,a:base,a:attr,a:tag)
+endf 
 func! s:VjdeTaglibCompletionFun(line,base,col,findstart) "{{{2
     if a:findstart
-        return VjdeFindStart(a:line,a:base,a:col,'[ \t:@"]')
+        return VjdeFindStart(a:line,a:base,a:col,'[ \t:@<"]')
     endif
     let s:retstr=""
-    "let id1 = stridx(a:line,'<') " TODO:find uncompleted <
-    let id1 = VjdeFindUnendPair(a:line,'<','>',0,a:col) " TODO:find uncompleted <
-    let id2 = stridx(a:line,':',id1)
-    if ( id1 < 0 )
+	let prefix2 = VjdeXMLPrefix(a:line,a:base,a:col,a:findstart)
+	if  prefix2[1]==-1
         return s:retstr
-    endif
-    if ( id2 == -1 ) " this is a <%@ ....
-        call s:VjdeDirectiveCFUVIM(a:line,a:base,a:col,a:findstart)
-        return s:retstr
-    endif
-    if !has('ruby') 
-	    return ""
-    endif
-    let prefix=strpart(a:line,id1+1,id2-id1-1) 
-    if prefix=='jsp'
-        let uri="http://java.sun.com/jsp/jsp"
-    else
-        let uri = s:VjdeTaglibGetURI(prefix)
-        if ( uri == '' ) 
-            "return "no found uri for prefix:".prefix
-            return ""
-        endif
-    endif
-
+	endif
     let id5 = a:col
     while id5 >=0 
-        if a:line[id5]=~'[ \t:]'
+        if a:line[id5]=~'[ \t:<]'
             break
         endif
         let id5-=1
     endw
     if id5 < 0 
-        "return "unknown"
-        return ""
+        return "unknown"
     endif
+    let id2 = stridx(getline(prefix2[1]),':',prefix2[2])
+    if ( id2 == -1 ) " this is a <%@ ....
+		"html
+		if strlen(prefix2[0])==0 
+			"element
+			if a:line[id5]=='<' 
+				return s:VjdeTaglibCompletionXmldata2(g:xmldata_html401t,a:base,0,'')
+			else " attribute
+				let line = getline(prefix2[1])
+				let id2 = match(line,'<',0)
+				let id3 = match(line,'[ \t]',id2)
+				if ( id3 < id2 ) 
+				endif
+				let tag = strpart(line,id2+1,id3-id2-1)
+				return s:VjdeTaglibCompletionXmldata2(g:xmldata_html401t,a:base,1,tag)
+			endif
+		endif
+        call s:VjdeDirectiveCFUVIM(a:line,a:base,a:col,a:findstart)
+        return s:retstr
+    endif
+    let prefix=prefix2[0]
+    if prefix=='jsp'
+        let uri="http://java.sun.com/jsp/jsp"
+	else
+		let uri = s:VjdeTaglibGetURI(prefix)
+    endif
+	if index(s:taglib_loaded,uri) < 0 
+		if ( has_key(g:vjde_taglib_uri,uri))
+			exe "runtime autoload/xml/".g:vjde_taglib_uri[uri].".vim"
+			"exec 'XMLns '. g:vjde_taglib_uri[uri].' '.prefix
+		endif
+		call add(s:taglib_loaded,uri)
+	endif
+	if !has_key(g:vjde_taglib_uri,uri)
+		return s:retstr
+	end
+
     if a:line[id5]!=':' 
-        let id3 = match(a:line,'[ \t]',id2)
+		let line = getline(prefix2[1])
+        let id3 = match(line,'[ \t]',id2)
         if ( id3 < id2 ) 
-            return ""
         endif
-        let tag = strpart(a:line,id2+1,id3-id2-1)
-        call s:VjdeTaglibCompletionRuby(uri,a:base,1,tag)
+        let tag = strpart(line,id2+1,id3-id2-1)
+        "call s:VjdeTaglibCompletionRuby(uri,a:base,1,tag)
+        return s:VjdeTaglibCompletionXmldata(uri,a:base,1,tag)
     else 
-        call s:VjdeTaglibCompletionRuby(uri,a:base,0,'')
+        "call s:VjdeTaglibCompletionRuby(uri,a:base,0,'')
+        return s:VjdeTaglibCompletionXmldata(uri,a:base,0,'')
     endif
     return s:retstr
 endf
+
 
 func! s:VjdeTaglibGetURI(prefix)  "{{{2
     let l:line_tld = search('prefix\s*=\s*"'.a:prefix.'"\s*',"nb")
@@ -1159,6 +1242,39 @@ func! VjdeXMLFun0(findstart,base)
 	endif
 
 endf
+func! VjdeXMLPrefix(line,base,col,findstart)
+    let aline=a:line
+    let abase=a:base
+    let acol=a:col
+
+    let ele = aline[s:last_start-1] =~'[:<]'
+
+    if ele
+	    let def_line=line('.')
+    else
+	    let def_line = search('<','nb')
+    endif
+    if def_line == -1
+		return ['',-1,-1]
+    endif
+    let def_l = getline(def_line)
+    if aline[s:last_start-1]=='<'
+	    let id1 = s:last_start-1
+    else
+	    let id1 = VjdeFindUnendPair(def_l,'<','>',0,a:col)
+    endif
+    if id1 == -1
+		return ['',-1,-1]
+    endif
+    
+    
+    let prefix=''
+    let id3 = stridx(def_l,':',id1)
+    if id3 != -1 " has a namespace
+		let prefix=strpart(def_l,id1+1,id3-id1-1) 
+    endif
+	return [prefix,def_line,id1]
+endf
 func! VjdeXMLFun(line,base,col,findstart) "{{{2
     if a:findstart
         return VjdeFindStart(a:line,a:base,a:col,'[ \t=<:"]')
@@ -1433,6 +1549,7 @@ func! VjdeGetDocWindowLine() "{{{2
 endf
  "{{{2
 command! -nargs=0 Vjdei call  s:VjdeInfomation()  
+"command! -nargs=0 Vjdei2 echo s:VjdeJspTaglib()
 command! -nargs=0 Vjdegd call  s:VjdeGotoDecl()  
 "command! -nargs=+ Vjdetld echo s:VjdeTaglibCompletionFun(<f-args>) 
 "command! -nargs=1 Vjdeft echo s:VjdeFormatLine(<f-args>)  
