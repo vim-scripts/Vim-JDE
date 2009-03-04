@@ -174,5 +174,43 @@ func! MatchToIgnoreString(line,index,target) "{{{2 remove
     endwhile
     return -1
 endf
+func! VjdeGetAnnotationObjects(l)
+	let rv = []
+	let idx = 0
+	let len = strlen(a:l)
+	while idx < len
+		if a:l[idx]=='"'
+			let idx= SkipToIgnoreString(a:l,idx+1,'"')
+			if idx == -1
+				return rv
+			endif
+		elseif a:l[idx]=="{" || a:l[idx]=="("
+			call add(rv,idx)
+		elseif a:l[idx] == "}" || a:l[idx]==")"
+			call remove(rv,-1)
+		endif
+		let idx = idx +1
+	endwhile
+	let lv2=[]
+	for idx in rv
+		let str = matchstr(strpart(a:l,0,idx+1),'[^@,({]*\s*[({]$')
+		let str = substitute(str,'[ \t]','','g')
+		call add(lv2,str)
+	endfor
+	let len = len(lv2)
+	echo lv2
+	let idx = len-1
+	echo idx
+	while idx >= 0
+		if lv2[idx][-1:-1]=='('
+			break
+		endif
+		let idx = idx-1
+	endwhile
+	if ( idx > 0 ) 
+		call remove(lv2,0,idx-1)
+	endif
+	return lv2
+endf
 "   vim600:fdm=marker:ff=unix
 "vim:fdm=marker:ff=unix

@@ -14,6 +14,7 @@ let s:directives={}
 let s:types=[]
 let s:cfu_type=0
 let s:xml_start = -1
+let s:wait_import=[]
 func! s:VjdeDirectiveAttribute(name,...) "{{{2
 	let attr = VjdeTagAttributeElement_New(a:name)
 	if a:0>0
@@ -413,6 +414,37 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     if a:findstart
         return VjdeFindStart(a:line,a:base,a:col,'[.@ \t(]')
     endif
+    let s:beginning = a:base
+    let lll = substitute(getline('.'),'^\s*\([^ \t(]*\)[ \t(].*$','\1','')
+    if strlen(lll)>0
+	    if lll[0]=='@'
+		    "call add(s:types , lll[1:-1])
+		    "let s:type=s:types[0]
+		    let types2=VjdeGetAnnotationObjects(getline('.'))
+		    if len(types2)==0 
+			    return ""
+		    endif
+		    let s:type=types2[0][0:-2]
+		    let s:types=[]
+		    call add(s:types,s:type)
+		    let l:imps = GetImportsStr()
+		    call s:VjdeCompletionByVIM(l:imps)
+		    "echo g:vjde_java_cfu
+		    if !g:vjde_java_cfu.success
+			    let s:retstr=""
+		    else
+			    if len(types2) > 1
+				    let name='value'
+				    if strlen(types2[1])>1
+					    let name=types2[1][0:-3]
+				    endif
+				    return s:VjdeAnnotationPreveiewMenu2(name) 
+			    endif
+			    return s:VjdeAnnotationPreveiewMenu(s:beginning) 
+		    endif
+		    return s:retstr
+	    endif
+    endif
     if a:line[s:last_start-1]=='('
 	    let retdict = VjdeJavaParameterPreview(2)
             for item in retdict
@@ -436,7 +468,6 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     endif
 
 
-    let s:beginning = a:base
     let l:imps = GetImportsStr()
 
     let s:types=[]
@@ -467,6 +498,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     let staticcfu=0
     let s:type=s:GettypeName(s:types[0])
     if s:type == ""
+	
 	if s:types[0][0]=~'[a-z]' " something like java.util ...
 		return s:VjdePkgCfuByVIM(join(s:types,'.').'.',a:base)
 	endif
@@ -1465,6 +1497,80 @@ func! VjdeJavaParameterPreview(...) "{{{2
 	"let g:vjde_show_preview=show_prev_old
         return mstr
 endf "}}}2
+func! s:VjdeAnnotationPreveiewMenu2(name) "{{{2
+    let lval= []
+        "for member in g:vjde_java_cfu.class.members
+        "    call add(lval,{'word': member.name ,'menu': member.type , 'kind': 'm' ,  'info': member.type.' '.member.name,'icase':0})
+        "endfor
+	for method in g:vjde_java_cfu.class.methods
+		if method.name != a:name
+			continue
+		endif
+		if method.ret_type=='java.lang.String[]'
+			return lval
+		elseif stridx( method.ret_type,'[]')> 0 
+			let ret_type=method.ret_type[0:-3]
+			if !index(s:wait_import,ret_type)
+				call add(s:wait_import , ret_type)
+			endif
+			let ret_type=VjdeGetClassName(ret_type)
+			"call Vjde_import_check(ret_type)
+			call add(lval,{'word': '@'.ret_type."(" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0, 'dup':1})
+		endif
+	endfor
+    return lval
+endf
+func! s:VjdeAnnotationPreveiewMenu(base) "{{{2
+    let lval= []
+    if strlen(a:base)==0
+        "for member in g:vjde_java_cfu.class.members
+        "    call add(lval,{'word': member.name ,'menu': member.type , 'kind': 'm' ,  'info': member.type.' '.member.name,'icase':0})
+        "endfor
+        for method in g:vjde_java_cfu.class.methods
+		if method.name=='annotationType'
+			continue
+		endif
+		if method.name=='hashCode'
+			continue
+		endif
+		if method.name=='toString'
+			continue
+		endif
+		if method.name=='equals'
+			continue
+		endif
+		if stridx( method.ret_type,'[]')> 0 
+			call add(lval,{'word': method.name."={" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0, 'dup':1})
+		else
+			call add(lval,{'word': method.name."=" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0, 'dup':1})
+		endif
+        endfor
+    else
+        "for member in g:vjde_java_cfu.class.SearchMembers('stridx(member.name,"'.a:base.'")==0')
+        "    call add(lval,{'word': member.name , 'kind': 'm' ,'menu':member.type ,  'info': member.type.' '.member.name ,'icase':0})
+        "endfor
+        for method in g:vjde_java_cfu.class.SearchMethods('stridx(method.name,"'.a:base.'")==0')
+		if method.name=='annotationType'
+			continue
+		endif
+		if method.name=='hashCode'
+			continue
+		endif
+		if method.name=='toString'
+			continue
+		endif
+		if method.name=='equals'
+			continue
+		endif
+		if stridx( method.ret_type,'[]')> 0 
+			call add(lval,{'word': method.name."{ }" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0, 'dup':1})
+		else
+			call add(lval,{'word': method.name."=" ,'menu':method.ret_type, 'kind' : 'f', 'info': method.ToString(),'icase':0, 'dup':1})
+		endif
+        endfor
+    endif
+    return lval
+endf
 func! s:VjdeGeneratePreveiewMenu(base) "{{{2
     let lval= []
     if strlen(a:base)==0
@@ -1509,7 +1615,15 @@ endf "}}}2
 func! VjdePreviewGetLines() "{{{2
 	return join(s:preview_buffer,"\n")
 endf "}}}
-
+func! VjdeAddOtherImport()
+	if len(s:wait_import) == 0
+		return
+	endif
+	for k in s:wait_import
+		call Vjde_import_check(k)
+	endfor
+	let s:wait_import=[]
+endf
 
 " add by wangfc
 func! VjdeInsertWord(word) "{{{2

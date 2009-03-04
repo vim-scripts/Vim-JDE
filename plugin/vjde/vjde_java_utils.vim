@@ -344,6 +344,9 @@ endf
 func! s:Vjde_get_cls(cls)
         return substitute(a:cls,'^\(\(\w\+\.\)*\)\(\w\+\)$','\3','')
 endf
+func! VjdeGetClassName(longname)
+		return s:Vjde_get_cls(a:longname)
+endf
 func! Vjde_import_check(cls) "{{{2
     if match(a:cls,'\<\(char\|int\|void\|long\|double\|byte\|boolean\|float\)\>')==0
         return 0

@@ -650,16 +650,18 @@ public class Completion {
 			  if (  isAccessible(fields[j].getModifiers(),level) &&
                       fields[j].getName().compareTo(name)==0 
                       ) {
-				  type = fields[j].getType().getName();
+				  //type = fields[j].getType().getName();
+				  type = componentName(fields[j].getType());
 				  break;
 			  }
 		  }
 		  if ( type == null ) {
 			  Method[] methods = c.getDeclaredMethods();
 			  for ( int j = 0 ; j < methods.length; j++ ) {
+				  //System.err.println(className(methods[j].getReturnType()));
 				  if ( isAccessible(methods[j].getModifiers(),level) && 
                           methods[j].getName().compareTo(name)==0) {
-					  type = methods[j].getReturnType().getName();
+					  type = componentName(methods[j].getReturnType());
 					  break;
 				  }
 			  }
@@ -767,6 +769,12 @@ public class Completion {
   static String className(Class c) {
     if (c.isArray())
       return c.getComponentType().getName() + "[]";
+    else
+      return c.getName();
+  }
+  static String componentName(Class c) {
+    if (c.isArray())
+      return c.getComponentType().getName() ;
     else
       return c.getName();
   }
