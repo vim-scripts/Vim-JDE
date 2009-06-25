@@ -197,7 +197,9 @@ public class DynamicClassLoader extends ClassLoader {
       }
       return c;
       } catch (ClassNotFoundException e) {
-        throw new ClassNotFoundException(argClassName);
+		  //System.err.println(argClassName);
+		  return null;
+        //throw new ClassNotFoundException(argClassName);
       } // end of try-catch
     } // end of else
   }//end of loadClass

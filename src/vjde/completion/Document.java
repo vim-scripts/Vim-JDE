@@ -138,6 +138,7 @@ public class Document {
 		return buffer.toString();
 	}
         public static void main(String[] args) {
+            //<search path> <source path> <class name> <method name>
 		if ( args.length < 4 ) {
 			return;
 		}

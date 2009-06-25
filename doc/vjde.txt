@@ -41,6 +41,7 @@
 		search definition		     |vjde-define|
 		goto 	definition		     |vjde-goto|
 		to-do list view			     |vjde-tasklist|
+		VJDE    usefull command	list         |vjde-command|
 		VJDE    variable		     |vjde-variable|
                 VJDE to-do list   		     |vjde-todolist|
                 VJDE Q&A			     |vjde-qa|
@@ -626,12 +627,61 @@ Just a command: >
 <
 
 
+							       *vjde-command*
+command for normal mode:
+<leader>\ai
+	Add import under cursor
+<leader>\oe
+	extend some methods of class
+<leader>\oi
+	implements some interface of current class
+<leader>\fr
+	fix compiler errors with throws statement.
+<leader>\ft
+	fix compiler errors with try-catch statement
+<leader>\jc
+	generate constructor of class with all members.
+<leader>\jt
+	surround line with try-catch statement
+<leader>\jd
+	read the document of symbol that under cursor.
+<leader>\jg
+	generate getter-setter of current member.
+<leader>\je
+	add import for current line,it used for this line >
+	java.io.PrintWriter
+>
+would add import statement and change this line to >
+	PrintWriter 
+<
+
+<leader>\ep
+	change current variable to function parameters.
+<leader>\em
+	chnage current variable to member of class.
+
+command for visul mode:
+<leader>\js
+	sort the selected import statement.
+<leader>\jt
+	surround the selected lines with try-catch statement.
+<leader>\en
+	change the selected to a static const defination.
+
 							       *vjde-variable*
 Note:the define like : >
 	g:vjde_show_paras [0|1]
 <
 is indicate: the global variable g:vjde_show_paras accept two values , 0 or 1.
 the first is the default value.
+							     *vjde_use_window*
+g:vjde_use_window [1|0]
+sometimes , you want to show some infomation , for example, the document of
+a method. your can use normal command >
+	\jd
+<
+to show the document the symbol under cursor. Just support for java
+method,member. this function is dependented on g:vjde_javadoc_path
 							     *vjde_show_paras*
 g:vjde_show_paras [0|1]
         while the auto completion is called, the parameter info display or

@@ -23,7 +23,9 @@ if !exists('g:vjde_completion_key')
 		let g:vjde_completion_key='<c-l>'
 	endif
 endif
-
+if !exists('g:vjde_use_window')
+	let g:vjde_use_window=1
+endif
 
 if !exists('g:vjde_out_path')
     let g:vjde_out_path = "."
@@ -108,6 +110,7 @@ if has('ruby')
 endif
 
 runtime plugin/vjde/vjde_preview.vim
+runtime plugin/vjde/vjde_window.vim
 runtime plugin/vjde/vjde_java_completion.vim
 runtime plugin/vjde/vjde_tag_loader.vim
 runtime plugin/vjde/vjde_java_utils.vim
@@ -187,6 +190,9 @@ endif
     if g:vjde_cfu_java_para
 	    au BufNewFile,BufRead,BufEnter *.java nested inoremap <buffer> ( <Esc>:call VjdeJavaParameterPreview()<CR>a(
     endif
+	if g:vjde_use_window
+		au BufNewFile,BufRead,BufEnter *.java nnoremap <buffer> <silent> <Leader>jd :call VjdeGetDocUnderCursor()<CR>
+	endif
 if has('ruby')
     func! s:VjdeGenTldData(file,name)
         if has('win32') || has('dos')

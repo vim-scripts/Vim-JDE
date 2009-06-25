@@ -15,6 +15,7 @@ let s:types=[]
 let s:cfu_type=0
 let s:xml_start = -1
 let s:wait_import=[]
+let s:vjde_doccmd=''
 func! s:VjdeDirectiveAttribute(name,...) "{{{2
 	let attr = VjdeTagAttributeElement_New(a:name)
 	if a:0>0
@@ -420,7 +421,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
 	    if lll[0]=='@'
 		    "call add(s:types , lll[1:-1])
 		    "let s:type=s:types[0]
-		    let types2=VjdeGetAnnotationObjects(getline('.'))
+		    let types2=VjdeGetAnnotationObjects(strpart(getline('.'),0,col('.')))
 		    if len(types2)==0 
 			    return ""
 		    endif
@@ -678,7 +679,7 @@ func! s:VjdeTaglibInfo() "{{{2
     endif
 endf
 
-func! VjdeInfo(...) "{{{2
+func! VjdeFindClassUnderCursor() "{{{2
     let key = expand('<cword>')
     let m_line = line('.')
     let m_col = col('.')
@@ -725,16 +726,26 @@ func! VjdeInfo(...) "{{{2
     else
 	    let s:retstr = s:VjdeCreateString4CFU(s:beginning)
     endif
-    if a:0 >=1 && a:1==1
-	    return
-    endif
+endf
+func! VjdeInfo(...) "{{{2
+	call VjdeFindClassUnderCursor()
+	if a:0 >=1 && a:1==1
+		return
+	endif
 
-    if g:vjde_java_cfu.success
-	    call s:VjdeGeneratePreviewBuffer(s:beginning)
-	    for item in s:preview_buffer
-		    echo item
-	    endfor
-    endif
+	if g:vjde_java_cfu.success
+		call s:VjdeGeneratePreviewBuffer(s:beginning)
+		if g:vjde_use_window == 1
+			call VjdeWindowClear()
+			for item in s:preview_buffer
+				call VjdeWindowAdd(item)
+			endfor
+		else
+			for item in s:preview_buffer
+				echo item
+			endfor
+		endif
+	endif
 endf
 
 
@@ -1662,7 +1673,56 @@ func! VjdeGetDocWindowLine() "{{{2
 		let str = str.'"'.g:vjde_javadoc_path.'" "./" '
 	endif
 	return str.";\n"
+endf "}}}
+func! s:VjdeGetMethod(name) "{{{
+	let res=[]
+	for item in g:vjde_java_cfu.class.members 
+		if a:name == item.name
+			call add(res,a:name)
+		endif
+	endfor
+	for item in g:vjde_java_cfu.class.methods
+		if a:name == item.name
+			let str = item.ToString()
+			let idx = stridx(str," ")
+			call add(res,strpart(str,idx+1))
+		endif
+	endfor
+	return res
+endf "}}}
+func! VjdeGetDocUnderCursor() "{{{
+	if strlen(s:vjde_doccmd) == 0 
+		let str = g:vjde_java_command. ' -cp "'.substitute(g:vjde_install_path,'\','/','g').'/vjde/vjde.jar" vjde.completion.Document '
+		if ( strlen(g:vjde_src_path)>0) 
+			let str = str.'"'.g:vjde_javadoc_path.'" "'.g:vjde_src_path.'" '
+		else
+			let str = str.'"'.g:vjde_javadoc_path.'" "./" '
+		endif
+		let s:vjde_doccmd=str
+	endif
+	call VjdeFindClassUnderCursor()
+	if g:vjde_java_cfu.success  && strlen(s:beginning)>0
+		let mms = s:VjdeGetMethod(s:beginning)
+		if  len(mms) > 0
+			if g:vjde_use_window == 1
+				call VjdeWindowClear()
+			endif
+			for mm in mms
+				let str = s:vjde_doccmd.' '.g:vjde_java_cfu.class.name.' '.mm
+				let doc = system(str)
+				if g:vjde_use_window == 1
+					call VjdeWindowAdd(doc)
+					"for item in split(doc,"\n")
+					"	call VjdeWindowAdd(item)
+					"endfor
+				else
+					echo item
+				endif
+			endfor
+		endif
+	endif
 endf
+
  "{{{2
 command! -nargs=0 Vjdei call  s:VjdeInfomation()  
 command! -nargs=0 Vjdei2 echo s:VjdeJspTaglib()

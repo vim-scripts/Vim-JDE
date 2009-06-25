@@ -84,7 +84,7 @@ module Vjde
 			puts "file  :\t#{res[0][0]}" if res.length>0 
 			puts "method:\t#{res[0][1]}" if res.length>0 
 			(1..res.length-1).each { |r|
-				puts "#{res[r][0]}\t\t#{res[r][1]}"
+				puts "#{res[r][0]} ->\t#{res[r][1]}"
 			}
 		end
 		def get_action_url(fp,websrc,str)
@@ -95,7 +95,11 @@ module Vjde
 end
 
 include Vjde
-	l = Struts2ConfigLoader.new('d:/workspace/b600-2/WebContent')
+if $*.length==3
+	#l = Struts2ConfigLoader.new('d:/workspace/b600-2/WebContent')
 	#puts l.find_file("javasource","/chinaoil/ToOplogin")
-	l.print_info("javasource","/aillypay/AillyFill.action")
+	#l.print_info("javasource","/aillypay/AillyFill.action")
+	l = Struts2ConfigLoader.new($*[0])
+	l.print_info($*[1],$*[2])
+end
 	
