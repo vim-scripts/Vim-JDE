@@ -110,7 +110,14 @@ public class DynamicClassLoader extends ClassLoader {
     if ((argClassName.startsWith("java.")) 
             || (argClassName.startsWith("javax."))
         ) {
-      return Class.forName(argClassName);
+		try {
+			c = Class.forName(argClassName);
+			if ( c != null ) {
+				return c;
+			}
+		}
+		catch(ClassNotFoundException ex) {
+		}
     } // end of if ()
     
     //First convert the class name from java.lang.String to java/lang/String

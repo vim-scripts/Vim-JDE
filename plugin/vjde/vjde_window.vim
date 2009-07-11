@@ -10,6 +10,8 @@ let g:vjde_window_loaded = 1
 if !exists('g:vjde_window_svr_cmd')
 	if has('win32') && has('gui_running')
 		let g:vjde_window_svr_cmd='!start gvim --servername VJDEWINDOW '
+	else
+		let g:vjde_window_svr_cmd=''
 	endif
 endif
 "let g:vjde_window_svr_cmd='!start gvim --servername VJDEWINDOW '
