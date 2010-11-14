@@ -34,6 +34,7 @@
 		Code tools			     |vjde-code|
 		    override methods	 	     |vjde-override|
 		    implements methods	 	     |vjde-implements|
+		    implements inner iterface 	     |vjde-impl-inner|
 		    sort imports		     |vjde-import-sort|
 		    extract imports		     |vjde-import-extract|
 		    wizard			     |vjde-wizard|
@@ -442,7 +443,12 @@ space , then ,the code will generated on the end of class definition.
 Implements the methods of implements . >
 	:call Vjde_override(1)
 	<leader>oe
->
+<
+							     *vjde-impl-inner*
+Implements interface with Anonymous class  . >
+	:call VjdeImplementInner()
+	<leader>ii
+<
 list the class method , select the index of method, separated by comma or
 space , then ,the code will generated on the end of class definition.
 

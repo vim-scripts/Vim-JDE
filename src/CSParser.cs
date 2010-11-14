@@ -35,8 +35,17 @@ namespace Wangfc {
 		}
         private static void findType() {
             foreach ( string lib in libs ) {
-                Assembly assem = Assembly.LoadFrom(lib);
+                
+                Assembly assem = null;
+                try {
+                assem = Assembly.LoadFrom(lib);
                 if ( assem == null ) {
+                    continue;
+                }
+                }
+                catch(Exception e) {
+                    //Console.Write(lib);
+                    //Console.WriteLine(lib);
                     continue;
                 }
                 Module[] module = assem.GetModules();
@@ -68,9 +77,9 @@ namespace Wangfc {
 										Console.WriteLine( fchar +"[\""+ t.FullName.Substring(len+1) + "\",\""+t.FullName+"\"]");
 										fchar = ",";
 										find += 1;
-                                        if ( find>=50) {
+                                        /*if ( find>=50) {
                                             break;
-                                        }
+                                        }*/
 								}
 						}
 						if ( find > 0 ) {
@@ -91,7 +100,7 @@ namespace Wangfc {
 				}
             }
         }
-        private static bool genModule(Module m) {
+        private static Boolean genModule(Module m) {
             foreach ( string ns in nss) {
                 Type t = m.GetType(ns+ tn);
                 if ( t != null ) {

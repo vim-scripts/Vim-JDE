@@ -129,11 +129,11 @@ function! VjdeIabCompletionPUM()
 	elseif len(comps)==0
 		return ''
 	endif
+	call complete(col('.')-strlen(word),comps)
 	inoremap  <buffer>  <cr> <C-R>=pumvisible() ? "\<lt>C-Y>\<lt>esc> : call VjdeIabCompletionEnd()\<lt>CR>i" : "\<lt>CR>"<CR>
 	inoremap  <buffer>  <C-Y> <C-R>=pumvisible() ? "\<lt>C-Y>\<lt>esc> : call VjdeIabCompletionEnd()\<lt>CR>i" : "\<lt>C-Y>"<CR>
 	inoremap  <buffer> 	<C-E> <C-R>=pumvisible() ? "\<lt>C-Y>\<lt>esc> : call VjdeIabCompletionClear()\<lt>CR>i" : "\<lt>C-E>"<CR>
 	inoremap  <buffer> 	<ESC> <C-R>=pumvisible() ? "\<lt>ESC>\<lt>esc> : call VjdeIabCompletionClear()\<lt>CR>i" : "\<lt>ESC>"<CR>
-	call complete(col('.')-strlen(word),comps)
 	return ''
 endf
 let s:paras = {}

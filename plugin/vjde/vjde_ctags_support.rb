@@ -556,7 +556,7 @@ module Vjde
 		end
 	    if @type_searched.include?(className1) || @type_searched.length>=@max_deep
 		    if block_given? 
-			    break
+			    return nil
 		    else
 			    return nil
 		    end
@@ -736,7 +736,7 @@ class ReadTags #{{{1
 		end
 	    if @type_searched.include?(className1) || @type_searched.length>=@max_deep
 		    if block_given? 
-			    break
+			    return nil
 		    else
 			    return nil
 		    end

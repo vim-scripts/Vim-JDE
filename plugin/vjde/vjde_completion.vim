@@ -486,7 +486,8 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
 
 
     if  len(s:types)<1 
-        return ""
+		return s:VjdePkgCfuByVIM('',a:base)
+        "return ""
     endif
 
     if   len(s:types)<1 || s:types[0]== "this"|| s:types[0]== "super"

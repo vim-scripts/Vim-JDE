@@ -189,7 +189,8 @@ func! s:VjdeRunCurrent(...)
 
         let cname = expand("%:t:r")
         let cpath= expand("%:h")
-        if strlen(cpath)>0
+		let cpath= substitute(cpath,'^'.getcwd()."/","","g")
+        if strlen(cpath)>strlen(g:vjde_src_path) "0
             if  strlen(g:vjde_src_path)!=0 && match(cpath,g:vjde_src_path)==0 
                 let cpath = strpart(cpath,strlen(g:vjde_src_path)+1)
             elseif strlen(g:vjde_test_path)!=0 && match(cpath,g:vjde_test_path)==0  
