@@ -473,6 +473,14 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
 
     let s:types=[]
     if a:line[s:last_start-1]=~'[ \t]'
+		let str = strpart(a:line,0,s:last_start)
+		let idx = matchend(str,'\<new\>\s*')
+        "completion for constructor of variable.
+		if idx > 0
+			let str = substitute(str,'^\s*\([^=]*\)\s\+\([^ \t=]\+\)\s*=.*$','\1','')
+			let s:retstr = str.'('
+            return s:retstr
+		endif	
         let ps = VjdeFindParent(1)
         let lval = s:VjdeParentCFUVIM(ps,l:imps)
         if len(lval)==0 " not found , completion for package
@@ -486,8 +494,13 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
 
 
     if  len(s:types)<1 
+		let str = strpart(a:line,0,s:last_start)
+		let idx = matchend(str,'\<new\>\s\+')
+		if idx > 0
+			let str = substitute(str,'^\s*\([^=]*\)\s\+\([^ \t=]\+\)\s*=.*$','\1','')
+			return str.'('
+		endif	
 		return s:VjdePkgCfuByVIM('',a:base)
-        "return ""
     endif
 
     if   len(s:types)<1 || s:types[0]== "this"|| s:types[0]== "super"
