@@ -9,7 +9,9 @@ if !has('ruby')
    " echo 'VJDE need +ruby future is enabled!'
 endif
 let g:vjde_loaded = 1
-
+if !exists('g:vjde_tab_cfu')
+    let g:vjde_tab_cfu=0
+endif
 if !exists('g:vjde_taglib_uri') 
 	let g:vjde_taglib_uri={}
 endif
@@ -192,6 +194,9 @@ endif
     endif
 	if g:vjde_use_window
 		au BufNewFile,BufRead,BufEnter *.java nnoremap <buffer> <silent> <Leader>jd :call VjdeGetDocUnderCursor()<CR>
+	endif
+	if g:vjde_tab_cfu==1
+		au BufNewFile,BufRead,BufEnter *.java inoremap <buffer> <tab> <c-x><c-u>
 	endif
 if has('ruby')
     func! s:VjdeGenTldData(file,name)

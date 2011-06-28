@@ -481,6 +481,10 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
 			let s:retstr = str.'('
             return s:retstr
 		endif	
+		if g:vjde_tab_cfu==1 && match(str,'^\s*$')>=0 
+			let s:retstr="\t"
+			return "\t"
+		end
         let ps = VjdeFindParent(1)
         let lval = s:VjdeParentCFUVIM(ps,l:imps)
         if len(lval)==0 " not found , completion for package
