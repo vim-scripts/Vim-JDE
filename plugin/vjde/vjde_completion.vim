@@ -518,7 +518,7 @@ func! s:VjdeJavaCompletionFun(line,base,col,findstart) "{{{2
     let s:type=s:GettypeName(s:types[0])
     if s:type == ""
 	
-	if s:types[0][0]=~'[a-z]' " something like java.util ...
+	if s:types[0][0]=~#'[a-z]' " something like java.util ...
 		return s:VjdePkgCfuByVIM(join(s:types,'.').'.',a:base)
 	endif
         let s:type=s:types[0]

@@ -80,13 +80,14 @@ public class Struts2Configure {
 	static XPathFactory factory = XPathFactory.newInstance();
 	static XPath xpath = factory.newXPath();
 	DocumentBuilder db = null ;
+    String destUrl=null;
 	private static class MyAction {
 		public MyAction(Action a, String sp,String m,String k) {
 			action = a;
 			space = sp;
 			klass = k;
 			method  = m==null?"execute":m;
-			url = space + action.value();
+			url = space +"/"+ action.value();
 		}
 		public String url;
 		public Action action;
@@ -110,6 +111,10 @@ public class Struts2Configure {
 	}
 	public void findAnnotation()
 	{
+		if ( actionpkg==null && actionpkg.length()==0)
+		{
+			return;
+		}
 		findAnnotation(actionpkg);
 		String[] names = dcl.getPackageNames();
 		for ( int i = 0 ; i < names.length ; i++) {
@@ -156,18 +161,30 @@ public class Struts2Configure {
 			//ex.printStackTrace();
 		}
 	}
-	public void handleAction(Action action,Class c)
+	public boolean handleAction(Action action,Class c)
 	{
-		handleAction(action,c,"");
+		return handleAction(action,c,"");
 		//System.out.println(action.method());
 	}
-	public void handleAction(Action action,Class c,String m)
+	public boolean handleAction(Action action,Class c,String m)
 	{
 		String space  = "/";
 		if ( currentPkg.length() > actionpkg.length()) {
 			space = space + currentPkg.substring(actionpkg.length()+1) +"/";
 		}
-		actions.add( new MyAction(action,space,m,c.getName()));
+        
+        String url = space+"/" + action.value();
+
+        if (destUrl!=null) {
+            if ( compareUrl(destUrl,url)) {
+                actions.add( new MyAction(action,space,m,c.getName()));
+                return true;
+            }
+        }
+        else {
+            actions.add( new MyAction(action,space,m,c.getName()));
+        }
+        return false;
 		/*
 		System.out.println(m);
 		//System.out.println(c.getName());
@@ -183,19 +200,24 @@ public class Struts2Configure {
 		*/
 		//System.out.println(action.method());
 	}
-	public void handleAnnotations(Annotation[] anns,Class c,Method m) {
+	public boolean handleAnnotations(Annotation[] anns,Class c,Method m) {
 			for ( int i = 0 ; i < anns.length ; i++ ) {
 				Annotation an = anns[i];
 				//System.out.println( an.annotationType());
 				if ( an  instanceof  Actions) {
 					Action[] actions = ((Actions)an).value();
 					for ( int j = 0 ; j < actions.length; j++) {
-						handleAction(actions[j],c,m.getName());
+						if(handleAction(actions[j],c,m.getName())) {
+                            return true;
+                        }
 					}
 					//System.out.println(an.annotationType().getName());
 				}
 				else if ( an instanceof Action) {
-						handleAction((Action)an,c,m.getName());
+						if(handleAction((Action)an,c,m.getName()))
+                        {
+                            return true;
+                        }
 				}
 				else if ( an instanceof Deprecated){
 					//System.out.println(an);
@@ -203,24 +225,30 @@ public class Struts2Configure {
 				//System.out.println(an.annotationType().getName());
 
 			}
+            return false;
 	}
-	public void handleAnnotations(Annotation[] anns,Class c) {
+	public boolean handleAnnotations(Annotation[] anns,Class c) {
 			for ( int i = 0 ; i < anns.length ; i++ ) {
 				//System.out.println(anns[i]);
 				Annotation an = anns[i];
 				if ( an instanceof Actions) {
 					Action[] actions = ((Actions)an).value();
 					for ( int j = 0 ; i < actions.length; j++) {
-						handleAction(actions[j],c);
+						if(handleAction(actions[j],c)){
+                            return true;
+                        }
 					}
 					//System.out.println(an.annotationType().getName());
 				}
 				else if (an instanceof Action)  {
-						handleAction((Action)an,c);
+						if(handleAction((Action)an,c)) {
+                            return true;
+                        }
 				}
 				//System.out.println(an.annotationType().getName());
 
 			}
+            return false;
 	}
 	public void toOut() {
 		for ( MyAction act : actions) {
@@ -298,10 +326,10 @@ public class Struts2Configure {
 		return null;
 		//return doc.getElementsByTagName("package");
 	}
-	public void findInxml() {
-		handleXml( findStruts2(webapp));
+	public boolean findInxml() {
+		return handleXml( findStruts2(webapp));
 	}
-	public void onPackage(Element pkg) {
+	public boolean onPackage(Element pkg) {
 		Object result = null ;
 		if ( exprpackage == null ) {
 			try {
@@ -316,7 +344,7 @@ public class Struts2Configure {
 		catch(XPathExpressionException e1) {
 		}
 		if ( result == null ) {
-			return ;
+			return false;
 		}
 
 		NodeList paction = (NodeList) result;
@@ -359,8 +387,18 @@ public class Struts2Configure {
 			};
 			*/
 
-			actions.add( new MyAction(action,space,me,klass));
+            if (destUrl!=null) {
+                String url = space+"/" + action.value();
+                if ( compareUrl(destUrl,url)) {
+                    actions.add( new MyAction(action,space,me,klass));
+                    return true;
+                }
+            }
+            else {
+                actions.add( new MyAction(action,space,me,klass));
+            }
 		}
+        return false;
 	}
 	public Result[] onResult(Element act) {
 		NodeList paction = act.getElementsByTagName("result");
@@ -397,8 +435,8 @@ public class Struts2Configure {
 		}
 		return res;
 	}
-	public void handleXml(Document doc) {
-		long s = System.currentTimeMillis();
+	public boolean handleXml(Document doc) {
+		//long s = System.currentTimeMillis();
 		if ( doc != null ) {
 			NodeList incs = findInclues(doc);
 			for ( int i = 0 ; i < incs.getLength(); i++ ) {
@@ -406,17 +444,22 @@ public class Struts2Configure {
 				String file=e.getAttribute("file");
 				Document dd2 = findXml(webapp+"/WEB-INF/classes/" + file);
 				if ( dd2 != null ) {
-					handleXml(dd2);
+					if (handleXml(dd2)) {
+                        return true;
+                    }
 				}
 				//System.out.println(file);
 			}
 			NodeList pkgs = findPackages(doc);
 			for ( int i = 0 ; i < pkgs.getLength() ; i++) {
 				Element e = (Element) pkgs.item(i);
-				onPackage(e);
+				if (onPackage(e)){
+                    return true;
+                }
 			}
 		}
-		System.out.println(System.currentTimeMillis()-s);
+        return false;
+		//System.out.println(System.currentTimeMillis()-s);
 	}
 	public Document findXml(String xml) {
 		System.out.println(xml);
@@ -443,18 +486,47 @@ public class Struts2Configure {
 			e1.printStackTrace(System.err);
 		}
 		finally {
-			System.out.println("parser "  + (System.currentTimeMillis()-s));
+			//System.out.println("parser "  + (System.currentTimeMillis()-s));
 		}
 		return null;
 	}
+    public boolean compareUrl(String source,String actionurl)
+    {
+        //System.out.println(source);
+        //System.out.println("==>" + actionurl);
+        if ( source.compareTo(actionurl)==0) {
+            return true;
+        }
+        if ( actionurl.indexOf('*')<0) {
+            return false;
+        }
+        String pattern[] = actionurl.split("\\*");
+        int start=0;
+        for ( int i = 0 ; i < pattern.length; i++ ) {
+            //System.out.println(pattern[i]);
+            start = source.indexOf(pattern[i],start);
+            if ( start<0) {
+                return false;
+            }
+        }
+        return true;
+    }
 	public static void main(String[] args) {
 		if ( args.length < 2) {
-			System.err.println("<webapp-dir> <actionpackage> ");
+			System.err.println("<webapp-dir> <actionpackage> [url]");
 			return;
 		}
+
 		Struts2Configure s2c = new Struts2Configure(args[0],"",args[1]);
+        //System.out.println(s2c.compareUrl("/nowuser/LoginAction","/nowuser/LoginAction"));
+        //System.out.println(s2c.compareUrl("/nowuser/UserAddAction","/nowuser/*AddAction"));
+        //System.out.println(s2c.compareUrl("/nowuser/UserDelAction","/nowuser/*AddAction"));
+        if ( args.length>=3) {
+            s2c.destUrl=args[2];
+        }
+        //System.out.println(s2c.destUrl);
 		s2c.findAnnotation();
 		s2c.findInxml();
-		//System.out.println(s2c.actions2vim());
+		System.out.println(s2c.actions2vim());
 	}
 }

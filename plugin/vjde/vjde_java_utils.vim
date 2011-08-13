@@ -353,7 +353,22 @@ func! Vjde_import_check(cls) "{{{2
     endif
     return s:Vjde_add_import(a:cls)
 endf
+func! s:Vjde_add_import_jsp(cls) "{{{2
+	let l:line_imp = search('^<%@.*\s*import\s\+','nb')
+        if l:line_imp <= 0 
+                let l:line_imp = search('^<%@\s*page\s\+','nb')
+				if l:line_imp<=0
+					let l:line_imp = 0
+				endif
+        endif
+        call append(l:line_imp,'<%@ page import="'.a:cls.'"%>')
+        return 1
+endf
 func! s:Vjde_add_import(cls) "{{{2
+
+		if &ft == 'jsp'
+			return s:Vjde_add_import_jsp(a:cls)
+		end
         if match(a:cls,'^java\.lang\.[A-Z]')==0
             return 0
         endif
@@ -925,6 +940,8 @@ endf "}}}2
 
 if g:vjde_utils_setup==1
 	au BufNewFile,BufRead *.java silent call s:Vjde_utils_setup()
+	au BufNewFile,BufRead *.jsp nnoremap <buffer> <silent> <Leader>ai :call Vjde_fix_import1()<cr>
+
 endif
 
 " vim:fdm=marker:sts=4:ts=4:ff=unix
