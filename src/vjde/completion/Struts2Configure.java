@@ -462,7 +462,7 @@ public class Struts2Configure {
 		//System.out.println(System.currentTimeMillis()-s);
 	}
 	public Document findXml(String xml) {
-		System.out.println(xml);
+		//System.out.println(xml);
 		if ( db == null ) {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			dbf.setIgnoringComments(true);

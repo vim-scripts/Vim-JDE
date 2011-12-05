@@ -93,6 +93,7 @@ func! VjdeJUnitCase(...)
     exec 'normal '.len(s:added_lines).'=='
     let s:added_lines=[]
 endf
+
 func! VjdeTemplateJavaRuby(tn,paras) "{{{2
     let s:added_lines = []
     let mf = &ft

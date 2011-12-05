@@ -61,7 +61,7 @@ let b:jcommenter_autostart_insert_mode = 1
 " description of the method
 let b:jcommenter_method_description_space = 2
 
-" The number of empty rows (containing only the star) to be added for the´
+" The number of empty rows (containing only the star) to be added for the
 " description of the field. Can be also -1, which means that "/**  */" is added
 " above the field declaration 
 let b:jcommenter_field_description_space = 1
@@ -147,7 +147,7 @@ let b:jcommenter_add_empty_line = 1
 
 " File:          jcommenter.vim
 " Summary:       Functions for documenting java-code
-" Author:        Kalle Björklid <bjorklid@st.jyu.fi>
+" Author:        Kalle Bj?rklid <bjorklid@st.jyu.fi>
 " Last Modified: 29.12.2002
 " Version:       1.3.1
 " Modifications:
