@@ -278,7 +278,7 @@ func! VjdeJavaSearchPackagesAndClasses(jar,lib_path,prefix,base)
 endf
 func! VjdeJavaSearch4Classes(jar,cname,lib_path)
 	let jar_path = substitute(a:jar,'vjde\.jar$','','')
-	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" vjde.completion.ClassesByName '.a:cname.' "'.jar_path.'/tlds/jdk1.5.lst" '.a:lib_path.g:vjde_java_rt
+	let cmd=g:vjde_java_command.' -cp "'.a:jar.'" -Dpath.separator=: vjde.completion.ClassesByName '.a:cname.' "'.jar_path.'/tlds/jdk1.5.lst" '.a:lib_path.g:vjde_java_rt
 	let array=[]
 	let array += split(system(cmd))
 	return array
