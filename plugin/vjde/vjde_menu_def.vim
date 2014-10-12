@@ -322,7 +322,8 @@ command!  -nargs=* -complete=file VjdeaddTld call s:VjdeAddTld(<f-args>)
 command!  -nargs=* -complete=file VjdeaddDtd call s:VjdeAddDtd(<f-args>)
 command!  -nargs=0 Vjdelistdtds echo VjdeListDtds()
 command!  -nargs=0 -complete=file Vjdesave call s:VjdeSaveProject()
-command! -nargs=0 Vjdec :compiler javac_ex <bar> exec "make -d \"".g:vjde_out_path."\" -classpath \"".g:vjde_lib_path."\" ".expand("%")
+"command! -nargs=0 Vjdec :compiler javac_ex <bar> exec "make -d \"".g:vjde_out_path."\" -classpath \"".g:vjde_lib_path."\" ".expand("%")
+command! -nargs=0 Vjdec :compiler javac_ex <bar> exec "make -d '".g:vjde_out_path."' -classpath '".g:vjde_lib_path."' -encoding '".g:vjde_compiler_encoding."' ".g:vjde_compiler_arguments." ".expand("%")
 command! -nargs=* Vjder :call s:VjdeRunCurrent(<f-args>)
 if v:version>=700
     "command!  -nargs=0 Vjdesetup set cfu=VjdeCompletionFun0 
